@@ -1,0 +1,248 @@
+# ✅ **FULL MEGA PROMPT — LIBRE (FINAL VERSION)**
+
+**Build a complete, production-ready Web3 ride-sharing DApp called “Libre” launching first in Orlando, Florida. Everything must be fully scaffolded and deployable in one pass.**
+
+---
+
+# 🧱 **TECH STACK**
+
+* **Next.js 15 (app router) + TypeScript**
+* **Tailwind CSS + shadcn/ui + dark mode**
+* **Wallet connect:** RainbowKit + Wagmi + viem
+* **Account Abstraction (ERC-4337)** onboarding (email / Google / Apple login OR wallet)
+* **Blockchain:** Base Mainnet (Alchemy/Infura RPC)
+* **Smart contracts:** Solidity (Foundry structure) placed under `/contracts`
+* **Payments:** USDC on Base (Circle’s fake USDC for testnet; mainnet address config)
+* **Realtime:** Supabase Realtime OR Socket.io
+* **Maps:** Mapbox GL JS + OpenStreetMap fallback
+* **i18n:** next-intl (English + Spanish)
+* **Email:** Resend + React Email
+* **Push notifications:** OneSignal (web + mobile)
+* **File uploads:** UploadThing or Supabase Storage
+
+---
+
+# 🚗 **APP SECTIONS (Driver + Rider in one codebase)**
+
+## **1. Landing Page (/)**
+
+* Miami/Orlando vice-city neon design (hot pink + teal + purple gradient)
+* Orlando skyline hero + animated cars moving
+* Countdown widget for local launch
+* Waitlist email form (Resend)
+* CTA buttons: “Become a Driver” / “Request a Ride”
+* Spanish / English toggle
+* Smooth animations
+
+---
+
+## **2. /rider — Rider App**
+
+* Pickup + dropoff autocomplete
+* Mapbox live map + route preview
+* Price estimator (based on Uber-like formula)
+* Dynamic surge pricing (5%, 10%, 15%, 25%)
+* Cashback badge (5–15% USDC rewards)
+* Instant USDC checkout (wallet OR AA smart account)
+* Matching flow → Driver en route → On trip → Completed
+* In-ride encrypted chat (Supabase Realtime / Socket.io)
+* SOS button → alerts admin + emergency contacts
+* Push notifications: “Driver accepted”, “Driver arriving”, “Ride completed”
+* Easter egg: if pickup == “Disney World” → put Mickey Ears on the map pin
+
+---
+
+## **3. /driver — Driver Dashboard**
+
+* “Go Online” toggle
+* Live map with rider requests
+* Accept/Decline ride modal
+* Navigation route preview
+* Surge heat map overlay
+* Earnings calculator & weekly projections
+* Driver metrics: acceptance rate, on-time %, 5-star badge
+* Upload: driver license, insurance, vehicle registration (OCR verification placeholder)
+* Proof-of-Humanity toggle (World ID hook)
+* Push notification: “New ride available”
+
+---
+
+## **4. Ride Flow (shared)**
+
+* Matching → En-route → Arrived → On trip → Complete
+* Instant USDC payout to driver (97–100% split)
+* Rewards: mock $LIBRE ERC-20 token distribution
+* Confetti animation on completion
+* Store ride logs (timestamp, route hash, driver ID, rider ID)
+* Safety: show only partial driver identity until matched
+
+---
+
+## **5. Profile Page (/profile)**
+
+* On-chain reputation score
+* NFT badges:
+
+  * 100 rides
+  * 1,000 rides
+  * 5-Star Driver
+  * Airport Licensed
+* Lifetime stats: miles, rides, earnings, carbon offset
+* Referral link → gives both parties 1–5 USDC
+
+---
+
+## **6. Admin Dashboard (/admin, protected route)**
+
+* View all rides (active, completed, canceled)
+* View revenue, driver payouts, treasury stats
+* Manage disputes
+* View SOS logs
+* Mark drivers as “verified”
+* Basic compliance logs for Florida TNC standards
+
+---
+
+# 🔐 **SAFETY FEATURES (MUST INCLUDE)**
+
+* SOS button (driver + rider)
+* Anonymized contact until match
+* Number masking (Twilio placeholder)
+* Encrypted driver/rider chat
+* Optional trip recording (client-side only; placeholder)
+* Vehicle & driver verification upload flow
+* Safety education modal on first ride
+
+---
+
+# 🌴 **ORLANDO-SPECIFIC FEATURES**
+
+* Pins for:
+
+  * MCO Airport
+  * International Drive
+  * Disney Springs
+  * Universal Studios
+* Dynamic airport fee (MCO regulation placeholder)
+* Airport geofence rules
+
+---
+
+# 🛣 **PROOF-OF-RIDE (ZK GPS) — PREP HOOK**
+
+Generate contract + frontend placeholders for:
+
+* `saveGPSProof(bytes32 routeHash)`
+* `verifyRoute(bytes zkProof)`
+* Store hashed GPS snapshots every 60 seconds
+* Prepare folder `/libre-zk/` for future circuits
+
+---
+
+# 📜 **SMART CONTRACTS TO GENERATE**
+
+Place all in `/contracts`:
+
+### **1. LibreProtocol.sol**
+
+* Tracks rides
+* Tracks driver/rider reputation
+* Emits ride events
+* Issues LIBRE token rewards
+* Stores GPS proof hashes
+* Mapping of disputes
+
+### **2. PaymentSplitter.sol**
+
+* Splits USDC payments
+* 97–100% to driver
+* Rest to protocol treasury
+* SafeTransfer + USDC interface
+
+### **3. LibreToken.sol**
+
+* ERC-20
+* Mintable only by protocol
+* Used for rewards + future governance
+
+### **4. BadgeNFT.sol**
+
+* ERC-721 badges for driver achievements
+
+### **5. Deploy script (Foundry)**
+
+* `deploy.s.sol` for Base
+* Environment config with RPC + private key
+
+---
+
+# 🧪 **TESTING**
+
+* Basic Foundry tests for all contracts
+* Example ride test
+* Example payout test
+* Example reputation increase test
+
+---
+
+# 📱 **MOBILE**
+
+* Full mobile-responsive layout
+* Sticky bottom bar for ride actions
+* Perfect on iPhone & Android
+
+---
+
+# 📝 **README.md (Very Detailed)**
+
+Include:
+
+* How to run locally
+* How to deploy to Vercel
+* How to deploy contracts to Base
+* Environment variables list (`.env.example`)
+* Wallet connect instructions
+* Mapbox setup
+* Supabase setup
+* OneSignal setup
+
+---
+
+# 📦 **DEPLOYMENT**
+
+* Include `vercel.json`
+* Include `next.config.mjs`
+* Include complete `.env.example`
+* Include base URLs for RPC, Supabase, OneSignal, Resend
+
+---
+
+# 🎨 **DESIGN**
+
+* Miami/Orlando vice-city neon theme
+
+  * Hot pink (#ff2d92)
+  * Miami teal (#02f7f3)
+  * Neon purple (#a020f0)
+* Gradient backgrounds
+* Animated buttons
+* Soft glassmorphism cards
+
+---
+
+# 🥚 **EASTER EGG**
+
+If a rider enters pickup == “Disney World”:
+
+* Replace pin icon with Mickey ears
+* Trigger sparkle animation
+
+---
+
+# 🧨 **FINAL REQUIREMENT**
+
+**Generate the full-stack app now.
+Everything should compile and run out of the box with one `npm install` + `npm run dev`.**
+
+---
+*“Generate everything.”**
