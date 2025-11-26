@@ -25,15 +25,11 @@ export default function Landing() {
           </div>
           
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/rider">
-              <a className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-rider">
-                For Riders
-              </a>
+            <Link href="/rider" className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-rider">
+              For Riders
             </Link>
-            <Link href="/driver">
-              <a className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-driver">
-                For Drivers
-              </a>
+            <Link href="/driver" className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-driver">
+              For Drivers
             </Link>
             <LanguageToggle />
           </div>
