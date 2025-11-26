@@ -200,6 +200,72 @@ export const complianceAuditLog = pgTable("compliance_audit_log", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Driver Identity Photos (FL TNC Law Required)
+export const driverPhotos = pgTable("driver_photos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  photoType: text("photo_type").notNull(), // "profile" | "license_front" | "license_back"
+  photoUrl: text("photo_url").notNull(),
+  photoHash: text("photo_hash"), // IPFS or hash for on-chain reference
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  verificationStatus: text("verification_status").default("pending"), // "pending" | "verified" | "rejected"
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Vehicle Photos & Documentation (FL TNC Law Required - Visible to Riders)
+export const vehiclePhotos = pgTable("vehicle_photos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  photoType: text("photo_type").notNull(), // "front" | "side" | "back" | "license_plate" | "vin" | "interior"
+  photoUrl: text("photo_url").notNull(),
+  photoHash: text("photo_hash"),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  verificationStatus: text("verification_status").default("pending"),
+  ocrData: jsonb("ocr_data").$type<{ licensePlate?: string; vin?: string; color?: string }>(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insurance Document Upload
+export const insuranceDocuments = pgTable("insurance_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  documentUrl: text("document_url").notNull(),
+  documentHash: text("document_hash"),
+  policyNumber: text("policy_number"),
+  effectiveDate: timestamp("effective_date"),
+  expirationDate: timestamp("expiration_date"),
+  coverageAmount: real("coverage_amount"),
+  ocrVerified: boolean("ocr_verified").default(false),
+  verificationStatus: text("verification_status").default("pending"),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Background Check Document
+export const backgroundCheckDocuments = pgTable("background_check_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  documentUrl: text("document_url").notNull(),
+  documentHash: text("document_hash"),
+  checkDate: timestamp("check_date"),
+  nextReviewDate: timestamp("next_review_date"),
+  verificationStatus: text("verification_status").default("pending"),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Rider Identity Photos (Optional)
+export const riderPhotos = pgTable("rider_photos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  riderId: varchar("rider_id").notNull().references(() => users.id),
+  photoUrl: text("photo_url").notNull(),
+  photoHash: text("photo_hash"),
+  livenessVerified: boolean("liveness_verified").default(false),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertDriverSchema = createInsertSchema(drivers).omit({ id: true });
@@ -230,6 +296,13 @@ export const insertInsuranceValidationSchema = createInsertSchema(insuranceValid
 export const insertOrlandoPermitSchema = createInsertSchema(orlandoPermit).omit({ id: true, createdAt: true });
 export const insertAirportOperationsSchema = createInsertSchema(airportOperations).omit({ id: true, createdAt: true });
 export const insertComplianceAuditLogSchema = createInsertSchema(complianceAuditLog).omit({ id: true, createdAt: true });
+
+// Photo & Document Schemas
+export const insertDriverPhotosSchema = createInsertSchema(driverPhotos).omit({ id: true, createdAt: true });
+export const insertVehiclePhotosSchema = createInsertSchema(vehiclePhotos).omit({ id: true, createdAt: true });
+export const insertInsuranceDocumentsSchema = createInsertSchema(insuranceDocuments).omit({ id: true, createdAt: true });
+export const insertBackgroundCheckDocumentsSchema = createInsertSchema(backgroundCheckDocuments).omit({ id: true, createdAt: true });
+export const insertRiderPhotosSchema = createInsertSchema(riderPhotos).omit({ id: true, createdAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -309,6 +382,22 @@ export type InsertOrlandoPermit = z.infer<typeof insertOrlandoPermitSchema>;
 export type AirportOperations = typeof airportOperations.$inferSelect;
 export type InsertAirportOperations = z.infer<typeof insertAirportOperationsSchema>;
 
+// Photo & Document Types
+export type DriverPhoto = typeof driverPhotos.$inferSelect;
+export type InsertDriverPhoto = z.infer<typeof insertDriverPhotosSchema>;
+
+export type VehiclePhoto = typeof vehiclePhotos.$inferSelect;
+export type InsertVehiclePhoto = z.infer<typeof insertVehiclePhotosSchema>;
+
+export type InsuranceDocument = typeof insuranceDocuments.$inferSelect;
+export type InsertInsuranceDocument = z.infer<typeof insertInsuranceDocumentsSchema>;
+
+export type BackgroundCheckDocument = typeof backgroundCheckDocuments.$inferSelect;
+export type InsertBackgroundCheckDocument = z.infer<typeof insertBackgroundCheckDocumentsSchema>;
+
+export type RiderPhoto = typeof riderPhotos.$inferSelect;
+export type InsertRiderPhoto = z.infer<typeof insertRiderPhotosSchema>;
+
 // Florida compliance constants
 export const FLORIDA_COMPLIANCE = {
   MIN_DRIVER_AGE: 21,
@@ -320,4 +409,6 @@ export const FLORIDA_COMPLIANCE = {
   CITY_INFRASTRUCTURE_FEE_PERCENT: 0.015, // 1.5%
   BACKGROUND_CHECK_VALIDITY_YEARS: 3,
   COMPLIANCE_REVIEW_INTERVAL_MONTHS: 36,
+  REQUIRED_DRIVER_PHOTOS: ["profile", "license_front", "license_back"],
+  REQUIRED_VEHICLE_PHOTOS: ["front", "side", "back", "license_plate"],
 } as const;

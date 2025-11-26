@@ -69,6 +69,14 @@ export interface IStorage {
   getReferralByCode(code: string): Promise<Referral | undefined>;
   getReferralsByUser(userId: string): Promise<Referral[]>;
   claimReferral(code: string, userId: string): Promise<Referral | undefined>;
+
+  // Photos & Documents (FL TNC Compliance)
+  uploadDriverPhoto(photo: any): Promise<any>;
+  getDriverPhotos(driverId: string): Promise<any[]>;
+  uploadVehiclePhoto(photo: any): Promise<any>;
+  getVehiclePhotos(driverId: string): Promise<any[]>;
+  uploadInsuranceDocument(doc: any): Promise<any>;
+  uploadBackgroundCheckDocument(doc: any): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -483,6 +491,41 @@ export class MemStorage implements IStorage {
     const updated = { ...referral, referredUserId: userId, claimed: true };
     this.referrals.set(referral.id, updated);
     return updated;
+  }
+
+  // Photos & Documents (FL TNC Compliance)
+  async uploadDriverPhoto(photo: any): Promise<any> {
+    const id = randomUUID();
+    const stored = { id, ...photo, uploadedAt: new Date(), createdAt: new Date() };
+    // In production, store in S3/Supabase; for now store reference
+    return stored;
+  }
+
+  async getDriverPhotos(driverId: string): Promise<any[]> {
+    // In production, retrieve from S3/Supabase
+    return [];
+  }
+
+  async uploadVehiclePhoto(photo: any): Promise<any> {
+    const id = randomUUID();
+    const stored = { id, ...photo, uploadedAt: new Date(), createdAt: new Date() };
+    return stored;
+  }
+
+  async getVehiclePhotos(driverId: string): Promise<any[]> {
+    return [];
+  }
+
+  async uploadInsuranceDocument(doc: any): Promise<any> {
+    const id = randomUUID();
+    const stored = { id, ...doc, uploadedAt: new Date(), createdAt: new Date() };
+    return stored;
+  }
+
+  async uploadBackgroundCheckDocument(doc: any): Promise<any> {
+    const id = randomUUID();
+    const stored = { id, ...doc, uploadedAt: new Date(), createdAt: new Date() };
+    return stored;
   }
 }
 

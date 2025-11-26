@@ -9,8 +9,13 @@ import {
   insertDriverSchema,
   insertSOSAlertSchema,
   insertDisputeSchema,
+  insertDriverPhotosSchema,
+  insertVehiclePhotosSchema,
+  insertInsuranceDocumentsSchema,
+  insertBackgroundCheckDocumentsSchema,
   ORLANDO_LOCATIONS,
   SURGE_TIERS,
+  FLORIDA_COMPLIANCE,
 } from "@shared/schema";
 
 interface WebSocketClient extends WebSocket {
@@ -404,6 +409,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       sosAlerts: sosAlerts.length,
       pendingDisputes: disputes.length,
     });
+  });
+
+  // Photo Upload APIs (FL TNC Compliance)
+  app.post("/api/driver/photos", async (req, res) => {
+    try {
+      const data = insertDriverPhotosSchema.parse(req.body);
+      const photo = await storage.uploadDriverPhoto(data);
+      res.json(photo);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid photo data" });
+    }
+  });
+
+  app.get("/api/driver/:driverId/photos", async (req, res) => {
+    const photos = await storage.getDriverPhotos(req.params.driverId);
+    res.json(photos);
+  });
+
+  app.post("/api/vehicle/photos", async (req, res) => {
+    try {
+      const data = insertVehiclePhotosSchema.parse(req.body);
+      const photo = await storage.uploadVehiclePhoto(data);
+      res.json(photo);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid vehicle photo data" });
+    }
+  });
+
+  app.get("/api/vehicle/:driverId/photos", async (req, res) => {
+    const photos = await storage.getVehiclePhotos(req.params.driverId);
+    res.json(photos);
+  });
+
+  app.post("/api/insurance/document", async (req, res) => {
+    try {
+      const data = insertInsuranceDocumentsSchema.parse(req.body);
+      const doc = await storage.uploadInsuranceDocument(data);
+      res.json(doc);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid insurance document" });
+    }
+  });
+
+  app.post("/api/background-check/document", async (req, res) => {
+    try {
+      const data = insertBackgroundCheckDocumentsSchema.parse(req.body);
+      const doc = await storage.uploadBackgroundCheckDocument(data);
+      res.json(doc);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid background check document" });
+    }
+  });
+
+  // Compliance Constants API (for frontend validation)
+  app.get("/api/compliance/constants", (req, res) => {
+    res.json(FLORIDA_COMPLIANCE);
   });
 
   return httpServer;

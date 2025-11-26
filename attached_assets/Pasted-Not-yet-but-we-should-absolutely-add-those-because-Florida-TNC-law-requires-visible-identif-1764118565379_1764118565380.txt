@@ -1,0 +1,160 @@
+Not yet — but we **should absolutely add those**, because Florida TNC law *requires* visible identification of both **driver** and **vehicle**.
+
+Here is an **updated section you can paste into your bolt.new prompt** that adds all *photo, identity, and vehicle documentation requirements* for the riders and drivers.
+
+---
+
+# 📸 **Add User Identity Photos + Driver & Vehicle Photo Requirements**
+
+### **1. Rider Identity (Optional or Required Based on Your Rules)**
+
+Add a module for:
+
+* Rider profile photo upload
+* Verification step using:
+
+  * Liveness check
+  * ID match (optional)
+* Storage via:
+
+  * Encrypted off-chain vault (AWS/GCP)
+  * IPFS hash recorded on-chain
+* Shared only when:
+
+  * Driver is matched
+  * Trip is active
+
+---
+
+## 👤 **2. Driver Profile Photo (Required by Florida TNC Law)**
+
+Include:
+
+* Clear frontal driver photo upload
+* Rejected if:
+
+  * Image quality too low
+  * Face not detected
+  * Mask/face obstruction
+* Smart contract flag:
+
+  * `driverProfilePhotoHash`
+* Must be visible to passengers in the rider app BEFORE trip acceptance
+
+---
+
+## 🚗 **3. Vehicle Photo Requirements**
+
+Florida and City of Orlando require passenger-visible vehicle identification.
+
+Add:
+
+### **Required Photos:**
+
+* Front view
+* Side view
+* Back view
+* License plate close-up
+* VIN photo (optional but recommended)
+* Interior photo (condition check)
+
+### **Validation Logic:**
+
+* AI-assisted plate recognition (OCR)
+* Plate must match registration
+* Vehicle color model must match uploaded info
+* Image tampering detection
+
+### **Smart Contract Fields to Add:**
+
+```
+vehiclePhotoHashes[]  
+licensePlatePhotoHash  
+registrationDocHash  
+inspectionDocHash  
+proofOfInsuranceHash
+```
+
+---
+
+## 🪪 **4. Driver License Upload**
+
+Add:
+
+* Florida driver's license upload
+* Front + back images
+* OCR extraction of:
+
+  * DOB
+  * License number
+  * Expiration date
+* Automatic disqualification if expired
+* Store license hash on-chain for audit
+
+---
+
+## 📄 **5. Insurance Upload**
+
+Add:
+
+* Proof of insurance photo (PDF or image)
+* OCR validation:
+
+  * Effective dates
+  * Coverage amounts
+  * Vehicle VIN match
+* Smart contract field:
+
+  ```
+  insuranceVerified = true
+  ```
+
+---
+
+## 🧾 **6. Background Check Document Upload**
+
+Add:
+
+* Background check certificate image
+* Re-verification every 3 years
+* Smart contract stores:
+
+  ```
+  backgroundCheckTimestamp
+  backgroundCheckDocHash
+  ```
+
+---
+
+## 📲 **7. Rider App Display Requirements (Legal Compliance)**
+
+Passengers *must* see:
+
+| Requirement            | Display to Rider | Storage                         | Legal Need        |
+| ---------------------- | ---------------- | ------------------------------- | ----------------- |
+| Driver photo           | YES              | On-chain hash + off-chain photo | Mandatory         |
+| Vehicle make/model     | YES              | On-chain                        | Mandatory         |
+| Vehicle color          | YES              | On-chain                        | Mandatory         |
+| License plate          | YES              | On-chain                        | Mandatory         |
+| Vehicle photos         | YES              | Off-chain                       | Recommended       |
+| Driver ratings         | YES              | On-chain                        | Mandatory         |
+| Driver name (optional) | Optional         | Off-chain                       | Optional in DApps |
+
+---
+
+## ✔️ **Paste this new section into your bolt.new prompt**
+
+And your DApp will automatically include:
+
+✔ Driver photos
+✔ Rider photos
+✔ Vehicle photos
+✔ Driver license upload
+✔ Insurance document upload
+✔ Background check upload
+✔ On-chain references and hashes
+✔ Legal + operational compliance for Orlando, Florida
+
+---
+
+If you want, I can now combine **all sections** into one **master prompt** for bolt.new to build the entire Web3 ridesharing DApp with all Florida/Orlando rules included.
