@@ -35,12 +35,12 @@ export default function Landing() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="/rider">
+            <Link href="/rider" asChild>
               <Button variant="outline" size="sm" className="border-accent text-accent" data-testid="button-nav-ride">
                 Request Ride
               </Button>
             </Link>
-            <Link href="/driver">
+            <Link href="/driver" asChild>
               <Button size="sm" className="bg-neon-pink hover:bg-neon-pink/90" data-testid="button-nav-drive">
                 Drive with Libre
               </Button>
@@ -78,12 +78,12 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Link href="/driver">
+            <Link href="/driver" asChild>
               <Button size="lg" className="bg-neon-pink hover:bg-neon-pink/90 text-white font-semibold px-8 py-6 text-lg rounded-full" data-testid="button-hero-driver">
                 Become a Driver
               </Button>
             </Link>
-            <Link href="/rider">
+            <Link href="/rider" asChild>
               <Button
                 size="lg"
                 variant="outline"

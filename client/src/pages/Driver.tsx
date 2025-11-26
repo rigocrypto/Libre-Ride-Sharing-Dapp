@@ -40,20 +40,16 @@ export default function Driver() {
       {/* Header */}
       <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/">
-            <a className="text-2xl font-bold bg-gradient-neon bg-clip-text text-transparent" data-testid="link-home">
-              Libre Driver
-            </a>
+          <Link href="/" className="text-2xl font-bold bg-gradient-neon bg-clip-text text-transparent" data-testid="link-home">
+            Libre Driver
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/profile">
+            <Link href="/profile" asChild>
               <Button variant="ghost" size="sm" data-testid="button-profile">
                 Profile
               </Button>
             </Link>
-            <Button variant="outline" size="sm" className="border-accent text-accent" data-testid="button-connect-wallet">
-              Connect Wallet
-            </Button>
+            <Web3Connect />
           </div>
         </div>
       </header>
