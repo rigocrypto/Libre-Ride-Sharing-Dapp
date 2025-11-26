@@ -81,6 +81,12 @@ export default {
           busy: "rgb(239 68 68)",
           offline: "rgb(156 163 175)",
         },
+        // Libre neon colors
+        neon: {
+          pink: "#ff2d92",
+          teal: "#02f7f3",
+          purple: "#a020f0",
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
@@ -96,10 +102,43 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "slide-left": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
+        "slide-right": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { 
+            boxShadow: "0 0 20px rgba(255, 45, 146, 0.6), 0 0 40px rgba(255, 45, 146, 0.4)",
+          },
+          "50%": { 
+            boxShadow: "0 0 30px rgba(255, 45, 146, 0.8), 0 0 60px rgba(255, 45, 146, 0.6)",
+          },
+        },
+        "sparkle": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.5", transform: "scale(1.2)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "slide-left": "slide-left 20s linear infinite",
+        "slide-right": "slide-right 20s linear infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "sparkle": "sparkle 1.5s ease-in-out infinite",
+      },
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-neon": "linear-gradient(135deg, #ff2d92 0%, #a020f0 50%, #02f7f3 100%)",
+        "gradient-neon-card": "linear-gradient(145deg, rgba(255,45,146,0.1) 0%, rgba(160,32,240,0.1) 100%)",
+        "gradient-dark-overlay": "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%)",
+      },
+      backdropBlur: {
+        xs: "2px",
       },
     },
   },
