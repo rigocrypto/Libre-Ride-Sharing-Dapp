@@ -1,0 +1,173 @@
+Here’s a clean, **bolt.new–ready prompt** you can paste directly into your project to integrate **Florida / Orlando regulatory compliance** into your new Web3 ridesharing DApp.
+
+---
+
+# ✅ **Prompt: Add Florida (Orlando) Legal Requirements to the Web3 Ridesharing DApp**
+
+**Task:**
+Enhance the ridesharing DApp architecture by integrating *all required legal, licensing, and compliance features* for operating a decentralized rideshare platform in **Orlando, Florida**.
+Use the following rules to design smart contract logic, backend compliance modules, and frontend UX flows.
+
+---
+
+## 🔐 **1. State Transportation Network Company (TNC) Compliance – Florida Statute §627.748**
+
+Implement modules that enforce:
+
+### **Driver Eligibility Verification**
+
+* Valid Florida driver's license
+* Minimum age 21
+* Criminal background check (disqualifying offenses logic)
+* Driving history check (DUIs, reckless driving, major violations in last 3–7 years)
+* No match on sex-offender registry
+* Automatic re-check every 3 years
+
+### **Vehicle Requirements**
+
+* 15 years old or newer
+* Valid registration (Florida or out-of-state)
+* Valid insurance meeting Florida TNC rules
+* 4-door vehicle requirement
+* VIN verification + license plate verification
+
+### **Insurance Requirements**
+
+Integrate an insurance proof module for:
+
+* $1M liability coverage during rides
+* $50k/$100k coverage when driver is online but not matched
+* Passengers automatically covered under the DApp’s platform policy
+* Smart contract insurance validation before trip matching
+
+---
+
+## ✔️ **2. City of Orlando Requirements (Local TNC Regulation)**
+
+### **Permit / Registration System**
+
+Add logic for:
+
+* City TNC permit (annual)
+* Local business tax receipt for drivers
+* Ability for smart contracts to verify city permit status
+
+### **Accessibility Compliance**
+
+* Wheelchair-accessible vehicle flag
+* Prioritized matching for ADA riders
+* ADA complaint-handling module
+
+### **Airport Operations Logic**
+
+For Orlando International Airport (MCO):
+
+* Airport pickup/dropoff fees
+* Geofencing zones
+* Smart contract triggers for:
+
+  * Airport surcharge
+  * Pickup authorization
+  * Automatic payout to airport authority wallet
+
+---
+
+## 🛡️ **3. Safety & Consumer Protection**
+
+### **App-Based Safety Features**
+
+* In-app emergency button
+* GPS trip tracking stored on-chain or IPFS
+* Driver/passenger identity verification (DID-based)
+* Safety rating smart contract for drivers & riders
+
+### **Zero-Tolerance Policies**
+
+Smart contract rules for:
+
+* Alcohol/drug complaints → temporary suspension
+* Violent/unsafe behavior → permanent flag
+* Automatic freeze & review triggers
+
+---
+
+## 💸 **4. Payments, Fees, and Taxes (Florida Requirements)**
+
+### **Crypto + Fiat Hybrid Compliance**
+
+Implement:
+
+* Traveler fee logic
+* Airport fee logic
+* 1–2% city infrastructure fee
+* Income reporting module for 1099-style self-employment taxes
+* Ability to pay fees in:
+
+  * USDC
+  * Credit card
+  * Local stablecoin
+  * (Optional) Your platform token
+
+### **Fraud Prevention**
+
+* Trip completion validation
+* GPS mismatch detection
+* Multi-sig dispute resolution
+
+---
+
+## 🧾 **5. Recordkeeping Requirements (Florida Law)**
+
+Add compliance data storage (IPFS + blockchain proofs) for:
+
+* 2-year retention of trips
+* Driver background checks
+* Vehicle inspection logs
+* Insurance policies
+* Accident & safety reports
+
+Smart contracts must allow **regulatory audit access** with restricted permissions.
+
+---
+
+## 🛠️ **6. Data Privacy & KYC**
+
+### **DID/KYC Required**
+
+Implement optional or mandatory:
+
+* KYC for drivers (Level-2)
+* “Light KYC” for riders (Level-1)
+* All data hashed + stored off-chain with selective disclosure
+
+### **Florida Data Privacy Compliance**
+
+* Allow users to request:
+
+  * Data deletion
+  * Export of their ride history
+* Store phone numbers, identities, and location data in encrypted vaults
+
+---
+
+## 🧩 **7. Final Output Requirements**
+
+The system should generate:
+
+* Updated smart contract architecture
+* Updated backend API modules
+* Updated UI flows (driver onboarding, vehicle onboarding, insurance upload, airport pickup)
+* Updated compliance dashboard
+* Error-handling rules for non-compliant drivers
+* Flowchart of the Orlando legal compliance pipeline
+
+---
+
+# 🔥 **Paste the above into Bolt.new and your DApp will auto-generate the architecture, flows, and modules that meet Orlando TNC regulations.**
+
+If you'd like, I can also write:
+✅ A **full smart contract design**
+✅ A **flowchart**
+✅ A **regulatory risk checklist**
+✅ A **Litepaper section for investors**
+Just tell me!

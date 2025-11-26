@@ -116,6 +116,90 @@ export const referrals = pgTable("referrals", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Florida/Orlando Compliance: Driver Background Checks (§627.748)
+export const driverCompliance = pgTable("driver_compliance", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  floridasLicenseNumber: text("florida_license_number"),
+  backgroundCheckStatus: text("background_check_status").default("pending"), // "pending" | "approved" | "rejected"
+  backgroundCheckDate: timestamp("background_check_date"),
+  drivingHistoryStatus: text("driving_history_status").default("pending"), // "clean" | "violations"
+  sexOffenderRegistryCheck: boolean("sex_offender_registry_check").default(false),
+  lastComplianceReview: timestamp("last_compliance_review"),
+  nextReviewDue: timestamp("next_review_due"),
+  suspensionStatus: text("suspension_status"), // null | "alcohol_complaint" | "violent_behavior" | "fraud_alert"
+  suspensionReason: text("suspension_reason"),
+  suspendedUntil: timestamp("suspended_until"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Florida Compliance: Vehicle Inspection
+export const vehicleCompliance = pgTable("vehicle_compliance", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  vinNumber: text("vin_number"),
+  yearOfManufacture: integer("year_of_manufacture"),
+  vehicleAgeCompliant: boolean("vehicle_age_compliant").default(false), // 15+ years requirement
+  inspectionDate: timestamp("inspection_date"),
+  registrationValid: boolean("registration_valid").default(false),
+  fourDoorCompliant: boolean("four_door_compliant").default(false),
+  wheelchairAccessible: boolean("wheelchair_accessible").default(false),
+  airportLicenseEligible: boolean("airport_license_eligible").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Florida Compliance: Insurance Validation (TNC Rules)
+export const insuranceValidation = pgTable("insurance_validation", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  insuranceCarrier: text("insurance_carrier"),
+  policyNumber: text("policy_number"),
+  expirationDate: timestamp("expiration_date"),
+  activeCoverageAmount: real("active_coverage_amount"), // $1M during rides
+  onlineButNotMatchedAmount: real("online_but_not_matched_amount"), // $50k requirement
+  coverageVerified: boolean("coverage_verified").default(false),
+  verificationDate: timestamp("verification_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// City of Orlando: TNC Permit & Registration
+export const orlandoPermit = pgTable("orlando_permit", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  permitNumber: text("permit_number").unique(),
+  businessTaxReceipt: text("business_tax_receipt"),
+  permitStatus: text("permit_status").default("pending"), // "pending" | "approved" | "expired" | "denied"
+  permitExpirationDate: timestamp("permit_expiration_date"),
+  approvalDate: timestamp("approval_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Airport Fees & Revenue Share (MCO Geofencing)
+export const airportOperations = pgTable("airport_operations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rideId: varchar("ride_id").notNull().references(() => rides.id),
+  isAirportPickup: boolean("is_airport_pickup").default(false),
+  isAirportDropoff: boolean("is_airport_dropoff").default(false),
+  airportFeePaid: real("airport_fee_paid").default(0),
+  cityInfrastructureFee: real("city_infrastructure_fee").default(0), // 1-2% fee
+  paidToAirportWallet: boolean("paid_to_airport_wallet").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Compliance Audit Log (for regulatory access)
+export const complianceAuditLog = pgTable("compliance_audit_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  auditType: text("audit_type").notNull(), // "background_check" | "vehicle_inspection" | "insurance_review" | "permit_renewal"
+  auditResult: text("audit_result"), // "passed" | "failed" | "review_needed"
+  auditNotes: text("audit_notes"),
+  auditedBy: varchar("audited_by"), // admin ID
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertDriverSchema = createInsertSchema(drivers).omit({ id: true });
@@ -138,6 +222,14 @@ export const insertReferralSchema = createInsertSchema(referrals).omit({
   id: true, 
   createdAt: true 
 });
+
+// Compliance Schemas
+export const insertDriverComplianceSchema = createInsertSchema(driverCompliance).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertVehicleComplianceSchema = createInsertSchema(vehicleCompliance).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertInsuranceValidationSchema = createInsertSchema(insuranceValidation).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOrlandoPermitSchema = createInsertSchema(orlandoPermit).omit({ id: true, createdAt: true });
+export const insertAirportOperationsSchema = createInsertSchema(airportOperations).omit({ id: true, createdAt: true });
+export const insertComplianceAuditLogSchema = createInsertSchema(complianceAuditLog).omit({ id: true, createdAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -199,4 +291,33 @@ export const BADGE_TYPES = {
   RIDES_1000: "rides_1000",
   FIVE_STAR: "five_star",
   AIRPORT_LICENSED: "airport_licensed",
+} as const;
+
+// Compliance types
+export type DriverCompliance = typeof driverCompliance.$inferSelect;
+export type InsertDriverCompliance = z.infer<typeof insertDriverComplianceSchema>;
+
+export type VehicleCompliance = typeof vehicleCompliance.$inferSelect;
+export type InsertVehicleCompliance = z.infer<typeof insertVehicleComplianceSchema>;
+
+export type InsuranceValidation = typeof insuranceValidation.$inferSelect;
+export type InsertInsuranceValidation = z.infer<typeof insertInsuranceValidationSchema>;
+
+export type OrlandoPermit = typeof orlandoPermit.$inferSelect;
+export type InsertOrlandoPermit = z.infer<typeof insertOrlandoPermitSchema>;
+
+export type AirportOperations = typeof airportOperations.$inferSelect;
+export type InsertAirportOperations = z.infer<typeof insertAirportOperationsSchema>;
+
+// Florida compliance constants
+export const FLORIDA_COMPLIANCE = {
+  MIN_DRIVER_AGE: 21,
+  MIN_VEHICLE_YEAR: 2009, // 15+ years from 2024
+  ACTIVE_COVERAGE_REQUIRED: 1000000, // $1M
+  ONLINE_NOT_MATCHED_COVERAGE: 50000, // $50k
+  MCO_AIRPORT_RADIUS_MILES: 2,
+  AIRPORT_SURCHARGE: 3.5,
+  CITY_INFRASTRUCTURE_FEE_PERCENT: 0.015, // 1.5%
+  BACKGROUND_CHECK_VALIDITY_YEARS: 3,
+  COMPLIANCE_REVIEW_INTERVAL_MONTHS: 36,
 } as const;
