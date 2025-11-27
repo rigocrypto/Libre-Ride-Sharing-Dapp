@@ -8,6 +8,8 @@ import express, {
 } from "express";
 
 import { registerRoutes } from "./routes";
+import { createRouteHandler } from "uploadthing/express";
+import { uploadRouter } from "./uploadthing";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -33,6 +35,9 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+// UploadThing routes for file uploads
+app.use("/api/uploadthing", createRouteHandler({ router: uploadRouter }));
 
 app.use((req, res, next) => {
   const start = Date.now();

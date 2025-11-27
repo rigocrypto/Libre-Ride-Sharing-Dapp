@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { z } from "zod";
+import { sendEmail, generateOnboardingStartedEmail, generateVerificationCompleteEmail, generateDocumentRejectedEmail, generateRideReceiptEmail } from "./email";
 import {
   insertWaitlistSchema,
   insertRideSchema,
@@ -411,11 +412,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Photo Upload APIs (FL TNC Compliance)
+  // Photo Upload APIs (FL TNC Compliance) with Resend emails
   app.post("/api/driver/photos", async (req, res) => {
     try {
       const data = insertDriverPhotosSchema.parse(req.body);
       const photo = await storage.uploadDriverPhoto(data);
+      
+      // Send verification email on profile photo upload
+      if (data.photoType === "profile") {
+        const driver = await storage.getDriver(data.driverId);
+        if (driver) {
+          const user = await storage.getUser(driver.userId);
+          if (user?.email) {
+            await sendEmail({
+              to: user.email,
+              subject: "Welcome to Libre! Complete Your Profile",
+              html: generateOnboardingStartedEmail(user.username || "Driver"),
+            });
+          }
+        }
+      }
+      
       res.json(photo);
     } catch (error) {
       res.status(400).json({ error: "Invalid photo data" });
@@ -459,6 +476,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(doc);
     } catch (error) {
       res.status(400).json({ error: "Invalid background check document" });
+    }
+  });
+
+  // Compliance email notification (when all docs approved)
+  app.post("/api/driver/approve", async (req, res) => {
+    try {
+      const { driverId, approvalType } = z.object({ 
+        driverId: z.string(), 
+        approvalType: z.enum(["verification_complete", "document_rejected"]),
+        rejectReason: z.string().optional(),
+      }).parse(req.body);
+
+      const driver = await storage.getDriver(driverId);
+      if (!driver) return res.status(404).json({ error: "Driver not found" });
+
+      const user = await storage.getUser(driver.userId);
+      if (!user?.email) return res.status(400).json({ error: "No email on file" });
+
+      if (approvalType === "verification_complete") {
+        await sendEmail({
+          to: user.email,
+          subject: "Your Libre Profile is Verified! 🎉",
+          html: generateVerificationCompleteEmail(user.username || "Driver"),
+        });
+      } else if (approvalType === "document_rejected" && req.body.rejectReason) {
+        await sendEmail({
+          to: user.email,
+          subject: "Document Review - Resubmission Needed",
+          html: generateDocumentRejectedEmail(user.username || "Driver", req.body.rejectReason),
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid approval request" });
+    }
+  });
+
+  // Send ride receipt email
+  app.post("/api/ride/send-receipt", async (req, res) => {
+    try {
+      const { rideId } = z.object({ rideId: z.string() }).parse(req.body);
+      const ride = await storage.getRide(rideId);
+      if (!ride) return res.status(404).json({ error: "Ride not found" });
+
+      const rider = await storage.getUser(ride.riderId);
+      const driver = ride.driverId ? await storage.getDriver(ride.driverId) : null;
+      const driverUser = driver ? await storage.getUser(driver.userId) : null;
+
+      if (!rider?.email) return res.status(400).json({ error: "No rider email" });
+
+      await sendEmail({
+        to: rider.email,
+        subject: "Your Libre Ride Receipt",
+        html: generateRideReceiptEmail(
+          rider.username || "Rider",
+          driverUser?.username || "Driver",
+          ride.finalPrice || 0,
+          ride.distance || 0,
+          ride.duration || 0
+        ),
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to send receipt" });
     }
   });
 
