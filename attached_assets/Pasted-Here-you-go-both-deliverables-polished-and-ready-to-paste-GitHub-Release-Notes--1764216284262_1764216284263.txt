@@ -1,0 +1,268 @@
+Here you go — both deliverables, polished and ready to paste.
+
+---
+
+# 📝 **GitHub Release Notes — v0.3 “Florida Compliance Update”**
+
+**Tag:** `v0.3.0`
+**Codename:** *Florida Compliance Update*
+**Release Date:** *(auto-fill on GitHub)*
+
+---
+
+## 🚀 Overview
+
+This release introduces **full Florida TNC (Transportation Network Company) compliance**, major stability fixes, and a new modular verification engine powering driver onboarding and ongoing verification. Libre is now architecturally ready for the next production steps: USDC ride payments, AA onboarding, secure file storage, and push notifications.
+
+---
+
+## 🔧 Key Improvements
+
+### **1. React Stability & Footer Fixes**
+
+* Removed nested `<a>` tags inside `<Link>` components.
+* Replaced with proper **wouter Link** elements and direct className styling.
+* Result: **Zero React runtime warnings.**
+
+---
+
+## 🗂️ **2. New Florida TNC Compliance Storage Layer**
+
+A complete in-memory persistence system for all legally required driver data:
+
+* Driver documents (license, ID, profile photo)
+* Vehicle photos (front/side/back, plate, VIN)
+* Proof of insurance
+* Registration metadata
+* Background check timestamps
+
+Data is stored in dedicated Maps for fast retrieval and future swappability to a database.
+
+---
+
+## 🧩 **3. `useComplianceStatus` Hook (Real-Time Verification Engine)**
+
+A new unified hook that calculates a driver’s complete compliance profile:
+
+* License validity
+* Insurance proof
+* Vehicle requirements
+* Photo requirements
+* Background check freshness
+* Overall onboarding completion %
+
+This powers the onboarding UI and prevents non-compliant drivers from going online.
+
+---
+
+## 📘 **4. Documentation Overhaul**
+
+`replit.md` has been fully rewritten with:
+
+* Complete architecture map
+* All **25+ REST API endpoints**
+* All WebSocket schemas
+* Florida TNC legal requirements and how Libre satisfies each
+* Next steps for production (Resend, OneSignal, Twilio, UploadThing, Base USDC payments)
+
+---
+
+## ⚙️ **5. Codebase Quality Enhancements**
+
+* Improved type definitions for driver/vehicle/insurance structures.
+* Centralized compliance evaluation logic.
+* Better error handling for upload endpoints.
+* Simplified route-level state to minimize rerenders.
+
+---
+
+## 🟦 **What’s Next (v0.4 & v0.5 Roadmap)**
+
+* UploadThing integration for real document storage
+* Resend email onboarding
+* Twilio SMS verification
+* OneSignal push notifications
+* Base USDC payment flows
+* Account abstraction setup (ERC-4337)
+* Live driver/rider matching on Socket.io
+* Production-grade admin console
+
+---
+
+# 🟢 Libre is now compliance ready, stable, and prepared for the next major milestone: live operations in Orlando.
+
+---
+
+---
+
+# ⚡ **Bolt.new Prompt — Next Development Phase (v0.4 & v0.5)**
+
+Paste this directly into Bolt.new and click **Generate**.
+
+---
+
+## **Bolt.new Prompt: Libre – Production Integration Phase (v0.4 – v0.5)**
+
+**Goal:** Build the full production integration layer for **Libre**, the decentralized ridesharing platform launching first in Orlando, FL.
+
+You are modifying an existing Next.js 15 + TypeScript project with Tailwind, shadcn/ui, wouter, and a complete Florida TNC compliance system.
+Keep all previous code. Add the following:
+
+---
+
+# ✅ **1. Secure File Storage for Compliance Documents**
+
+Integrate **UploadThing**:
+
+* All driver/rider uploads (profile photo, license, vehicle photos, plate photo, insurance, background check)
+* Store files in UploadThing storage buckets
+* Replace all in-memory file buffers with permanent URLs
+* Store URL references in the compliance Maps
+
+Update endpoints:
+
+* `/api/upload/license`
+* `/api/upload/vehicle`
+* `/api/upload/insurance`
+* `/api/upload/profile-photo`
+
+---
+
+# 📧 **2. Resend Email Integration**
+
+Add transactional emails via **Resend + React Email**:
+
+Email templates for:
+
+* "Driver Onboarding Started"
+* "Driver Verification Complete"
+* "Document Rejected" (with reason codes)
+* "Ride Receipt"
+* "Admin Alerts (New Driver, New Ride)"
+
+Use environment variable:
+`RESEND_API_KEY`
+
+---
+
+# 📱 **3. Twilio SMS Verification**
+
+Add a phone verification step:
+
+* `/api/auth/send-sms`
+* `/api/auth/verify-sms`
+* Code expiration + rate limiting
+* Required for all drivers, optional for riders
+
+Env vars:
+
+```
+TWILIO_ACCOUNT_SID
+TWILIO_AUTH_TOKEN
+TWILIO_PHONE_NUMBER
+```
+
+---
+
+# 🔔 **4. OneSignal Push Notifications**
+
+Add push notifications for:
+
+* Ride request received
+* Driver en route
+* Ride accepted
+* Ride completed
+* Document approval/rejection
+* Admin alerts
+
+Implement the SDK on both client and server.
+
+Env vars:
+
+```
+ONESIGNAL_APP_ID
+ONESIGNAL_API_KEY
+```
+
+---
+
+# 🪙 **5. Base USDC Payment Flow (Testnet First)**
+
+Integrate Alchemy / viem:
+
+* Smart contract call: startRide, completeRide
+* Transfer USDC from rider → contract → driver
+* Add 3% protocol fee → treasury
+* Add LIBRE token reward logic (mock or real)
+
+Pages to update:
+
+* `/rider/confirm`
+* `/driver/ride/[id]`
+* `/admin/rides`
+
+---
+
+# 🔐 **6. Add Account Abstraction (ERC-4337)**
+
+Implement:
+
+* Passkeys / email login (Privy or ZeroDev)
+* Fallback: connect wallet with RainbowKit
+* Smart account for gasless transactions
+* Store session in Next.js server actions
+
+---
+
+# 🗺️ **7. Improve Mapbox Driver/Rider Flow**
+
+Add real navigation UX:
+
+* Live driver position via Socket.io
+* Polyline route drawing
+* Distance + ETA calculation
+* Mapbox Directions API integration
+
+Improve Orlando geozones:
+
+* Airport (MCO)
+* Disney Springs
+* I-Drive
+* Universal
+
+---
+
+# 🟣 **8. Admin Dashboard Enhancements**
+
+Add real-time panels for:
+
+* Rides in progress
+* Document pending approvals
+* Drivers currently online
+* Volume chart (rides/day, revenue, completed trips)
+* Compliance violations log
+
+---
+
+# ⚡ **Deliverables Expected From Bolt.new**
+
+* All new APIs implemented
+* Updated components and hooks
+* Updated compliance engine using cloud file URLs
+* Resend + OneSignal + Twilio integrations
+* Full USDC payment flow skeleton
+* Updated README
+* No TypeScript or console errors
+
+---
+
+When finished, provide a ZIP URL and a ready-to-run commit.
+
+---
+
+If you'd like, I can also:
+🔹 Generate a matching **LinkedIn announcement**
+🔹 Write the v0.4 + v0.5 **milestone roadmap**
+🔹 Draft the **Florida legal review memo** for your internal docs
+
+Just tell me what you need next.
