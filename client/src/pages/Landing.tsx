@@ -229,15 +229,15 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Riders</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/rider"><a className="hover:text-foreground transition-colors">Request Ride</a></Link></li>
-                <li><Link href="/profile"><a className="hover:text-foreground transition-colors">My Profile</a></Link></li>
+                <li><Link href="/rider" className="hover:text-foreground transition-colors">Request Ride</Link></li>
+                <li><Link href="/profile" className="hover:text-foreground transition-colors">My Profile</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Drivers</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/driver"><a className="hover:text-foreground transition-colors">Drive with Us</a></Link></li>
-                <li><Link href="/profile"><a className="hover:text-foreground transition-colors">Dashboard</a></Link></li>
+                <li><Link href="/driver" className="hover:text-foreground transition-colors">Drive with Us</Link></li>
+                <li><Link href="/profile" className="hover:text-foreground transition-colors">Dashboard</Link></li>
               </ul>
             </div>
             <div>

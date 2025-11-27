@@ -17,6 +17,9 @@ import {
   type InsertReferral,
   type RideWithDetails,
   type DriverProfile,
+  type DriverCompliance,
+  type VehicleCompliance,
+  type InsuranceValidation,
   BADGE_TYPES,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -88,6 +91,9 @@ export class MemStorage implements IStorage {
   private sosAlerts: Map<string, SOSAlert>;
   private disputes: Map<string, Dispute>;
   private referrals: Map<string, Referral>;
+  private driverCompliance: Map<string, DriverCompliance>;
+  private vehicleCompliance: Map<string, VehicleCompliance>;
+  private insuranceValidation: Map<string, InsuranceValidation>;
 
   constructor() {
     this.users = new Map();
@@ -98,6 +104,9 @@ export class MemStorage implements IStorage {
     this.sosAlerts = new Map();
     this.disputes = new Map();
     this.referrals = new Map();
+    this.driverCompliance = new Map();
+    this.vehicleCompliance = new Map();
+    this.insuranceValidation = new Map();
   }
 
   // Users
