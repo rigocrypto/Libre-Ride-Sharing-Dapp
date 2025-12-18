@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { storage } from "./storage";
+import { storage } from "./storage-factory";
 import { z } from "zod";
 import { sendEmail, generateOnboardingStartedEmail, generateVerificationCompleteEmail, generateDocumentRejectedEmail, generateRideReceiptEmail } from "./email";
 import {
@@ -28,7 +28,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // WebSocket Server for real-time features
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+  // Only handle /ws path to avoid conflicts with Vite HMR WebSocket
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: "/ws"
+  });
 
   const clients = new Set<WebSocketClient>();
 

@@ -10,6 +10,9 @@ import express, {
 import { registerRoutes } from "./routes";
 import { createRouteHandler } from "uploadthing/express";
 import { uploadRouter } from "./uploadthing";
+import uploadRoutes from "./routes/upload";
+import walletRoutes from "./routes/wallet";
+import paymentRoutes from "./routes/payments";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -38,6 +41,15 @@ app.use(express.urlencoded({ extended: false }));
 
 // UploadThing routes for file uploads
 app.use("/api/uploadthing", createRouteHandler({ router: uploadRouter }));
+
+// Custom upload routes (driver photos, vehicle docs, etc.)
+app.use(uploadRoutes);
+
+// Wallet routes (attach wallet to user)
+app.use(walletRoutes);
+
+// Payment routes (escrow, intents, releases)
+app.use(paymentRoutes);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -91,11 +103,7 @@ export default async function runApp(
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
 }

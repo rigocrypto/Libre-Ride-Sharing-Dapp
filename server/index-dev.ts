@@ -35,8 +35,15 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  // Vite middleware handles its own WebSocket upgrades automatically
   app.use(vite.middlewares);
+  
   app.use("*", async (req, res, next) => {
+    // Skip WebSocket upgrade requests - Vite handles its own, /ws is handled by WebSocketServer
+    if (req.headers.upgrade === 'websocket') {
+      return next();
+    }
+    
     const url = req.originalUrl;
 
     try {
