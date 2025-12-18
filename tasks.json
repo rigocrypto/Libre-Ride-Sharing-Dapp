@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Replace MemStorage with Drizzle adapter",
+    "description": "Implement server/storage-drizzle.ts, wire routes to Drizzle, keep mem adapter as fallback",
+    "priority": "high"
+  },
+  {
+    "title": "Implement upload + compliance pipeline",
+    "description": "UploadThing integration, OCR stubs, compliance review UI & APIs",
+    "priority": "high"
+  },
+  {
+    "title": "Integrate RainbowKit/Wagmi + USDC flow",
+    "description": "Real wallet connect, payment intent flow, AA fallback toggle",
+    "priority": "high"
+  },
+  {
+    "title": "Redis-backed realtime + socket layer",
+    "description": "Driver presence, ride events, location updates via Socket.io + Redis pub/sub",
+    "priority": "high"
+  },
+  {
+    "title": "Add automated verification jobs",
+    "description": "Workers for compliance expirations, airport permit, insurance reminders",
+    "priority": "medium"
+  }
+]
+
+
+
+
+
