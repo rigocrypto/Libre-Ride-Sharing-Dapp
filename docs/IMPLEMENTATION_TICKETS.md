@@ -2,6 +2,26 @@
 
 This backlog converts the production roadmap into buildable engineering work. Phase 1 is deliberately narrow: prove one real escrow-protected ride flow before expanding into subscriptions, AI, or broad marketplace features.
 
+## Phase 0 - Security Hardening
+
+### TICKET-021: Resolve Dependabot Security Vulnerabilities
+
+Priority: Critical  
+Status: Completed
+
+Acceptance Criteria:
+
+- `npm audit` is run and reviewed.
+- Direct vulnerabilities are separated from transitive vulnerabilities.
+- Safe direct dependency upgrades are applied first.
+- `npm audit fix --force` is avoided unless breaking changes are reviewed.
+- Overrides are used only where the transitive package path is otherwise blocked.
+- Critical vulnerabilities are resolved or explicitly documented if blocked.
+- High vulnerabilities are reduced as much as safely possible.
+- Remaining vulnerabilities are documented in `SECURITY.md` with reason and risk level.
+- Full verification runs: `check`, unit tests, production build, and E2E smoke tests.
+- Security hardening commit is pushed.
+
 ## Phase 1 - Escrow Production Core
 
 ### TICKET-001: Deploy Escrow Contract To Base Sepolia
@@ -290,4 +310,3 @@ Acceptance Criteria:
 - Support process is staffed for pilot hours.
 - Incident and dispute escalation paths are ready.
 - Metrics dashboard tracks completion rate, acceptance time, pickup ETA, disputes, and payment failures.
-
