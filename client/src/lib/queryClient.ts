@@ -12,14 +12,48 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Get auth token if available
+  const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
+  
+  try {
+    const { getAuth } = await import('firebase/auth');
+    const auth = getAuth();
+    if (auth.currentUser) {
+      const token = await auth.currentUser.getIdToken();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (error) {
+    // Auth not available, continue without token
+    console.warn('[apiRequest] Failed to get auth token:', error);
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 
-  await throwIfResNotOk(res);
+  // Better error handling - check content-type before parsing JSON
+  const contentType = res.headers.get('content-type');
+  if (!res.ok) {
+    const text = await res.text();
+    if (contentType?.includes('application/json')) {
+      try {
+        const json = JSON.parse(text);
+        throw new Error(json.error || json.message || `${res.status}: ${text.slice(0, 100)}`);
+      } catch (e) {
+        throw new Error(`${res.status}: ${text.slice(0, 100)}`);
+      }
+    }
+    throw new Error(`${res.status}: ${text.slice(0, 100)}`);
+  }
+
+  if (!contentType?.includes('application/json')) {
+    const text = await res.text();
+    throw new Error(`Expected JSON, got ${contentType}. Response: ${text.slice(0, 100)}`);
+  }
+
   return res;
 }
 

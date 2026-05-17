@@ -1,0 +1,293 @@
+# RideShareDapp Implementation Tickets
+
+This backlog converts the production roadmap into buildable engineering work. Phase 1 is deliberately narrow: prove one real escrow-protected ride flow before expanding into subscriptions, AI, or broad marketplace features.
+
+## Phase 1 - Escrow Production Core
+
+### TICKET-001: Deploy Escrow Contract To Base Sepolia
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Escrow contract deploys successfully to Base Sepolia.
+- Contract address is stored in environment configuration.
+- Contract ABI is available to frontend and backend.
+- Deployment transaction hash is recorded.
+- Contract can receive test USDC or mock USDC.
+- Deposit, release, refund, and dispute paths are manually verified.
+- Deployment steps are documented for repeatability.
+
+### TICKET-002: Wire Real Rider Wallet Deposit Flow
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Rider can connect wallet.
+- Rider sees ride fare in USD/USDC.
+- Rider signs deposit transaction.
+- UI shows pending state while transaction confirms.
+- Backend verifies transaction hash.
+- Ride escrow state changes to `DEPOSIT_CONFIRMED`.
+- Driver cannot start ride before escrow confirmation.
+- Failed or rejected wallet transactions show recoverable UI errors.
+
+### TICKET-003: Backend Escrow Transaction Verification
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Backend verifies chain ID, contract address, sender, amount, token, ride ID, and transaction status.
+- Duplicate transaction hashes are rejected.
+- Failed or reverted transactions do not update escrow state.
+- Each confirmed transaction is tied to one ride only.
+- Verification result is persisted with timestamp and raw chain metadata.
+- Verification errors are visible in admin payment logs.
+
+### TICKET-004: Enforce Escrow State Machine In Code
+
+Priority: Critical  
+Status: In Progress
+
+Acceptance Criteria:
+
+- Escrow states are defined in a shared TypeScript module.
+- Allowed transitions are defined in one canonical map.
+- Backend uses the validator before mutating escrow state.
+- Invalid transition errors include current state, target state, and reason.
+- Unit tests cover valid and invalid transitions.
+- Documentation and code state names match.
+
+### TICKET-005: Persist Escrow State In PostgreSQL
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Escrow record stores ride ID, rider ID, driver ID, state, chain ID, contract address, amount, token, and transaction hashes.
+- Database enforces one active escrow per ride.
+- Database enforces unique transaction hashes.
+- Migration runs cleanly on staging database.
+- Rollback plan is documented.
+- Existing mem-storage tests still pass.
+
+### TICKET-006: Release, Refund, And Dispute Actions
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Release can occur only from valid states.
+- Refund can occur only from valid states.
+- Dispute freezes release/refund.
+- Admin dispute decision can release, refund, or split.
+- Every release/refund/dispute action is audit logged.
+- E2E happy path covers deposit to release.
+- Manual QA covers refund and dispute.
+
+## Phase 2 - Driver Compliance And Admin Operations
+
+### TICKET-007: Production Driver Approval Workflow
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Driver can submit required compliance documents.
+- Admin can approve, reject, suspend, and reinstate driver.
+- Rejection reasons are visible to driver.
+- Expired documents block eligible ride categories.
+- Every admin action is audit logged.
+
+### TICKET-008: Insurance Coverage Gate
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Driver insurance certificate is required before active rides.
+- Admin can record policy number, coverage limits, insurer, named insured, and expiration.
+- System flags missing TNC/commercial coverage language.
+- Expired insurance blocks driver from going online.
+- Legal disclaimer is visible in onboarding.
+
+### TICKET-009: Orlando/MCO Eligibility Workflow
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Driver can upload Orlando/MCO-related permits or credentials.
+- Admin can mark driver as airport eligible.
+- Airport eligibility expires independently from general driver approval.
+- Airport rides prioritize eligible drivers.
+- Rider sees airport-eligible driver badge where relevant.
+
+### TICKET-010: Admin Command Center MVP
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Admin can view active rides.
+- Admin can view active escrows.
+- Admin can view stuck payments.
+- Admin can view pending driver approvals.
+- Admin can view disputes.
+- Admin can view failed transaction logs.
+- Admin actions are role-gated and audit logged.
+
+## Phase 3 - Fare Transparency And Risk Controls
+
+### TICKET-011: Toll-Aware Fare Estimator
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Fare estimate includes toll line item when route uses toll roads.
+- Fare breakdown includes base fare, distance, time, tolls, airport fee, platform fee, and network fee.
+- Quote has expiration timestamp.
+- Rider sees escrow amount before paying.
+- Admin can inspect fare components on a ride.
+
+### TICKET-012: AI Dispatch Scoring V1
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Driver matching uses configurable scoring weights.
+- Score includes proximity, reliability, compliance, vehicle match, airport eligibility, rating, and escrow readiness.
+- Airport rides weight compliance and airport eligibility higher.
+- Match decision stores input scores for later review.
+- Admin can inspect why a driver was selected.
+
+### TICKET-013: Ride Risk Scoring V1
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Risk score is calculated before escrow release.
+- Score includes account age, disputes, cancellations, payment failures, device/wallet mismatch, and abnormal ride patterns.
+- High-risk rides can trigger manual review.
+- Risk score is visible to admin.
+- Risk decisions are audit logged.
+
+## Phase 4 - Safety, Disputes, And Privacy
+
+### TICKET-014: Dispute Center MVP
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Rider or driver can file dispute during dispute window.
+- Escrow freezes while dispute is open.
+- Evidence can be uploaded.
+- Admin can decide release, refund, or split.
+- SLA timers are visible in admin.
+- Final decision is audit logged.
+
+### TICKET-015: Safety And SOS MVP
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Rider can trigger SOS during active ride.
+- Active ride sends location heartbeat.
+- Emergency contact can receive trip-sharing link.
+- Admin receives real-time alert.
+- Incident evidence package is created.
+- Retention policy is documented.
+
+### TICKET-016: Privacy And Data Retention Controls
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Sensitive document access is role-restricted.
+- PII is masked in logs.
+- GPS retention policy is implemented.
+- Identity document retention policy is implemented.
+- Data export/deletion process is documented.
+- Audit logs track sensitive data access.
+
+## Phase 5 - Monetization And Benefits
+
+### TICKET-017: Driver Subscription Benefits Beta
+
+Priority: Medium  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Feature flag controls subscription visibility.
+- Standard/Pro/Elite tiers are configurable.
+- Repair rewards ledger exists.
+- Claims workflow exists in beta/admin-only mode.
+- Legal review is complete before insurance-like claims are marketed.
+- Subscriptions do not block core pilot launch.
+
+### TICKET-018: Rider Subscription And Tourist Bundle Beta
+
+Priority: Medium  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Feature flag controls subscription visibility.
+- Rider Plus/Elite tiers are configurable.
+- MCO Arrival Bundle can be purchased in test mode.
+- Ride credits ledger exists.
+- Credits cannot exceed configured redemption cap.
+- Subscriptions do not block core pilot launch.
+
+## Phase 6 - Pilot Launch
+
+### TICKET-019: Staging Ride Pilot
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- One staging ride completes from request to wallet-signed deposit to driver acceptance to trip completion to release.
+- Driver is approved through production-like compliance workflow.
+- Escrow state transitions are recorded correctly.
+- Admin can inspect ride, payment, driver, and audit log.
+- Manual QA notes are recorded.
+
+### TICKET-020: Limited Orlando Corridor Pilot
+
+Priority: High  
+Status: Not Started
+
+Acceptance Criteria:
+
+- Pilot corridor is defined, preferably MCO to International Drive/Convention Center.
+- 20-30 verified drivers are onboarded manually.
+- Support process is staffed for pilot hours.
+- Incident and dispute escalation paths are ready.
+- Metrics dashboard tracks completion rate, acceptance time, pickup ETA, disputes, and payment failures.
+

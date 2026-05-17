@@ -1,8 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { storage } from "./storage-factory";
+import { storage } from "./storage-factory.js";
 import { z } from "zod";
+import authRoutes from "./routes/auth.js";
+import referralRoutes from "./routes/referrals.js";
+import identityRoutes from "./routes/identity.js";
+import userRoutes from "./routes/user.js";
+import adminRoutes from "./routes/admin.js";
 import { sendEmail, generateOnboardingStartedEmail, generateVerificationCompleteEmail, generateDocumentRejectedEmail, generateRideReceiptEmail } from "./email";
 import {
   insertWaitlistSchema,
@@ -18,6 +23,13 @@ import {
   SURGE_TIERS,
   FLORIDA_COMPLIANCE,
 } from "@shared/schema";
+import {
+  authenticateSocket,
+  registerHandlers,
+  heartbeat,
+  onPong,
+  type AuthenticatedSocket,
+} from "./ws/index";
 
 interface WebSocketClient extends WebSocket {
   userId?: string;
@@ -27,76 +39,113 @@ interface WebSocketClient extends WebSocket {
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
+  // Auth routes (AA signup, wallet management)
+  app.use(authRoutes);
+  
+  // Referral routes
+  app.use(referralRoutes);
+
+  // Identity verification routes
+  app.use(identityRoutes);
+
+  // User profile routes
+  app.use(userRoutes);
+
+  // Admin routes (stats, drivers, rides, users)
+  app.use(adminRoutes);
+
+  // Wallet linking routes
+  const walletRoutes = (await import('./routes/wallet.js')).default;
+  app.use(walletRoutes);
+
+  // Driver verification routes
+  const driverRoutes = (await import('./routes/driver.js')).default;
+  app.use(driverRoutes);
+
+  // Rides routes (matching, acceptance)
+  const ridesRoutes = (await import('./routes/rides.js')).default;
+  app.use(ridesRoutes);
+
+  // Escrow routes
+  const escrowRoutes = (await import('./routes/escrow.js')).default;
+  app.use(escrowRoutes);
+
+  // SIWE (Sign-In With Ethereum) routes
+  const siweRoutes = (await import('./routes/siwe.js')).default;
+  app.use(siweRoutes);
+
   // WebSocket Server for real-time features
-  // Only handle /ws path to avoid conflicts with Vite HMR WebSocket
+  // Use noServer: true to manually handle upgrades and avoid conflicts with Vite HMR
   const wss = new WebSocketServer({ 
-    server: httpServer, 
+    noServer: true,
     path: "/ws"
   });
 
-  const clients = new Set<WebSocketClient>();
+  const clients = new Set<AuthenticatedSocket>();
 
-  wss.on("connection", (ws: WebSocketClient) => {
+  wss.on("connection", async (ws: AuthenticatedSocket) => {
+    // Socket is now authenticated (userId + role attached by upgrade handler)
+    if (!ws.user) {
+      console.warn('[WS] Connection without authenticated user');
+      ws.close(4001, 'Not authenticated');
+      return;
+    }
+
+    console.log(`[WS] Connected: user=${ws.user.userId}, role=${ws.user.role}`);
     clients.add(ws);
 
-    ws.on("message", async (data) => {
-      try {
-        const message = JSON.parse(data.toString());
+    // Mark as alive for heartbeat monitoring
+    ws.isAlive = true;
 
-        // Handle different message types
-        switch (message.type) {
-          case "auth":
-            ws.userId = message.userId;
-            ws.role = message.role;
-            broadcast({ type: "user_online", userId: message.userId, role: message.role });
-            break;
+    // Register event handlers
+    registerHandlers(ws, wss);
 
-          case "ride_request":
-            // Broadcast to online drivers
-            broadcastToDrivers({ type: "new_ride_request", ride: message.ride });
-            break;
-
-          case "ride_accepted":
-            // Notify rider
-            sendToUser(message.riderId, { type: "driver_assigned", driver: message.driver });
-            break;
-
-          case "chat_message":
-            // Send to specific user
-            sendToUser(message.toUserId, {
-              type: "chat_message",
-              from: message.from,
-              message: message.message,
-              timestamp: new Date().toISOString(),
-            });
-            break;
-
-          case "location_update":
-            // Broadcast location to matched rider/driver
-            if (message.toUserId) {
-              sendToUser(message.toUserId, {
-                type: "location_update",
-                location: message.location,
-              });
-            }
-            break;
-        }
-      } catch (error) {
-        console.error("WebSocket message error:", error);
-      }
+    // Handle pong responses (heartbeat)
+    ws.on('pong', () => {
+      onPong(ws);
     });
 
     ws.on("close", () => {
       clients.delete(ws);
-      if (ws.userId) {
-        broadcast({ type: "user_offline", userId: ws.userId });
-      }
+      console.log(`[WS] Disconnected: user=${ws.user?.userId}`);
+    });
+
+    ws.on('error', (err) => {
+      console.error(`[WS] Error for user ${ws.user?.userId}:`, err);
     });
   });
 
+  // Heartbeat monitor (detect dead connections)
+  const heartbeatInterval = setInterval(() => {
+    wss.clients.forEach((ws: AuthenticatedSocket) => {
+      if (!ws.isAlive) {
+        ws.terminate();
+        return;
+      }
+      heartbeat(ws);
+    });
+  }, 30000); // Every 30 seconds
+
+  // Store wss on httpServer for broadcast access
+  (httpServer as any).wss = wss;
+
+  // Broadcast stats periodically (online drivers count, etc.)
+  setInterval(async () => {
+    try {
+      const onlineDrivers = await storage.getOnlineDrivers();
+      broadcast({ type: 'stats', onlineDriversCount: onlineDrivers.length });
+    } catch (error: any) {
+      // Silently fail stats broadcasts - they're not critical
+      if (error.message !== 'Query timeout') {
+        console.error("[WebSocket] Stats broadcast error:", error.message);
+      }
+    }
+  }, 10000); // Every 10 seconds
+
+  // Legacy helper functions (deprecated - prefer WS broadcast utilities)
   function broadcast(message: any) {
     const data = JSON.stringify(message);
-    clients.forEach((client) => {
+    wss.clients.forEach((client: AuthenticatedSocket) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(data);
       }
@@ -105,8 +154,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   function broadcastToDrivers(message: any) {
     const data = JSON.stringify(message);
-    clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN && client.role === "driver") {
+    wss.clients.forEach((client: AuthenticatedSocket) => {
+      if (client.readyState === WebSocket.OPEN && client.user?.role === "driver") {
         client.send(data);
       }
     });
@@ -114,8 +163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   function sendToUser(userId: string, message: any) {
     const data = JSON.stringify(message);
-    clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN && client.userId === userId) {
+    wss.clients.forEach((client: AuthenticatedSocket) => {
+      if (client.readyState === WebSocket.OPEN && client.user?.userId === userId) {
         client.send(data);
       }
     });
@@ -137,41 +186,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(waitlist);
   });
 
-  // Rides API
-  app.post("/api/rides", async (req, res) => {
-    try {
-      const data = insertRideSchema.parse(req.body);
+  // Import wallet middleware before defining protected routes
+  const { requireAuth, requireWallet } = await import('./middleware/auth.js');
 
-      // Calculate surge pricing based on demand
+  // Import identity middleware
+  const { requireIdentity } = await import('./middleware/auth.js');
+
+  // Rides API - Requires authenticated user with verified wallet and identity
+  app.post("/api/rides", requireAuth, requireWallet, requireIdentity, async (req, res) => {
+    try {
+      // Calculate surge pricing based on demand (before validation)
       const activeRides = await storage.getActiveRides();
       const surgeMultiplier = calculateSurge(activeRides.length);
 
-      // Calculate estimated price
-      const distance = calculateDistance(data.pickupLocation, data.dropoffLocation);
+      // Calculate estimated price (before validation)
+      const distance = calculateDistance(req.body.pickupLocation, req.body.dropoffLocation);
       const basePrice = 5.0;
       const pricePerMile = 2.5;
       const estimatedPrice = (basePrice + distance * pricePerMile) * surgeMultiplier;
 
       // Check for airport fee
       let airportFee = 0;
-      if (isNearAirport(data.pickupLocation) || isNearAirport(data.dropoffLocation)) {
+      if (isNearAirport(req.body.pickupLocation) || isNearAirport(req.body.dropoffLocation)) {
         airportFee = 3.5;
       }
 
+      // Add required fields from auth and calculations before validation
+      const rideData = {
+        ...req.body,
+        riderId: req.user!.userId, // From requireAuth middleware
+        estimatedPrice: estimatedPrice + airportFee,
+        status: "OFFERED",
+      };
+
+      // Now validate with complete data
+      const data = insertRideSchema.parse(rideData);
+
       const ride = await storage.createRide({
         ...data,
-        estimatedPrice: estimatedPrice + airportFee,
         surgeMultiplier,
         distance,
         airportFee,
-        status: "matching",
       });
 
       // Broadcast to online drivers via WebSocket
       broadcastToDrivers({ type: "new_ride_request", ride });
 
       res.json(ride);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Rides] Validation error:', error);
+      // Provide more detailed error message if it's a Zod validation error
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Invalid ride data",
+          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        });
+      }
       res.status(400).json({ error: "Invalid ride data" });
     }
   });
@@ -196,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!ride) {
       return res.status(404).json({ error: "Ride not found" });
     }
-    res.json(ride);
+    res.json({ success: true, data: ride });
   });
 
   app.patch("/api/rides/:id", async (req, res) => {
@@ -232,13 +302,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/rides/:id/complete", async (req, res) => {
     const ride = await storage.updateRide(req.params.id, {
-      status: "completed",
+      status: "COMPLETED",
       completedAt: new Date(),
       finalPrice: req.body.finalPrice,
+      escrowStatus: "released",
     });
 
     if (!ride) {
       return res.status(404).json({ error: "Ride not found" });
+    }
+
+    sendToUser(ride.riderId, { type: "ride.completed", rideId: ride.id, ride });
+    if (ride.driverId) {
+      sendToUser(ride.driverId, { type: "ride.completed", rideId: ride.id, ride });
     }
 
     // Award badges if milestones reached
@@ -261,46 +337,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(ride);
   });
 
-  // Drivers API
-  app.post("/api/drivers", async (req, res) => {
-    try {
-      const data = insertDriverSchema.parse(req.body);
-      const driver = await storage.createDriver(data);
-      res.json(driver);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid driver data" });
-    }
-  });
+  // Dev-only: Seed test data for browser smoke tests
+  if (process.env.NODE_ENV !== 'production') {
+    app.post('/api/__test/seed', async (req, res) => {
+      try {
+        // Deterministic but unique IDs per run for easier debugging
+        const now = Date.now();
+        const riderFirebaseUid = `dev-rider-${now}`;
+        const driverFirebaseUid = `dev-driver-${now}`;
 
-  app.get("/api/drivers/online", async (req, res) => {
-    const drivers = await storage.getOnlineDrivers();
-    res.json(drivers);
-  });
+        // Check for existing rider by firebaseUid or email first
+        console.log('[DEV SEED] Rider UID:', riderFirebaseUid);
+        let rider = (await storage.getUserByFirebaseUid(riderFirebaseUid)) || (await storage.getUserByEmail(`rider-test+${Date.now()}@dev.local`));
+        if (!rider) {
+          // Generate a unique wallet address for the rider and create atomically
+          const riderEmail = `rider-test+${now}@dev.local`;
+          const { randomBytes } = await import('node:crypto');
+          const riderWallet = `0x${randomBytes(20).toString('hex')}`;
+          try {
+            console.log('[DEV SEED] Creating rider with UID:', riderFirebaseUid, 'email:', riderEmail, 'wallet:', riderWallet);
+            // Avoid collisions by checking firebaseUid/email first
+            const existingByFirebase = await storage.getUserByFirebaseUid(riderFirebaseUid);
+            const existingByEmail = await storage.getUserByEmail(riderEmail);
+            if (existingByFirebase) {
+              rider = existingByFirebase;
+            } else if (existingByEmail) {
+              rider = existingByEmail;
+            } else {
+              rider = await storage.createUser({
+                firebaseUid: riderFirebaseUid,
+                email: riderEmail,
+                role: 'rider',
+                walletAddress: riderWallet,
+                profileImage: null,
+              } as any);
+            }
+          } catch (err: any) {
+            console.error('[DEV SEED] createUser rider error:', err.stack || err);
+            if (/(duplicate key|unique constraint)/i.test(err.message || '')) {
+              // Try to resolve existing user by firebaseUid, walletAddress, or email
+              rider = await storage.getUserByFirebaseUid(riderFirebaseUid);
+              if (!rider) rider = await storage.getUserByWallet(riderWallet);
+              if (!rider) rider = await storage.getUserByEmail(riderEmail);
+              if (!rider) throw err;
+            } else throw err;
+          }
+        }
 
-  app.get("/api/drivers/:userId", async (req, res) => {
-    const driver = await storage.getDriver(req.params.userId);
-    if (!driver) {
-      return res.status(404).json({ error: "Driver not found" });
-    }
-    res.json(driver);
-  });
+        // Create or reuse driver user
+        console.log('[DEV SEED] Driver UID:', driverFirebaseUid);
+        let driver = (await storage.getUserByFirebaseUid(driverFirebaseUid)) || (await storage.getUserByEmail(`driver-test+${Date.now()}@dev.local`));
+        if (!driver) {
+          // Generate a unique wallet address for the driver and create atomically
+          const driverEmail = `driver-test+${now}@dev.local`;
+          const { randomBytes } = await import('node:crypto');
+          let driverWallet = `0x${randomBytes(20).toString('hex')}`;
+          try {
+            console.log('[DEV SEED] Creating driver with UID:', driverFirebaseUid, 'email:', driverEmail, 'wallet:', driverWallet);
+            // Avoid collisions by checking firebaseUid/email first
+            const existingByFirebase = await storage.getUserByFirebaseUid(driverFirebaseUid);
+            const existingByEmail = await storage.getUserByEmail(driverEmail);
+            if (existingByFirebase) {
+              driver = existingByFirebase;
+            } else if (existingByEmail) {
+              driver = existingByEmail;
+            } else {
+              // Ensure driver wallet differs from rider's
+              if ((rider as any)?.walletAddress && (rider as any).walletAddress === driverWallet) {
+                driverWallet = `0x${randomBytes(20).toString('hex')}`;
+              }
+              driver = await storage.createUser({
+                firebaseUid: driverFirebaseUid,
+                email: driverEmail,
+                role: 'driver',
+                walletAddress: driverWallet,
+              } as any);
+            }
+          } catch (err: any) {
+            console.error('[DEV SEED] createUser driver error:', err.stack || err);
+            if (/(duplicate key|unique constraint)/i.test(err.message || '')) {
+              driver = await storage.getUserByFirebaseUid(driverFirebaseUid);
+              if (!driver) driver = await storage.getUserByWallet(driverWallet);
+              if (!driver) driver = await storage.getUserByEmail(driverEmail);
+              if (!driver) throw err;
+            } else throw err;
+          }
+        }
 
-  app.patch("/api/drivers/:userId", async (req, res) => {
-    const driver = await storage.updateDriver(req.params.userId, req.body);
-    if (!driver) {
-      return res.status(404).json({ error: "Driver not found" });
-    }
+        // Create a ride for the rider (use createRide for normal flow)
+        const ride = await storage.createRide({
+          riderId: rider.id,
+          driverId: null,
+          status: 'OFFERED',
+          escrowStatus: 'pending',
+          pickupLocation: { lat: 28.428, lng: -81.3089, address: 'Orlando Airport' },
+          dropoffLocation: { lat: 28.5, lng: -81.4, address: 'Downtown Orlando' },
+          estimatedPrice: 25.0,
+        } as any);
 
-    // Notify if going online/offline
-    if ("isOnline" in req.body) {
-      broadcast({
-        type: req.body.isOnline ? "driver_online" : "driver_offline",
-        driverId: req.params.userId,
-      });
-    }
+        // Mark rider as wallet & SIWE verified and identity verified in storage updates
+        await storage.updateUser(rider.id, {
+          walletVerifiedAt: new Date(),
+          siweVerifiedAt: new Date(),
+          identityVerified: true,
+          identityVerifiedAt: new Date(),
+        } as any);
 
-    res.json(driver);
-  });
+        // Mark driver as online/approved
+        await storage.updateUser(driver.id, { driverStatus: 'approved' } as any);
+        await storage.createDriver({ userId: driver.id } as any).catch(() => {});
+
+        // Register dev token that maps to this rider
+        const { setDevToken } = await import('./lib/devAuth');
+        // Map the dev token to the rider we just created (deterministic for tests)
+        setDevToken('dev-token', {
+          firebaseUid: riderFirebaseUid,
+          userId: rider.id,
+          email: rider.email,
+          role: 'rider',
+          walletAddress: rider.walletAddress,
+          walletVerifiedAt: new Date(),
+          siweVerifiedAt: new Date(),
+        });
+
+        // Also register a driver dev token so tests can call driver-protected endpoints
+        setDevToken('dev-driver-token', {
+          firebaseUid: driverFirebaseUid,
+          userId: driver.id,
+          email: driver.email,
+          role: 'driver',
+          walletAddress: driver.walletAddress,
+          walletVerifiedAt: new Date(),
+          siweVerifiedAt: new Date(),
+        });
+
+        res.json({ success: true, token: 'dev-token', driverToken: 'dev-driver-token', rideId: ride.id, riderId: rider.id, driverId: driver.id });
+      } catch (err: any) {
+        console.error('[DEV SEED] Failed:', err);
+        res.status(500).json({ error: 'Seed failed', message: err.message });
+      }
+    });
+  }
 
   // Badges API
   app.get("/api/badges/:userId", async (req, res) => {
@@ -533,7 +710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await sendEmail({
         to: rider.email,
-        subject: "Your Libre Ride Receipt",
+        subject: "Your Libre Receipt",
         html: generateRideReceiptEmail(
           rider.username || "Rider",
           driverUser?.username || "Driver",
@@ -552,6 +729,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Compliance Constants API (for frontend validation)
   app.get("/api/compliance/constants", (req, res) => {
     res.json(FLORIDA_COMPLIANCE);
+  });
+
+  /**
+   * WebSocket Upgrade Handler
+   *
+   * This runs when a client attempts to upgrade to WS.
+   * We authenticate with Firebase token before allowing upgrade.
+   */
+  httpServer.on('upgrade', async (request, socket, head) => {
+    // Parse URL to get path
+    const url = new URL(request.url || '', `http://${request.headers.host}`);
+    
+    // Only handle /ws upgrades
+    if (url.pathname === '/ws') {
+      try {
+        // Extract token from query param or Authorization header
+        const token = url.searchParams.get('token') || 
+          request.headers.authorization?.replace('Bearer ', '');
+        
+        if (!token) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        // Authenticate socket with Firebase token
+        const authenticated = await authenticateSocket(
+          { close: () => socket.destroy() } as unknown as AuthenticatedSocket,
+          token
+        );
+
+        if (!authenticated) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        // Extract user from token (we already verified it)
+        const adminAuth = (await import('./lib/firebase/admin')).getFirebaseAdmin();
+        if (!adminAuth) {
+          socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        const decodedToken = await adminAuth.verifyIdToken(token);
+
+        // Proceed with upgrade
+        const ws = wss.handleUpgrade(request, socket, head, (ws: AuthenticatedSocket) => {
+          // Attach user to socket
+          ws.user = {
+            userId: decodedToken.uid,
+            role: (decodedToken.role || 'rider') as 'rider' | 'driver' | 'admin',
+          };
+          wss.emit('connection', ws, request);
+        });
+      } catch (err) {
+        console.error('[WS Upgrade] Authentication failed:', err);
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+      }
+    } else {
+      // Not a WS request, pass to next handler
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+      socket.destroy();
+    }
+  });
+
+  // Cleanup on server close
+  httpServer.on('close', () => {
+    clearInterval(heartbeatInterval);
   });
 
   return httpServer;

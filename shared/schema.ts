@@ -6,12 +6,18 @@ import { z } from "zod";
 // Users (both riders and drivers)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firebaseUid: text("firebase_uid").unique(), // Primary auth identifier (from Firebase)
   walletAddress: text("wallet_address").unique(),
+  walletVerifiedAt: timestamp("wallet_verified_at"), // When wallet was linked via signature
+  siweVerifiedAt: timestamp("siwe_verified_at"), // When SIWE verification completed
   email: text("email"),
   username: text("username"),
   role: text("role").notNull(), // "rider" | "driver" | "admin"
   phoneNumber: text("phone_number"),
   profileImage: text("profile_image"),
+  identityVerified: boolean("identity_verified").default(false),
+  identityVerifiedAt: timestamp("identity_verified_at"),
+  authProvider: text("auth_provider"), // "email" | "google" | "apple"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -19,6 +25,10 @@ export const users = pgTable("users", {
 export const drivers = pgTable("drivers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
+  driverStatus: text("driver_status").notNull().default("unverified"), // "unverified" | "pending" | "approved" | "rejected"
+  driverApprovedAt: timestamp("driver_approved_at"),
+  driverRejectedAt: timestamp("driver_rejected_at"),
+  rejectionReason: text("rejection_reason"),
   isOnline: boolean("is_online").default(false),
   currentLocation: jsonb("current_location").$type<{ lat: number; lng: number }>(),
   vehicleType: text("vehicle_type"), // "sedan" | "suv" | "premium"
@@ -45,7 +55,7 @@ export const rides = pgTable("rides", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   riderId: varchar("rider_id").notNull().references(() => users.id),
   driverId: varchar("driver_id").references(() => users.id),
-  status: text("status").notNull(), // "matching" | "en_route" | "arrived" | "on_trip" | "completed" | "cancelled"
+  status: text("status").notNull(), // "REQUESTED" | "OFFERED" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
   pickupLocation: jsonb("pickup_location").notNull().$type<{ lat: number; lng: number; address: string }>(),
   dropoffLocation: jsonb("dropoff_location").notNull().$type<{ lat: number; lng: number; address: string }>(),
   estimatedPrice: real("estimated_price").notNull(),
@@ -58,6 +68,16 @@ export const rides = pgTable("rides", {
   routeHash: text("route_hash"), // For GPS proof
   gpsProofs: jsonb("gps_proofs").$type<string[]>(), // Array of hashed GPS snapshots
   libreRewards: real("libre_rewards").default(0),
+  // Escrow fields
+  escrowId: text("escrow_id"), // On-chain escrow contract ID
+  escrowAddress: text("escrow_address"), // Escrow contract address
+  escrowStatus: text("escrow_status").default("pending"), // "pending" | "locked" | "released" | "refunded"
+  escrowAmount: real("escrow_amount"), // Amount locked in escrow
+  escrowTxHash: text("escrow_tx_hash"), // Transaction hash for escrow creation
+  escrowReleaseTxHash: text("escrow_release_tx_hash"), // Transaction hash for escrow release
+  // Acceptance flow timestamps
+  offeredAt: timestamp("offered_at"), // When ride transitioned to OFFERED
+  acceptedAt: timestamp("accepted_at"), // When driver accepted (assignment time)
   createdAt: timestamp("created_at").defaultNow(),
   matchedAt: timestamp("matched_at"),
   startedAt: timestamp("started_at"),
@@ -114,6 +134,15 @@ export const referrals = pgTable("referrals", {
   rewardAmount: real("reward_amount").default(5.0),
   claimed: boolean("claimed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Driver Real-Time Status (for acceptance flow)
+export const driverStatus = pgTable("driver_status", {
+  driverId: varchar("driver_id").primaryKey().references(() => users.id),
+  isOnline: boolean("is_online").notNull().default(false),
+  lat: real("lat"),
+  lng: real("lng"),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Florida/Orlando Compliance: Driver Background Checks (§627.748)

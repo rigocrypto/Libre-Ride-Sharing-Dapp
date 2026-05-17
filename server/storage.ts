@@ -27,10 +27,17 @@ import { randomUUID } from "crypto";
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
+  getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getUserByWallet(walletAddress: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+
+  // Wallet nonces (for DrizzleStorage)
+  setWalletNonce?(firebaseUid: string, nonce: string, expiresAt: Date): Promise<void>;
+  getWalletNonce?(firebaseUid: string): Promise<string | null>;
+  clearWalletNonce?(firebaseUid: string): Promise<void>;
 
   // Drivers
   getDriver(userId: string): Promise<Driver | undefined>;
@@ -118,20 +125,34 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find((user) => user.username === username);
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find((user) => user.email === email);
+  }
+
   async getUserByWallet(walletAddress: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find((user) => user.walletAddress === walletAddress);
+  }
+
+  async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find((user) => (user as any).firebaseUid === firebaseUid);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = {
       id,
+      firebaseUid: (insertUser as any).firebaseUid || null,
       walletAddress: insertUser.walletAddress || null,
+      walletVerifiedAt: (insertUser as any).walletVerifiedAt || null,
       email: insertUser.email || null,
       username: insertUser.username || null,
       role: insertUser.role,
       phoneNumber: insertUser.phoneNumber || null,
       profileImage: insertUser.profileImage || null,
+      identityVerified: (insertUser as any).identityVerified || false,
+      identityVerifiedAt: (insertUser as any).identityVerifiedAt || null,
+      siweVerifiedAt: (insertUser as any).siweVerifiedAt || null,
+      authProvider: (insertUser as any).authProvider || null,
       createdAt: new Date(),
     };
     this.users.set(id, user);
@@ -189,9 +210,13 @@ export class MemStorage implements IStorage {
       acceptanceRate: insertDriver.acceptanceRate ?? 100,
       onTimeRate: insertDriver.onTimeRate ?? 100,
       weeklyEarnings: insertDriver.weeklyEarnings ?? 0,
+      driverStatus: (insertDriver as any).driverStatus || "unverified",
+      driverApprovedAt: null,
+      driverRejectedAt: null,
+      rejectionReason: null,
     };
     this.drivers.set(id, driver);
-    return driver;
+    return driver; 
   }
 
   async updateDriver(userId: string, updates: Partial<Driver>): Promise<Driver | undefined> {
@@ -290,8 +315,16 @@ export class MemStorage implements IStorage {
       airportFee: insertRide.airportFee ?? 0,
       cashbackAmount: insertRide.cashbackAmount ?? 0,
       routeHash: insertRide.routeHash || null,
-      gpsProofs: insertRide.gpsProofs || null,
+      gpsProofs: (insertRide as any).gpsProofs || null,
       libreRewards: insertRide.libreRewards ?? 0,
+      escrowId: null,
+      escrowAddress: null,
+      escrowStatus: null,
+      escrowAmount: null,
+      escrowTxHash: null,
+      escrowReleaseTxHash: null,
+      offeredAt: null,
+      acceptedAt: null,
       createdAt: new Date(),
       matchedAt: null,
       startedAt: null,

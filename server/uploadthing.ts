@@ -9,7 +9,8 @@ export const uploadRouter = {
   })
     .input(z.object({ driverId: z.string() }))
     .onUploadComplete(async ({ metadata, file }) => {
-      return { fileUrl: file.url, driverId: metadata.driverId };
+      const meta = metadata as any;
+      return { fileUrl: file.url, driverId: meta.driverId };
     }),
 
   driverLicense: f({
@@ -17,7 +18,8 @@ export const uploadRouter = {
   })
     .input(z.object({ driverId: z.string(), side: z.enum(["front", "back"]) }))
     .onUploadComplete(async ({ metadata, file }) => {
-      return { fileUrl: file.url, driverId: metadata.driverId, side: metadata.side };
+      const meta = metadata as any;
+      return { fileUrl: file.url, driverId: meta.driverId, side: meta.side }; 
     }),
 
   vehiclePhotos: f({
@@ -25,7 +27,8 @@ export const uploadRouter = {
   })
     .input(z.object({ driverId: z.string(), photoType: z.enum(["front", "side", "back", "plate"]) }))
     .onUploadComplete(async ({ metadata, file }) => {
-      return { fileUrl: file.url, driverId: metadata.driverId, photoType: metadata.photoType };
+      const meta = metadata as any;
+      return { fileUrl: file.url, driverId: meta.driverId, photoType: meta.photoType }; 
     }),
 
   insuranceDocument: f({
@@ -34,7 +37,8 @@ export const uploadRouter = {
   })
     .input(z.object({ driverId: z.string() }))
     .onUploadComplete(async ({ metadata, file }) => {
-      return { fileUrl: file.url, driverId: metadata.driverId };
+      const meta = metadata as any;
+      return { fileUrl: file.url, driverId: meta.driverId };
     }),
 
   backgroundCheckDocument: f({
@@ -43,7 +47,8 @@ export const uploadRouter = {
   })
     .input(z.object({ driverId: z.string() }))
     .onUploadComplete(async ({ metadata, file }) => {
-      return { fileUrl: file.url, driverId: metadata.driverId };
+      const meta = metadata as any;
+      return { fileUrl: file.url, driverId: meta.driverId };
     }),
 } satisfies FileRouter;
 

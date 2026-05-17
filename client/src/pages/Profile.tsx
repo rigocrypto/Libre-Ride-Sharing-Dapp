@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,14 +7,41 @@ import { NFTBadgeCard } from "@/components/NFTBadgeCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, DollarSign, TrendingUp, Copy, Share2 } from "lucide-react";
 import { Link } from "wouter";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Web3Connect } from "@/components/Web3Connect";
 import { BADGE_TYPES } from "@shared/schema";
+import { track } from "@/lib/analytics";
 
 export default function Profile() {
   const { toast } = useToast();
-  const [referralCode] = useState("LIBRE2025XYZ");
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralStats, setReferralStats] = useState<any>(null);
+  
+  // Fetch referral code on mount
+  React.useEffect(() => {
+    // TODO: Get userId from auth context
+    const userId = "current-user-id"; // Replace with actual user ID
+    if (userId) {
+      fetch(`/api/referrals/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.code) {
+            setReferralCode(data.code);
+          }
+        })
+        .catch(console.error);
+      
+      // Fetch stats
+      fetch(`/api/referrals/stats?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => setReferralStats(data))
+        .catch(console.error);
+    }
+  }, []);
 
   const userProfile = {
     username: "JohnDoe",
@@ -36,10 +64,13 @@ export default function Profile() {
   };
 
   const handleCopyReferral = () => {
-    navigator.clipboard.writeText(`https://libre.app/ref/${referralCode}`);
+    if (!referralCode) return;
+    const shareUrl = `${window.location.origin}/become-driver?ref=${referralCode}`;
+    navigator.clipboard.writeText(shareUrl);
+    track('referral_link_copied', { code: referralCode });
     toast({
       title: "Referral link copied!",
-      description: "Share it with friends to earn $5 USDC each.",
+      description: "Share it with friends to earn $50 for each driver you refer.",
     });
   };
 
@@ -47,7 +78,7 @@ export default function Profile() {
     if (navigator.share) {
       navigator.share({
         title: "Join Libre",
-        text: "Join me on Libre - Web3 ride-sharing!",
+        text: "Join me on Libre - fairer ridesharing!",
         url: `https://libre.app/ref/${referralCode}`,
       });
     } else {
@@ -159,8 +190,17 @@ export default function Profile() {
             <h2 className="text-xl font-bold mb-6">Refer & Earn</h2>
             <div className="space-y-4">
               <p className="text-muted-foreground">
-                Share your referral link and earn <span className="text-neon-teal font-semibold">$5 USDC</span> for each friend who joins!
-                They'll get $5 too.
+                Share your referral link and earn <span className="text-neon-teal font-semibold">$50 USDC</span> for each driver you refer!
+                They'll get $50 too when they complete signup. Payments sent instantly!
+                {referralStats && (
+                  <div className="mt-4 text-sm text-muted-foreground space-y-1">
+                    <p><strong>Total Referrals:</strong> {referralStats.totalReferrals || 0}</p>
+                    <p><strong>Total Earned:</strong> ${referralStats.totalEarned || 0} USDC</p>
+                    {referralStats.pendingBonus > 0 && (
+                      <p className="text-yellow-400"><strong>Pending:</strong> ${referralStats.pendingBonus} USDC</p>
+                    )}
+                  </div>
+                )}
               </p>
               
               <div className="relative">
@@ -192,14 +232,44 @@ export default function Profile() {
 
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <div className="text-center p-4 bg-neon-teal/10 rounded-lg border border-neon-teal/20">
-                  <p className="text-2xl font-bold text-neon-teal" data-testid="text-referrals-sent">12</p>
+                  <p className="text-2xl font-bold text-neon-teal" data-testid="text-referrals-sent">
+                    {referralStats?.totalReferrals || 0}
+                  </p>
                   <p className="text-xs text-muted-foreground">Referrals Sent</p>
                 </div>
                 <div className="text-center p-4 bg-neon-purple/10 rounded-lg border border-neon-purple/20">
-                  <p className="text-2xl font-bold text-neon-purple" data-testid="text-referrals-earned">$35.00</p>
-                  <p className="text-xs text-muted-foreground">Earned</p>
+                  <p className="text-2xl font-bold text-neon-purple" data-testid="text-referrals-earned">
+                    ${referralStats?.totalEarned || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Earned (USDC)</p>
                 </div>
               </div>
+
+              {/* Recent Referral Transactions */}
+              {referralStats?.recentReferrals && referralStats.recentReferrals.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h3 className="text-sm font-semibold mb-3">Recent Bonuses</h3>
+                  <div className="space-y-2">
+                    {referralStats.recentReferrals.map((ref: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between text-sm p-2 bg-white/5 rounded">
+                        <span className="text-muted-foreground">
+                          {ref.code} - ${ref.rewardAmount} USDC
+                        </span>
+                        {ref.txHash && (
+                          <a
+                            href={`https://sepolia.basescan.org/tx/${ref.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-neon-teal hover:underline text-xs"
+                          >
+                            View Tx: {ref.txHash.slice(0, 8)}...
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>

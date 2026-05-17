@@ -1,95 +1,41 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Wallet, CheckCircle } from "lucide-react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useWallet } from "@/lib/wallet/useWallet";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Web3ConnectProps {
   onConnect?: (address: string) => void;
 }
 
 export function Web3Connect({ onConnect }: Web3ConnectProps) {
-  const { address, isConnected } = useWallet();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState("");
 
-  // Call onConnect callback when wallet connects
-  React.useEffect(() => {
-    if (isConnected && address) {
-      onConnect?.(address);
-    }
-  }, [isConnected, address, onConnect]);
+  const handleConnect = async (method: "wallet" | "email" | "google" | "apple") => {
+    // Mock wallet connection - in production, use RainbowKit + Wagmi
+    const mockAddress = "0x" + Math.random().toString(16).substring(2, 42).toUpperCase();
+    setAddress(mockAddress);
+    setIsConnected(true);
+    setIsOpen(false);
+    onConnect?.(mockAddress);
+  };
 
-  if (isConnected && address) {
+  if (isConnected) {
     return (
-      <ConnectButton.Custom>
-        {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
-          return (
-            <div
-              {...(!mounted && {
-                "aria-hidden": true,
-                style: {
-                  opacity: 0,
-                  pointerEvents: "none",
-                  userSelect: "none",
-                },
-              })}
-            >
-              {(() => {
-                if (!mounted || !account || !chain) {
-                  return (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={openConnectModal}
-                      className="gap-2 border-accent text-accent"
-                      data-testid="button-connect-wallet"
-                    >
-                      <Wallet className="w-4 h-4" />
-                      Connect Wallet
-                    </Button>
-                  );
-                }
-
-                return (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openAccountModal}
-                    className="gap-2 border-accent text-accent"
-                    data-testid="button-connected-wallet"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    {account.displayName}
-                  </Button>
-                );
-              })()}
-            </div>
-          );
-        }}
-      </ConnectButton.Custom>
+      <Button variant="outline" size="sm" className="gap-2 border-accent text-accent" data-testid="button-connected-wallet">
+        <CheckCircle className="w-4 h-4" />
+        {address.slice(0, 6)}...{address.slice(-4)}
+      </Button>
     );
   }
-
-  return (
-    <ConnectButton.Custom>
-      {({ openConnectModal, mounted }) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={openConnectModal}
-          className="gap-2 border-accent text-accent"
-          data-testid="button-connect-wallet"
-          {...(!mounted && {
-            "aria-hidden": true,
-            style: { opacity: 0, pointerEvents: "none" },
-          })}
-        >
-          <Wallet className="w-4 h-4" />
-          Connect Wallet
-        </Button>
-      )}
-    </ConnectButton.Custom>
-  );
-}
 
   return (
     <>
@@ -169,7 +115,7 @@ export function Web3Connect({ onConnect }: Web3ConnectProps) {
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white text-2xl">
-                  
+                  🍎
                 </div>
                 <div>
                   <h3 className="font-semibold">Continue with Apple</h3>

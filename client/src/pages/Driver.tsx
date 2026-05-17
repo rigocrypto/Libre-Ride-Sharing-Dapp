@@ -1,30 +1,106 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { MapPlaceholder } from "@/components/MapPlaceholder";
 import { TrendingUp, DollarSign, Star, Clock, CheckCircle, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Web3Connect } from "@/components/Web3Connect";
+import { DriverStatusToggle } from "@/components/DriverStatusToggle";
+import { DriverRideOfferCard } from "@/components/DriverRideOfferCard";
+import { DriverAcceptedRidePanel } from "@/components/DriverAcceptedRidePanel";
+import { StartRideButton } from "@/components/StartRideButton";
+import { useRideOffers } from "@/hooks/useRideOffers";
+import { useRideAcceptance } from "@/hooks/useRideAcceptance";
+import { useRideStart } from "@/hooks/useRideStart";
+import { useDriverStatus } from "@/hooks/useDriverStatus";
 
 export default function Driver() {
-  const [isOnline, setIsOnline] = useState(false);
-  const [showRideRequest, setShowRideRequest] = useState(false);
+  // Hook: Manage ride offers (WS)
+  const { currentOffer, isLoading: isLoadingOffers, error: offerError, ws } = useRideOffers();
+  
+  // Hook: Manage driver status (online/offline)
+  const { isOnline, setIsOnline, error: statusError } = useDriverStatus();
+  
+  // Hook: Handle ride acceptance (WS event-based)
+  const { acceptRide, isAccepting, error: acceptError, acceptedRideId } = useRideAcceptance(ws);
+  
+  // Hook: Handle ride start (REST + SIWE + escrow gate)
+  const { startRide, isStarting, error: startError, success: startSuccess } = useRideStart();
 
-  const handleGoOnline = (checked: boolean) => {
-    setIsOnline(checked);
-    if (checked) {
-      // Simulate ride request appearing after going online
-      setTimeout(() => setShowRideRequest(true), 2000);
-    } else {
-      setShowRideRequest(false);
+  // Local state: Track accepted ride with full details
+  const [acceptedRide, setAcceptedRide] = useState<{
+    id: string;
+    status: string;
+    escrowStatus: string;
+    pickup: { lat: number; lng: number; address: string };
+    dropoff: { lat: number; lng: number; address: string };
+    price: number;
+  } | null>(null);
+
+  // Effect: When acceptance succeeds, fetch full ride details
+  useEffect(() => {
+    if (acceptedRideId && !acceptedRide) {
+      // Fetch full ride details from API
+      const token = localStorage.getItem('firebaseToken');
+      if (!token) return;
+
+      fetch(`/api/rides/${acceptedRideId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            const ride = data.data;
+            setAcceptedRide({
+              id: ride.id,
+              status: ride.status,
+              escrowStatus: ride.escrowStatus,
+              pickup: {
+                lat: ride.pickupLat,
+                lng: ride.pickupLng,
+                address: ride.pickupLocation,
+              },
+              dropoff: {
+                lat: ride.dropoffLat,
+                lng: ride.dropoffLng,
+                address: ride.dropoffLocation,
+              },
+              price: ride.estimatedPrice,
+            });
+          }
+        })
+        .catch((err) => console.error('Failed to fetch ride:', err));
+    }
+  }, [acceptedRideId, acceptedRide]);
+
+  // Effect: When ride starts successfully, clear accepted state
+  useEffect(() => {
+    if (startSuccess) {
+      setAcceptedRide(null);
+    }
+  }, [startSuccess]);
+
+  // Handler: Accept incoming offer
+  const handleAcceptOffer = async () => {
+    if (!currentOffer) return;
+    try {
+      await acceptRide(currentOffer.rideId);
+      // Accepted state will be shown after ride details load
+    } catch (err) {
+      console.error('Accept failed:', err);
     }
   };
 
-  const handleAcceptRide = () => {
-    setShowRideRequest(false);
-    // Would navigate to active ride view
+  // Handler: Start accepted ride
+  const handleStartRide = async () => {
+    if (!acceptedRide) return;
+    try {
+      await startRide(acceptedRide.id);
+      // Success effect clears acceptedRide state above
+    } catch (err) {
+      console.error('Start failed:', err);
+    }
   };
 
   const driverStats = {
@@ -57,26 +133,7 @@ export default function Driver() {
       <div className="container mx-auto px-4 py-8">
         {/* Go Online Toggle */}
         <Card className="max-w-2xl mx-auto mb-8 bg-white/5 backdrop-blur-lg border-white/10 p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">
-                {isOnline ? (
-                  <span className="text-neon-teal">You're Online</span>
-                ) : (
-                  <span>Go Online to Start Earning</span>
-                )}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {isOnline ? "Ready to accept rides" : "Toggle to start receiving ride requests"}
-              </p>
-            </div>
-            <Switch
-              checked={isOnline}
-              onCheckedChange={handleGoOnline}
-              className="data-[state=checked]:bg-neon-teal"
-              data-testid="switch-go-online"
-            />
-          </div>
+          <DriverStatusToggle />
         </Card>
 
         {/* Stats Grid */}
@@ -138,64 +195,52 @@ export default function Driver() {
               <Card className="bg-white/5 backdrop-blur-lg border-white/10 p-8 text-center">
                 <p className="text-muted-foreground">Go online to see ride requests</p>
               </Card>
-            ) : !showRideRequest ? (
+            ) : isLoadingOffers ? (
               <Card className="bg-white/5 backdrop-blur-lg border-white/10 p-8 text-center">
                 <div className="animate-pulse">
                   <MapPin className="w-12 h-12 mx-auto mb-4 text-neon-teal" />
                   <p className="text-muted-foreground">Searching for riders...</p>
                 </div>
               </Card>
+            ) : acceptedRide ? (
+              // Show accepted ride panel with start button
+              <DriverAcceptedRidePanel
+                rideId={acceptedRide.id}
+                status={acceptedRide.status}
+                escrowStatus={acceptedRide.escrowStatus}
+                pickup={acceptedRide.pickup}
+                dropoff={acceptedRide.dropoff}
+                price={acceptedRide.price}
+                onStart={handleStartRide}
+                isStarting={isStarting}
+                error={startError?.message ?? undefined}
+              />
+            ) : currentOffer ? (
+              // Show ride offer card with accept button
+              <DriverRideOfferCard
+                offer={currentOffer}
+                onAccept={handleAcceptOffer}
+                isAccepting={isAccepting}
+                error={acceptError?.message ?? undefined}
+              />
             ) : (
-              <Card className="bg-white/5 backdrop-blur-lg border-white/10 p-6 border-neon-pink animate-pulse-glow" data-testid="card-ride-request">
-                <div className="flex items-center justify-between mb-4">
-                  <Badge className="bg-neon-pink">New Request</Badge>
-                  <Badge variant="outline" className="text-neon-teal border-neon-teal">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    15% Surge
-                  </Badge>
+              <Card className="bg-white/5 backdrop-blur-lg border-white/10 p-8 text-center">
+                <div className="animate-pulse">
+                  <MapPin className="w-12 h-12 mx-auto mb-4 text-neon-teal" />
+                  <p className="text-muted-foreground">Searching for riders...</p>
                 </div>
+              </Card>
+            )}
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-neon-pink mt-0.5" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Pickup</p>
-                      <p className="font-medium text-sm">Disney Springs</p>
-                      <p className="text-xs text-muted-foreground">0.8 mi away</p>
-                    </div>
-                  </div>
-                  <div className="h-px bg-border" />
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Est. Earnings</span>
-                    <span className="text-xl font-bold text-neon-teal" data-testid="text-request-earnings">$24.50</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Distance</span>
-                    <span className="font-medium">8.2 mi</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setShowRideRequest(false)}
-                    data-testid="button-decline-ride"
-                  >
-                    Decline
-                  </Button>
-                  <Button
-                    className="flex-1 bg-neon-teal hover:bg-neon-teal/90"
-                    onClick={handleAcceptRide}
-                    data-testid="button-accept-ride"
-                  >
-                    Accept
-                  </Button>
-                </div>
-
-                <p className="text-xs text-center text-muted-foreground mt-4">
-                  Auto-decline in 15s
-                </p>
+            {/* Error Messages */}
+            {offerError && (
+              <Card className="bg-destructive/10 border-destructive/20 p-4">
+                <p className="text-sm text-destructive">Offer Error: {offerError}</p>
+              </Card>
+            )}
+            {statusError && (
+              <Card className="bg-destructive/10 border-destructive/20 p-4">
+                <p className="text-sm text-destructive">Status Error: {statusError}</p>
               </Card>
             )}
 

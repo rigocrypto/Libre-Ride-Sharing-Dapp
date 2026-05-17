@@ -10,9 +10,6 @@ import express, {
 import { registerRoutes } from "./routes";
 import { createRouteHandler } from "uploadthing/express";
 import { uploadRouter } from "./uploadthing";
-import uploadRoutes from "./routes/upload";
-import walletRoutes from "./routes/wallet";
-import paymentRoutes from "./routes/payments";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -42,16 +39,15 @@ app.use(express.urlencoded({ extended: false }));
 // UploadThing routes for file uploads
 app.use("/api/uploadthing", createRouteHandler({ router: uploadRouter }));
 
-// Custom upload routes (driver photos, vehicle docs, etc.)
-app.use(uploadRoutes);
-
-// Wallet routes (attach wallet to user)
-app.use(walletRoutes);
-
-// Payment routes (escrow, intents, releases)
-app.use(paymentRoutes);
-
+// Log ALL requests for debugging
 app.use((req, res, next) => {
+  console.log(`🔍 ${new Date().toISOString()} ${req.method} ${req.url}`);
+  console.log('Headers:', {
+    upgrade: req.headers.upgrade || 'NO',
+    connection: req.headers.connection || 'NO',
+    accept: req.headers.accept || 'NO'
+  });
+  
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
@@ -64,6 +60,8 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
+    console.log(`✅ ${req.method} ${path} → ${res.statusCode} in ${duration}ms`);
+    
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {

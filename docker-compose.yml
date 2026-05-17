@@ -1,0 +1,85 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: libre-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: libre
+      POSTGRES_PASSWORD: libre
+      POSTGRES_DB: libre
+    ports:
+      - "5432:5432"
+    volumes:
+      - libre-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U libre -d libre"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: libre-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: libre-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  onesignal-mock:
+    image: node:18-alpine
+    container_name: libre-onesignal-mock
+    working_dir: /app
+    volumes:
+      - ./dev-tools/onesignal-mock:/app
+    command: ["node", "index.js"]
+    ports:
+      - "5010:5010"
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    container_name: libre-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - .env.compose
+    environment:
+      DATABASE_URL: postgres://libre:libre@postgres:5432/libre
+      REDIS_URL: redis://redis:6379
+      MAILHOG_SMTP: smtp://mailhog:1025
+      ONESIGNAL_MOCK_URL: http://onesignal-mock:5010
+    ports:
+      - "5000:5000"
+    command: ["pnpm", "dev"]
+
+  client:
+    build:
+      context: client
+      dockerfile: Dockerfile
+    container_name: libre-client
+    depends_on:
+      - server
+    env_file:
+      - .env.compose
+    ports:
+      - "5173:5173"
+    command: ["pnpm", "dev", "--host", "0.0.0.0"]
+
+volumes:
+  libre-postgres-data:
+
