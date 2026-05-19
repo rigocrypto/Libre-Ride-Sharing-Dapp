@@ -189,7 +189,7 @@ export function useEscrowDeposit(rideId: string) {
         address: escrowAddress,
         abi: rideEscrowAbi,
         functionName: "deposit",
-        args: [data.rideIdHash, data.driverAddress, amount, BigInt(data.platformFeeBps)],
+        args: [data.rideIdHash, data.driverAddress, amount, BigInt(data.platformFeeBps), usdcAddress],
         chain: libreChain,
       });
       setDepositHash(txHash);

@@ -84,6 +84,7 @@ Key groups:
 
 - **Database/Cache:** `DATABASE_URL`, `REDIS_URL`, `STORAGE_ENGINE`
 - **Web3:** `NEXT_PUBLIC_BASE_CHAIN_ID`, `NEXT_PUBLIC_ALCHEMY_BASE_RPC`, `PRIVATE_KEY_DEPLOYER`, `USDC_CONTRACT_ADDRESS_TESTNET`
+- **Escrow Deploy:** `RPC_URL_BASE_SEPOLIA`, `BASESCAN_API_KEY`, `PLATFORM_WALLET_ADDRESS`, `ARBITER_ADDRESS`, `DEPLOYER_PRIVATE_KEY`, `ESCROW_CONTRACT_ADDRESS`, `VITE_ESCROW_CONTRACT_ADDRESS`
 - **Notifications:** `RESEND_API_KEY`, `TWILIO_*`, `ONESIGNAL_*`, `MAILHOG_SMTP`
 - **Uploads:** `UPLOADTHING_API_KEY`, `UPLOADTHING_SECRET`
 - **Feature Toggles:** `ENABLE_PAYMENTS`, `ENABLE_AA`, `ENABLE_PUSH`
@@ -207,4 +208,3 @@ Ensure Florida TNC rules:
 ---
 
 Happy building! Reach out to the Libre core team for Base RPC keys, UploadThing creds, and compliance audit workflows. Continuous upgrades tracked in `NEXT_TASKS.md`.
-
