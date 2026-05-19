@@ -14,7 +14,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "cross-env NODE_ENV=development STORAGE_ENGINE=mem node node_modules/tsx/dist/cli.mjs server/index-dev.ts",
+      "cross-env NODE_ENV=development STORAGE_ENGINE=mem ESCROW_VERIFIER_MODE=mock node node_modules/tsx/dist/cli.mjs server/index-dev.ts",
     url: "http://127.0.0.1:5000/api/user/test",
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,

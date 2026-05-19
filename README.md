@@ -1,210 +1,614 @@
-# Libre Ride — Web3 Ride-Sharing Platform
+# LIBRE Ride - Orlando-First Web3 Ride-Sharing Platform
 
-Libre Ride is a Florida-compliant, Web3-enabled ride-hailing platform targeting the Orlando market. The project pairs a Vite/React client with an Express/TypeScript API, Drizzle/Postgres persistence, UploadThing-backed document storage, and real-time services (Redis, WebSockets, notifications) to deliver a production-ready MVP.
+**LIBRE Ride** is an Orlando-first, Florida-compliance-aware Web3 ride-sharing platform designed to give drivers, riders, and local transportation operators a more transparent alternative to traditional ride-hailing apps.
 
-## Table of Contents
+LIBRE combines modern ride-sharing infrastructure with **AI dispatch concepts**, **USDC escrow**, Web3 wallet support, driver verification, compliance workflows, safety tooling, and real-time operations.
 
-1. [Stack Overview](#stack-overview)
-2. [Key Capabilities](#key-capabilities)
-3. [Architecture](#architecture)
-4. [Prerequisites](#prerequisites)
-5. [Environment Variables](#environment-variables)
-6. [Getting Started](#getting-started)
-    - [Quick Start (Docker)](#quick-start-docker)
-    - [Manual Dev Setup](#manual-dev-setup)
-7. [Database Migrations & Seeding](#database-migrations--seeding)
-8. [Testing](#testing)
-9. [Notifications & Integrations](#notifications--integrations)
-10. [Compliance Workflow](#compliance-workflow)
-11. [Deployment Notes](#deployment-notes)
-12. [Troubleshooting](#troubleshooting)
+The project is currently a **QA/staging-ready MVP**, not a live production service for real passengers, real drivers, or real funds.
 
----
+## Vision
+
+Traditional ride-sharing platforms often leave drivers with limited transparency, high platform dependency, unclear earnings logic, and little ownership in the ecosystem.
+
+LIBRE is being built around a different idea:
+
+> Drivers should have more transparency, riders should have safer local options, and payments should be protected by modern digital infrastructure.
+
+LIBRE is not simply "Uber with crypto." It is a **compliance-first, AI-assisted, Web3-enabled mobility marketplace** built initially for the Orlando, Florida market.
+
+## Why Orlando?
+
+Orlando is a strong pilot market for a next-generation ride-sharing platform because it has:
+
+- Heavy tourism demand
+- Orlando International Airport traffic
+- Disney, Universal, hotels, conventions, and event zones
+- High driver activity
+- Strong demand for airport, tourist, family, and local transportation
+- A clear need for transparent driver-first alternatives
+
+The first launch strategy focuses on a limited Orlando pilot before broader Florida or national expansion.
+
+## Who LIBRE Is For
+
+**Drivers**
+
+LIBRE is designed for independent drivers who want transparent ride offers, clear payout information, escrow-protected payment flow, verification badges, AI demand guidance, local support, founding-driver benefits, optional Web3 rewards, and a stronger voice in the platform's future.
+
+**Riders**
+
+LIBRE is designed for riders who want transparent fares, verified local drivers, safer ride workflows, digital payment options, tourist-friendly ride support, and better visibility into ride/payment status.
+
+**Investors and Partners**
+
+LIBRE is designed for early backers, local sponsors, operators, and strategic partners interested in Web3 mobility infrastructure, stablecoin payments, AI-assisted local transportation, driver-first marketplaces, Orlando tourism and airport mobility, and compliance-focused ride-sharing innovation.
+
+## Product Snapshot
+
+LIBRE includes or is being built toward:
+
+- Rider and driver dashboards
+- Premium LIBRE Driver Dashboard
+- Ride request, offer, acceptance, and start flows
+- Real-time ride state updates
+- WebSocket and polling fallback
+- USDC escrow flow on Base Sepolia
+- Wallet support through Wagmi, RainbowKit, and Viem
+- Shared escrow state machine
+- AI dispatch and smart matching roadmap
+- Driver document upload and compliance review
+- Orlando permit and airport-eligibility workflow
+- Safety/SOS structures
+- Dispute center planning
+- Driver and rider subscription models
+- Admin command center roadmap
+- Security hardening and production readiness documentation
+
+## Current Status
+
+The project is currently in **QA/staging-ready MVP** state.
+
+Verified recently:
+
+```powershell
+npm.cmd run check
+npm.cmd test -- --run
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+Current progress:
+
+- React/Vite/TypeScript frontend is working.
+- Express/TypeScript backend is working.
+- Driver dashboard is implemented.
+- Escrow state machine is implemented and tested under `shared/escrow`.
+- Base Sepolia `RideEscrow` contract is deployed.
+- Mock USDC is deployed and funded for testing.
+- Live approve -> deposit -> backend verify -> release flow has passed on Base Sepolia.
+- Correct 300 bps fee split has been verified on-chain.
+- Escrow balance returned to zero after release.
+- Dev seed routes are isolated from production route registration.
+- Security hardening reduced local audit results to low-only issues.
+- Production roadmap and implementation tickets are documented.
+
+Not production-live yet:
+
+- Real driver wallet auth and escrow-gated ride start is the next milestone.
+- Basescan source verification still needs a valid API key.
+- Production database validation is still needed.
+- Production Firebase/KYC/storage/notification keys must be validated.
+- Admin workflows need production-grade completion.
+- Legal/compliance review is required before public operation.
+- Smart contract and payment security review are required before handling real user funds.
+
+## Web3 Payments & Escrow
+
+LIBRE is designed around a payment-first ride flow.
+
+The current tested rail is USDC escrow on Base Sepolia:
+
+1. Rider requests a ride.
+2. Rider approves USDC spend.
+3. Rider deposits fare into the escrow contract.
+4. Backend verifies chain ID, contract, token, amount, rider, ride ID, and transaction status.
+5. Ride becomes driver-eligible only after escrow confirmation.
+6. Ride is completed.
+7. Funds are released to the driver, with the configured platform fee split.
+8. Refunds or disputes can follow a defined workflow.
+
+This helps reduce uncertainty for both riders and drivers. The live test for `TICKET-024` verified a 25 USDC fare, 0.75 USDC platform fee, 24.25 USDC driver payout, and final escrow balance of 0 USDC.
+
+Important: Any token, reward, bond, staking, investment, or revenue-sharing structure connected to LIBRE requires legal review before public launch. LIBRE tokens, if introduced, should be treated as utility/reward infrastructure only unless properly reviewed under applicable securities and financial regulations.
+
+## Why LIBRE?
+
+**For drivers:** clearer ride economics, payment-confirmed work, compliance credentials, local launch focus, and a path toward driver-first benefits.
+
+**For riders:** transparent fares, verified drivers, safer payment state, better local context, and tourist-friendly Orlando ride workflows.
+
+**For local operators:** compliance-first tooling, admin visibility, airport/permit readiness, and a marketplace that can be piloted city by city.
+
+## AI Capabilities Roadmap
+
+LIBRE is being designed with AI features that support real operational needs:
+
+- AI driver matching
+- AI dispatch optimization
+- AI demand heatmaps
+- AI driver copilot
+- AI document pre-screening
+- AI risk scoring
+- AI fraud detection
+- AI tourist ride assistant
+- AI toll-aware routing
+- AI earnings insights
+
+Example use cases include recommending the best driver based on compliance, distance, rating, vehicle type, and escrow readiness; helping drivers identify high-demand Orlando zones; flagging suspicious payment patterns; and helping tourists request rides to MCO, Disney, Universal, hotels, and convention areas.
+
+## Compliance-First Orlando Launch
+
+LIBRE is being designed with Florida and Orlando transportation requirements in mind.
+
+Compliance areas include:
+
+- Driver license verification
+- Vehicle document upload
+- Insurance document tracking
+- Background-check workflow
+- Orlando transportation permit tracking
+- Airport/MCO eligibility workflow
+- Vehicle inspection status
+- Driver approval and suspension workflow
+- Admin compliance queue
+- Retention and privacy policies
+
+The project includes planning for Florida TNC insurance considerations, Orlando driver requirements, airport pickup eligibility, toll-aware route planning, ADA/accessibility considerations, and driver/rider safety workflows.
+
+## Driver Founding Program
+
+LIBRE is exploring a founding-driver model for early Orlando drivers.
+
+Possible benefits may include:
+
+- Founding Driver badge
+- Early access to the platform
+- Priority onboarding
+- Reduced platform fees during pilot
+- Access to private feedback group
+- Driver profile visibility
+- Referral rewards
+- Early access to future driver benefits
+- Eligibility for reputation credentials
+
+The founding-driver program should not be treated as an investment product. It is intended as an early-access and community-building program.
+
+## Investor / Partner Snapshot
+
+LIBRE's early opportunity is based on:
+
+- Orlando's high-volume tourism market
+- Airport and event transportation demand
+- Driver dissatisfaction with legacy platforms
+- Growth in stablecoin payment infrastructure
+- AI-assisted dispatch and operations
+- Compliance-first transportation tooling
+- Potential expansion across Florida markets
+
+Potential revenue channels include ride platform fees, driver subscriptions, rider memberships, corporate accounts, tourist passes, local sponsor partnerships, premium driver tools, compliance/admin services, and future utility/rewards ecosystem.
+
+Any formal investment offering should be conducted through proper legal structures, disclosures, and regulatory review.
 
 ## Stack Overview
 
-| Layer        | Technology                                                                                   |
-|--------------|-----------------------------------------------------------------------------------------------|
-| Client       | React 18 + Vite + TypeScript, TanStack Query, Tailwind + Radix UI, Wagmi/RainbowKit          |
-| Server       | Express + TypeScript, Zod validation, UploadThing, Socket.io (planned), Redis pub/sub        |
-| Persistence  | Drizzle ORM + Postgres (Neon/local), Redis for presence/queues                               |
-| Web3         | Base network (testnet/mainnet), USDC transfer flow, AA scaffolding                           |
-| Notifications| Resend (email), Twilio (SMS), OneSignal (push) + Mailhog/Mock services for dev               |
-| DevOps       | Docker Compose, pnpm/NPM scripts, GitHub Actions CI                                          |
-
----
-
-## Key Capabilities
-
-- **Rider & Driver Flows:** Request rides, track status, view driver stats, manage profiles.
-- **Compliance Automation:** Driver license, vehicle photos, insurance, background checks, Orlando permit, airport eligibility.
-- **Document Storage:** UploadThing-backed storage with metadata + OCR placeholders.
-- **Real Payments:** Wallet connect (RainbowKit/Wagmi) + USDC escrow flow on Base testnet (AA-friendly).
-- **Real-Time Operations:** Driver presence, ride matching, SOS, disputes, admin dashboards.
-- **Notifications:** Email (Resend), SMS (Twilio), Push (OneSignal) with local mocks for dev.
-
----
+| Layer | Technology |
+| --- | --- |
+| Client | React 18, Vite, TypeScript, TanStack Query, Tailwind, Radix UI |
+| Server | Express, TypeScript, Zod validation |
+| Persistence | Drizzle ORM, PostgreSQL, MemStorage for dev/test |
+| Web3 | Wagmi, RainbowKit, Viem, Base Sepolia, USDC escrow flow, Foundry contracts |
+| Realtime | WebSocket layer, polling fallback |
+| Uploads | UploadThing / S3-style document storage path |
+| Notifications | Resend, Twilio, OneSignal planning |
+| Testing | Vitest, Playwright, Foundry |
+| DevOps | Docker Compose planning, GitHub Actions CI planning |
 
 ## Architecture
 
-```
-client/                 React SPA (Vite)
-server/                 Express API + WebSocket + workers
-shared/schema.ts        Drizzle schema + types shared across layers
-dev-tools/onesignal-mock   Local webhook logger for OneSignal payloads
-migrations/             SQL migrations (authoritative schema)
-docker-compose.yml      Postgres, Redis, Mailhog, OneSignal mock, server, client
-.github/workflows/      CI pipelines
+```txt
+client/
+  React SPA
+  Rider dashboard
+  Driver dashboard
+  Wallet/payment UI
+  Compliance components
+
+server/
+  Express API
+  Ride routes
+  Escrow routes
+  Compliance routes
+  Auth scaffolding
+  WebSocket/realtime layer
+  routes.dev.ts
+
+contracts/
+  RideEscrow.sol
+  MockUSDC.sol
+  script/
+  test/
+
+shared/
+  schema.ts
+  escrow/
+    states.ts
+    transitions.ts
+    validators.ts
+    errors.ts
+    abi.ts
+
+docs/
+  IMPLEMENTATION_TICKETS.md
+  PRODUCTION_READINESS_CHECKLIST.md
+  ESCROW_STATE_MACHINE.md
+  DRIVER_SUBSCRIPTION_BENEFITS.md
+  RIDER_SUBSCRIPTION_TIERS.md
+
+migrations/
+  SQL migrations
+
+SECURITY.md
+ORLANDO_AI_COMPLIANCE_ROADMAP.md
 ```
 
----
+## Key Capabilities
+
+**Rider Flow**
+
+- Request ride
+- View active ride
+- Connect wallet
+- Approve and deposit USDC
+- Track escrow/deposit status
+- Track driver assignment
+- Complete ride
+- View ride summary
+
+**Driver Flow**
+
+- Go online/offline
+- View eligible ride offers
+- Accept rides
+- View escrow-confirmed status
+- Start escrow-confirmed rides
+- Track earnings
+- View AI Copilot tips
+- Manage vehicle/compliance status
+- Access driver benefits
+
+**Escrow Flow**
+
+- Initiate deposit
+- Check allowance
+- Approve USDC spend
+- Confirm deposit
+- Verify transaction
+- Lock ride payment
+- Release payment
+- Refund payment
+- Dispute payment
+- Maintain canonical escrow state transitions
+
+**Admin/Compliance Flow**
+
+- Review driver documents
+- Approve/reject drivers
+- Track insurance and permits
+- Monitor escrow status
+- Review disputes
+- Manage safety flags
+- Prepare for Orlando pilot operations
 
 ## Prerequisites
 
-- Node.js 20+
-- pnpm 9+ (recommended) or npm 10+
-- Docker + Docker Compose v2
-- Access keys for:
-  - Postgres (Neon/local)
-  - UploadThing (or S3 replacement)
-  - Resend, Twilio, OneSignal
-  - Base RPC provider (Alchemy, Infura, etc.)
+Recommended:
 
----
+- Node.js 20+
+- npm 10+
+- PostgreSQL or Neon for production-like runs
+- Redis if using realtime/queue features
+- Docker + Docker Compose v2, optional
+- Foundry for contract tests and deployment
+- Base Sepolia RPC provider
+- UploadThing or equivalent file storage
+- Resend/Twilio/OneSignal sandbox credentials, optional
 
 ## Environment Variables
 
-All services read from `.env`. Copy `.env.example`:
+Create a local `.env` file and use development/sandbox keys. Never commit real production secrets.
 
-```bash
-cp .env.example .env
+Common environment groups:
+
+```txt
+Database / Storage
+DATABASE_URL=
+STORAGE_ENGINE=mem
+REDIS_URL=
+
+Web3 / Escrow
+CHAIN_ID=84532
+VITE_CHAIN_ID=84532
+RPC_URL_BASE_SEPOLIA=
+BASESCAN_API_KEY=
+PLATFORM_WALLET_ADDRESS=
+ARBITER_ADDRESS=
+DEPLOYER_PRIVATE_KEY=
+ESCROW_CONTRACT_ADDRESS=
+VITE_ESCROW_CONTRACT_ADDRESS=
+USDC_TOKEN_ADDRESS=
+USDC_CONTRACT_ADDRESS_TESTNET=
+VITE_USDC_TOKEN_ADDRESS=
+ESCROW_VERIFIER_MODE=viem
+PLATFORM_FEE_BPS=300
+
+Auth / KYC
+FIREBASE_*
+PERSONA_*
+
+Uploads
+UPLOADTHING_API_KEY=
+UPLOADTHING_SECRET=
+
+Notifications
+RESEND_API_KEY=
+TWILIO_*
+ONESIGNAL_*
+
+Feature Flags
+ENABLE_PAYMENTS=
+ENABLE_AA=
+ENABLE_PUSH=
+
+Compliance
+RETENTION_DAYS=
+PROTOCOL_FEE_BPS=
 ```
-
-Key groups:
-
-- **Database/Cache:** `DATABASE_URL`, `REDIS_URL`, `STORAGE_ENGINE`
-- **Web3:** `NEXT_PUBLIC_BASE_CHAIN_ID`, `NEXT_PUBLIC_ALCHEMY_BASE_RPC`, `PRIVATE_KEY_DEPLOYER`, `USDC_CONTRACT_ADDRESS_TESTNET`
-- **Escrow Deploy:** `RPC_URL_BASE_SEPOLIA`, `BASESCAN_API_KEY`, `PLATFORM_WALLET_ADDRESS`, `ARBITER_ADDRESS`, `DEPLOYER_PRIVATE_KEY`, `ESCROW_CONTRACT_ADDRESS`, `VITE_ESCROW_CONTRACT_ADDRESS`
-- **Notifications:** `RESEND_API_KEY`, `TWILIO_*`, `ONESIGNAL_*`, `MAILHOG_SMTP`
-- **Uploads:** `UPLOADTHING_API_KEY`, `UPLOADTHING_SECRET`
-- **Feature Toggles:** `ENABLE_PAYMENTS`, `ENABLE_AA`, `ENABLE_PUSH`
-- **Compliance:** `RETENTION_DAYS`, `PROTOCOL_FEE_BPS`
-
-Refer to the full `.env.example` for descriptions/defaults.
-
----
 
 ## Getting Started
 
-### Quick Start (Docker)
+Install dependencies:
 
-```bash
-# 1. copy env template & fill secrets
-cp .env.example .env.compose   # used by docker-compose
+```powershell
+npm.cmd install
+```
 
-# 2. start full stack
+Run TypeScript check:
+
+```powershell
+npm.cmd run check
+```
+
+Run tests:
+
+```powershell
+npm.cmd test -- --run
+```
+
+Run production build:
+
+```powershell
+npm.cmd run build
+```
+
+Run E2E smoke test:
+
+```powershell
+npm.cmd run test:e2e
+```
+
+## Development
+
+Start local dev server:
+
+```powershell
+npm.cmd run dev
+```
+
+Depending on your local setup, the app generally runs on:
+
+```txt
+Client/API dev server: http://localhost:5000
+```
+
+Use `STORAGE_ENGINE=mem` for local development and tests when you do not want PostgreSQL startup checks.
+
+## Docker
+
+The repository includes `docker-compose.yml` for local service orchestration. Confirm required environment variables first, then run:
+
+```powershell
 docker compose up --build
-
-# services exposed on:
-# client: http://localhost:5173
-# api:    http://localhost:5000
-# mailhog ui: http://localhost:8025
-# onesignal mock: http://localhost:5010/health
 ```
 
-### Manual Dev Setup
-
-```bash
-pnpm install
-
-# start Postgres/Redis locally or via docker compose
-pnpm db:push             # run drizzle migrations
-pnpm tsx server/scripts/seed.ts
-
-# in two terminals
-pnpm --filter server dev
-pnpm --filter client dev
-```
-
----
+Common local services may include Postgres, Redis, Mailhog, mock notification tooling, the API, and the client depending on the active compose profile.
 
 ## Database Migrations & Seeding
 
-1. Apply SQL migrations (authoritative schema):
+For production-like database testing, configure:
 
-```bash
-psql "$DATABASE_URL" -f migrations/001_init.sql
+```txt
+DATABASE_URL=
+STORAGE_ENGINE=drizzle
 ```
 
-2. Seed sample Orlando data:
+Then run the Drizzle command:
 
-```bash
-pnpm tsx server/scripts/seed.ts
+```powershell
+npm.cmd run db:push
 ```
 
-3. Optional Drizzle migrations via `pnpm db:push` (keep SQL in sync).
+SQL migrations live under `migrations/`. Confirm the current migration path and storage engine before running destructive database changes.
 
----
+Dev-only seed routes are isolated in `server/routes.dev.ts` and are only registered when `NODE_ENV !== 'production'`.
+
+## Smart Contracts
+
+Foundry configuration lives in `foundry.toml`.
+
+Run contract tests:
+
+```powershell
+forge test -vv
+```
+
+Deploy `RideEscrow` to Base Sepolia:
+
+```powershell
+forge script contracts/script/DeployRideEscrow.s.sol `
+  --rpc-url $env:RPC_URL_BASE_SEPOLIA `
+  --private-key $env:DEPLOYER_PRIVATE_KEY `
+  --broadcast `
+  --verify `
+  -vvvv
+```
+
+If Basescan verification fails because of an API key issue, re-run verification without redeploying after setting `BASESCAN_API_KEY`.
 
 ## Testing
 
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test             # add Vitest/Jest suites
-forge test            # once contracts live
+Core verification commands:
+
+```powershell
+npm.cmd run check
+npm.cmd test -- --run
+npm.cmd run build
+npm.cmd run test:e2e
+forge test -vv
 ```
 
-The CI workflow mirrors these steps plus build + migration checks.
+Current coverage includes:
 
----
+- Ride acceptance race-condition tests
+- Escrow state-machine tests
+- Escrow contract tests
+- Playwright smoke flow
 
-## Notifications & Integrations
+Before opening a pull request, run the verification commands relevant to your change.
 
-- **Email:** Resend (dev fallback: Mailhog via `MAILHOG_SMTP`)
-- **SMS:** Twilio – `/api/auth/send-sms` + `/api/auth/verify-sms`
-- **Push:** OneSignal – use `dev-tools/onesignal-mock` in Docker for local testing
-- **Uploads:** UploadThing endpoints configured under `/api/uploadthing`
+## Security
 
-Each integration reads from `.env`; provide sandbox/test keys in dev.
+Security hardening is tracked in [SECURITY.md](SECURITY.md).
 
----
+Recent hardening reduced local npm audit results from critical/high issues to low-only issues.
 
-## Compliance Workflow
+Security priorities before production:
 
-1. Driver uploads profile/license/vehicle/insurance docs (UploadThing)
-2. Server saves metadata → Drizzle tables (`driver_photos`, `vehicle_photos`, etc.)
-3. Verification jobs (queue/cron) run OCR + rule checks
-4. Admin dashboard surfaces `pending` / `requires_manual_review`
-5. When approved, driver unlocked for ride matching and airport zones
+- Smart contract audit
+- Payment route review
+- WebSocket authorization review
+- Rate limiting
+- Request validation
+- Escrow transaction replay protection
+- Admin RBAC
+- Audit logging
+- Secrets management
+- Production CI security checks
 
-Ensure Florida TNC rules:
+## Production Readiness
 
-- License + background re-check every 3 years
-- Vehicle < 15 years, four-door, wheelchair flag respected
-- Orlando permit + airport authorization before airport pickups
+Production readiness is tracked in [docs/PRODUCTION_READINESS_CHECKLIST.md](docs/PRODUCTION_READINESS_CHECKLIST.md).
 
----
+LIBRE should not be considered live-production-ready until:
 
-## Deployment Notes
+- Real two-wallet authenticated ride flow is validated.
+- Contract source is verified on Basescan.
+- Production database is migration-tested.
+- Firebase/KYC/storage integrations are validated.
+- Driver compliance workflow is operational.
+- Admin approval workflow is operational.
+- Rate limiting and validation are active.
+- WebSocket authorization is reviewed.
+- Smart contract review is complete.
+- Staging pilot ride is completed end to end.
 
-- Use `.github/workflows/ci.yml` for CI gate (lint, typecheck, tests, builds, migrations)
-- Build production images with `server.Dockerfile` / `client/Dockerfile`
-- Configure secrets (DB, Redis, UploadThing, Alchemy, Twilio, Resend, OneSignal) in hosting provider
-- Prefer deploying server + Postgres + Redis on Fly.io/Railway/Render; client can go to Vercel/Netlify
+## Roadmap
 
----
+See:
+
+- [docs/IMPLEMENTATION_TICKETS.md](docs/IMPLEMENTATION_TICKETS.md)
+- [docs/ESCROW_STATE_MACHINE.md](docs/ESCROW_STATE_MACHINE.md)
+- [docs/DRIVER_SUBSCRIPTION_BENEFITS.md](docs/DRIVER_SUBSCRIPTION_BENEFITS.md)
+- [docs/RIDER_SUBSCRIPTION_TIERS.md](docs/RIDER_SUBSCRIPTION_TIERS.md)
+- [ORLANDO_AI_COMPLIANCE_ROADMAP.md](ORLANDO_AI_COMPLIANCE_ROADMAP.md)
+
+Near-term priorities:
+
+1. Complete `TICKET-025`: real driver wallet auth plus escrow-gated ride start.
+2. Verify contract source on Basescan.
+3. Add admin escrow monitoring.
+4. Validate production database path.
+5. Complete driver compliance approval workflow.
+6. Run limited Orlando staging pilot with two real wallets.
+7. Prepare legal/compliance review before public launch.
 
 ## Troubleshooting
 
-| Issue                                   | Fix                                                                 |
-|-----------------------------------------|----------------------------------------------------------------------|
-| `pg_isready` failures in Docker         | Remove `libre-postgres-data` volume to reinit DB                     |
-| UploadThing errors                      | Confirm `UPLOADTHING_*` env + correct callback URLs                  |
-| Resend emails not showing               | In dev, point SMTP to Mailhog and inspect http://localhost:8025      |
-| Wallet connect not detecting Base       | Ensure `NEXT_PUBLIC_BASE_CHAIN_ID` + RPC envs set; reload provider   |
-| Redis connection refused                | Check `REDIS_URL`, ensure container running                          |
+| Issue | Fix |
+| --- | --- |
+| TypeScript errors after dependency update | Run a clean install and verify lockfile changes. |
+| Wallet not detecting Base Sepolia | Confirm chain ID `84532`, RPC URL, and wallet network. |
+| Approval succeeds but deposit fails | Check USDC allowance, escrow address, token address, and wallet network. |
+| Backend rejects deposit tx | Check `ESCROW_CONTRACT_ADDRESS`, `USDC_TOKEN_ADDRESS`, `RPC_URL_BASE_SEPOLIA`, `ESCROW_VERIFIER_MODE`, and tx hash formatting. |
+| PostgreSQL checks running in local tests | Use `STORAGE_ENGINE=mem`. |
+| Upload errors | Confirm UploadThing keys and callback URLs. |
+| Push notifications not working | Confirm OneSignal sandbox/app credentials. |
+| E2E port conflicts | Ensure no dev server is already listening on port 5000. |
+| GitHub Dependabot count looks stale | Wait for GitHub rescan and compare against local `npm audit`. |
 
----
+## Legal and Compliance Notice
 
-Happy building! Reach out to the Libre core team for Base RPC keys, UploadThing creds, and compliance audit workflows. Continuous upgrades tracked in `NEXT_TASKS.md`.
+LIBRE is an early-stage software project. It is not currently a live licensed transportation company, investment offering, money transmission service, insurance product, or public token sale.
+
+Before public launch, the project should receive legal review for:
+
+- Transportation/TNC operations
+- Insurance requirements
+- Airport pickup rules
+- Driver onboarding
+- KYC/background checks
+- Stablecoin payments
+- Escrow handling
+- Token/reward design
+- Subscriptions
+- Driver benefits
+- Privacy and data retention
+- Investment or fundraising structures
+
+Nothing in this repository should be interpreted as legal, financial, insurance, or investment advice.
+
+## Contributing
+
+Contributions should preserve:
+
+- TypeScript safety
+- Tested ride state transitions
+- Escrow state-machine integrity
+- Payment safety
+- Compliance-first design
+- Privacy-conscious data handling
+- Clear documentation
+
+Before submitting changes:
+
+```powershell
+npm.cmd run check
+npm.cmd test -- --run
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+## Contact
+
+LIBRE is being built as an Orlando-first Web3 ride-sharing MVP focused on transparency, driver empowerment, and safer local transportation infrastructure.
+
+For collaboration, driver onboarding, partnerships, or investment discussions, contact the LIBRE core team.
