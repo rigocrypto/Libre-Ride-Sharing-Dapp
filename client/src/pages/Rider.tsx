@@ -18,7 +18,7 @@ import { useEscrowStatus } from '@/hooks/useEscrowStatus';
 import { useEscrowDeposit } from '@/hooks/useEscrowDeposit';
 import { getRiderViewState } from '@/lib/riderViewState';
 import { FindingDriverPanel } from '@/components/FindingDriverPanel';
-import { PaymentCTA } from '@/components/PaymentCTA';
+import { RiderEscrowPaymentCard } from '@/components/rider/RiderEscrowPaymentCard';
 import { DriverAssignedPanel } from '@/components/DriverAssignedPanel';
 import { RideInProgressPanel } from '@/components/RideInProgressPanel';
 import { RideCompleteSummary } from '@/components/RideCompleteSummary';
@@ -104,11 +104,17 @@ export default function Rider() {
               {viewState === 'FINDING_DRIVER' && <FindingDriverPanel />}
 
               {viewState === 'PAYMENT_REQUIRED' && (
-                <PaymentCTA
+                <RiderEscrowPaymentCard
                   amount={ride.data.estimatedPrice}
-                  onPay={handlePay}
+                  onDeposit={handlePay}
                   isLoading={deposit.isLoading}
                   error={deposit.error?.message}
+                  status={deposit.status}
+                  statusLabel={deposit.statusLabel}
+                  isWalletReady={deposit.isWalletReady}
+                  walletAddress={deposit.walletAddress}
+                  approvalHash={deposit.approvalHash}
+                  depositHash={deposit.depositHash}
                 />
               )}
 

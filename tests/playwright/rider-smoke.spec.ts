@@ -32,7 +32,9 @@ test('Rider payment-first flow smoke test', async ({ page }) => {
   }, token);
 
   // Start at the Rider route
-  await page.goto(`http://127.0.0.1:5000/rider?rideId=${rideId}`);
+  await page.goto(`http://127.0.0.1:5000/rider?rideId=${rideId}`, {
+    waitUntil: 'domcontentloaded',
+  });
 
   // 1) Initial load: should show loading or finding driver
   await expect(page.locator('text=Loading ride details...').first()).toBeVisible({ timeout: 5000 }).catch(() => {});
@@ -61,8 +63,9 @@ test('Rider payment-first flow smoke test', async ({ page }) => {
   // After match, Payment CTA should appear
   await expect(payCTA.first()).toBeVisible({ timeout: 5000 });
 
-  // 3) Click payment CTA and expect the payment flow to begin
-  await payCTA.first().click();
+  // 3) Browser automation does not have a wallet injected, so verify the
+  // payment-required UI and simulate the verified on-chain result via API.
+  await expect(page.locator('text=Connect wallet to pay').first()).toBeVisible({ timeout: 5000 });
 
   // For testing, trigger escrow confirm (simulate on-chain success) as the rider
   await page.request.post('http://127.0.0.1:5000/api/escrow/confirm', {

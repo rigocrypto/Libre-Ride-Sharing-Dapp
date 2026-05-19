@@ -19,6 +19,7 @@ import {
 import { db } from '../db/client';
 import { rides } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { getRideStartEligibility } from '../services/rideStartGuard';
 
 const router = Router();
 
@@ -172,32 +173,12 @@ router.post(
 
         const ride = rideResult[0];
 
-        /**
-         * 2. Authorization check
-         * Only the assigned driver can start the ride
-         */
-        if (ride.driverId !== driverId) {
-          return { error: 'not_authorized' };
-        }
-
-        /**
-         * 3. State check
-         * Ride must be ACCEPTED before it can be started
-         */
-        if (ride.status !== 'ACCEPTED') {
-          return { error: 'invalid_state', current: ride.status };
-        }
-
-        /**
-         * 4. CRITICAL: Escrow check
-         * This is the economic invariant enforcement.
-         * Payment MUST be locked before the ride starts.
-         */
-        if (ride.escrowStatus !== 'locked') {
+        const eligibility = getRideStartEligibility(ride, driverId);
+        if (!eligibility.ok) {
           return {
-            error: 'escrow_not_funded',
-            current: ride.escrowStatus,
-            code: 'ESCROW_REQUIRED',
+            error: eligibility.code,
+            current: "current" in eligibility ? eligibility.current : undefined,
+            code: eligibility.code === "escrow_not_funded" ? "ESCROW_REQUIRED" : undefined,
           };
         }
 

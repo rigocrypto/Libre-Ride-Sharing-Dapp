@@ -20,4 +20,4 @@ export {
   InvalidEscrowStateError,
   InvalidEscrowTransitionError,
 } from "./errors";
-
+export { erc20Abi, rideEscrowAbi } from "./abi";

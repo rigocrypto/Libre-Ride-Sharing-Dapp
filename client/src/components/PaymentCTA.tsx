@@ -13,6 +13,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { AlertTriangle, Lock, Loader2 } from 'lucide-react';
 
 interface PaymentCTAProps {
@@ -20,9 +21,18 @@ interface PaymentCTAProps {
   onPay: () => void;
   isLoading?: boolean;
   error?: string;
+  statusLabel?: string;
+  isWalletReady?: boolean;
 }
 
-export function PaymentCTA({ amount, onPay, isLoading = false, error }: PaymentCTAProps) {
+export function PaymentCTA({
+  amount,
+  onPay,
+  isLoading = false,
+  error,
+  statusLabel,
+  isWalletReady = false,
+}: PaymentCTAProps) {
   return (
     <Card className="p-8 bg-gradient-to-br from-neon-purple/10 to-neon-pink/10 border-neon-purple/20">
       <div className="space-y-6">
@@ -59,6 +69,12 @@ export function PaymentCTA({ amount, onPay, isLoading = false, error }: PaymentC
         )}
 
         {/* CTA Button */}
+        {!isWalletReady && (
+          <div className="flex justify-center">
+            <ConnectButton />
+          </div>
+        )}
+
         <Button
           onClick={onPay}
           disabled={isLoading}
@@ -68,6 +84,12 @@ export function PaymentCTA({ amount, onPay, isLoading = false, error }: PaymentC
           {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {isLoading ? 'Processing...' : `Pay $${amount.toFixed(2)} with USDC`}
         </Button>
+
+        {statusLabel && (
+          <p className="text-xs text-center text-muted-foreground">
+            {statusLabel}
+          </p>
+        )}
 
         {/* Security note */}
         <p className="text-xs text-center text-muted-foreground">

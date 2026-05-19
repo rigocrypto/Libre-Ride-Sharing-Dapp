@@ -9,9 +9,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireWallet, requireSIWE } from '../middleware/auth';
 import { storage } from '../storage-factory';
-import { keccak256, stringToBytes } from 'viem';
+import { keccak256, stringToBytes, type Hex } from 'viem';
+import { prepareEscrowDeposit, confirmEscrowDeposit, EscrowDepositError } from '../services/escrowDeposit';
 
 const router = Router();
+
+const txHashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/) as z.ZodType<Hex>;
 
 router.post('/api/escrow/deposit/initiate', requireAuth, requireWallet, requireSIWE, async (req, res) => {
   try {
@@ -23,43 +26,35 @@ router.post('/api/escrow/deposit/initiate', requireAuth, requireWallet, requireS
       rideId: z.string(),
     }).parse(req.body);
 
-    const ride = await storage.getRide(rideId);
-    if (!ride) {
-      return res.status(404).json({ error: 'Ride not found' });
+    const riderWallet = req.user.walletAddress;
+    if (!riderWallet) {
+      return res.status(401).json({ error: 'Wallet required' });
     }
 
-    if (ride.riderId !== req.user.userId) {
-      return res.status(403).json({ error: 'Not authorized for this ride' });
-    }
-
-    if (!ride.driverId) {
-      return res.status(409).json({ error: 'Driver has not accepted this ride yet' });
-    }
-
-    const rideIdHash = keccak256(stringToBytes(rideId));
-    const amount = Number((ride as any).estimatedPrice || 0);
-
-    await storage.updateRide(rideId, {
-      escrowId: rideIdHash as any,
-      escrowAddress: process.env.ESCROW_CONTRACT_ADDRESS as any,
-      escrowStatus: 'pending' as any,
-      escrowAmount: amount as any,
+    const prepared = await prepareEscrowDeposit({
+      storage,
+      rideId,
+      riderUserId: req.user.userId,
+      riderWallet,
     });
 
     res.json({
       success: true,
-      data: {
-        rideId,
-        rideIdHash,
-        contractAddress: process.env.ESCROW_CONTRACT_ADDRESS || null,
-        amount,
-        amountWei: String(Math.round(amount * 1e6)),
-        platformFeeBps: 300,
-      },
+      data: prepared,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors[0].message });
+    }
+    if (error instanceof EscrowDepositError) {
+      const status = error.code === 'RIDE_NOT_FOUND'
+        ? 404
+        : error.code === 'NOT_AUTHORIZED'
+          ? 403
+          : error.code === 'NO_DRIVER'
+            ? 409
+            : 400;
+      return res.status(status).json({ error: error.message, code: error.code });
     }
     console.error('[Escrow] Failed to initiate deposit:', error);
     res.status(500).json({ error: 'Failed to initiate escrow deposit' });
@@ -74,27 +69,38 @@ router.post('/api/escrow/deposit/confirm', requireAuth, requireWallet, requireSI
 
     const { rideId, txHash } = z.object({
       rideId: z.string(),
-      txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/),
+      txHash: txHashSchema,
     }).parse(req.body);
 
-    const ride = await storage.getRide(rideId);
-    if (!ride) {
-      return res.status(404).json({ error: 'Ride not found' });
+    const riderWallet = req.user.walletAddress;
+    if (!riderWallet) {
+      return res.status(401).json({ error: 'Wallet required' });
     }
 
-    if (ride.riderId !== req.user.userId) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-
-    await storage.updateRide(rideId, {
-      escrowTxHash: txHash as any,
-      escrowStatus: 'locked' as any,
+    const result = await confirmEscrowDeposit({
+      storage,
+      rideId,
+      txHash,
+      riderUserId: req.user.userId,
+      riderWallet,
     });
 
-    res.json({ success: true, data: { escrowStatus: 'locked', txHash } });
+    res.json({ success: true, data: { escrowStatus: result.escrowStatus, txHash } });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors[0].message });
+    }
+    if (error instanceof EscrowDepositError) {
+      const status = error.code === 'RIDE_NOT_FOUND'
+        ? 404
+        : error.code === 'NOT_AUTHORIZED'
+          ? 403
+          : error.code === 'DUPLICATE_TX'
+            ? 409
+            : error.code === 'VERIFICATION_FAILED'
+              ? 422
+              : 400;
+      return res.status(status).json({ error: error.message, code: error.code });
     }
     console.error('[Escrow] Failed to confirm deposit:', error);
     res.status(500).json({ error: 'Failed to confirm escrow deposit' });
@@ -210,32 +216,42 @@ router.post('/api/escrow/confirm', requireAuth, requireWallet, requireSIWE, asyn
 
     const { rideId, txHash } = z.object({
       rideId: z.string(),
-      txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/),
+      txHash: txHashSchema,
     }).parse(req.body);
 
-    const ride = await storage.getRide(rideId);
-    if (!ride) {
-      return res.status(404).json({ error: 'Ride not found' });
+    const riderWallet = req.user.walletAddress;
+    if (!riderWallet) {
+      return res.status(401).json({ error: 'Wallet required' });
     }
 
-    if (ride.riderId !== req.user.userId) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-
-    // Update ride with transaction hash and mark as funded
-    await storage.updateRide(rideId, {
-      escrowTxHash: txHash as any,
-      escrowStatus: 'locked' as any, // Maps to FUNDED state in contract
+    const result = await confirmEscrowDeposit({
+      storage,
+      rideId,
+      txHash,
+      riderUserId: req.user.userId,
+      riderWallet,
     });
 
     res.json({
       success: true,
-      escrowStatus: 'locked',
+      escrowStatus: result.escrowStatus,
       txHash,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors[0].message });
+    }
+    if (error instanceof EscrowDepositError) {
+      const status = error.code === 'RIDE_NOT_FOUND'
+        ? 404
+        : error.code === 'NOT_AUTHORIZED'
+          ? 403
+          : error.code === 'DUPLICATE_TX'
+            ? 409
+            : error.code === 'VERIFICATION_FAILED'
+              ? 422
+              : 400;
+      return res.status(status).json({ error: error.message, code: error.code });
     }
     console.error('[Escrow] Failed to confirm escrow:', error);
     res.status(500).json({ error: 'Failed to confirm escrow' });
