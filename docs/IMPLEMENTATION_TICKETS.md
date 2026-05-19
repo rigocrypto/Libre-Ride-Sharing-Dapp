@@ -112,6 +112,45 @@ Acceptance Criteria:
 - E2E happy path covers deposit to release.
 - Manual QA covers refund and dispute.
 
+### TICKET-024: Live End-to-End Wallet Test
+
+Priority: Critical  
+Status: Complete
+
+Results:
+
+- Ride ID: `711efbe9-604f-414c-8d08-99f23eb0b68d`
+- Rider wallet: `0xb4CfAB88357D0f8C817a0b4E8C95D7B067C49Ac0`
+- Escrow contract: `0xE4995d77BffAcB05AF23764bf2831FCC35B4888F`
+- Mock USDC: `0xcb27336B232eA62469D0d2DEcDAC016d23CE1414`
+- Approval tx: `0x13fac0c80ee89ccc68482ce34b53a107b7de191c6986ce98cf59cdd3c052b1df`
+- Deposit tx: `0x5d949a4dee7b26711c40085fc78876905451fdb8b5961ea96a091a37a13c52a5`
+- Release tx: `0x52b5ddd5d9d62ae1e2f196846d84ab43de1bf1b4ab51c612741cc766f3bc5ecd`
+- Fare: 25 USDC
+- Fee: 300 bps, 0.75 USDC
+- Driver payout: 24.25 USDC
+- Final escrow balance: 0 USDC
+- Backend escrow state path: `locked` -> `released`
+
+Caveat:
+
+- `/api/rides/:id/start` returned 403 with a dummy driver wallet. Payment rail is proven; authenticated driver wallet flow is the next dependency.
+
+### TICKET-025: Wire Real Driver Auth For Escrow-Gated Ride Start
+
+Priority: Critical  
+Status: Not Started
+
+Acceptance Criteria:
+
+- A registered driver wallet can complete auth, wallet verification, and SIWE.
+- Driver account passes the current approval gate required for ride acceptance/start.
+- Driver accepts a ride after rider escrow reaches `locked`.
+- `/api/rides/:id/start` succeeds only for the assigned authenticated driver.
+- `/api/rides/:id/start` still returns 402 when escrow is not locked.
+- Live test uses two real wallets: rider and driver.
+- No dev seed wallet override is required for the authenticated happy path.
+
 ## Phase 2 - Driver Compliance And Admin Operations
 
 ### TICKET-007: Production Driver Approval Workflow
