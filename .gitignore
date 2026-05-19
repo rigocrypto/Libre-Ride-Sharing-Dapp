@@ -3,6 +3,7 @@ dist
 artifacts/
 cache/
 lib/
+broadcast/
 .DS_Store
 server/public
 vite.config.ts.*
