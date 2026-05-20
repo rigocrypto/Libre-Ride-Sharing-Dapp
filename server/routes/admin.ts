@@ -11,9 +11,12 @@ import { requireAuth, requireRole } from "../middleware/auth";
 import { storage } from "../storage-factory";
 import { db } from "../db/client";
 import { users, rides } from "../db/schema";
-import { sql, and, inArray } from "drizzle-orm";
+import { sql, inArray } from "drizzle-orm";
+import { buildAdminEscrowSnapshot } from "../services/adminEscrowMonitor";
 
 const router = Router();
+
+const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 /**
  * GET /api/admin/stats
@@ -222,6 +225,41 @@ router.get(
 );
 
 /**
+ * GET /api/admin/escrows
+ *
+ * Payment operations view for escrowed rides. Uses the storage abstraction so
+ * local QA can run against MemStorage while production remains auth-gated.
+ */
+router.get(
+  "/api/admin/escrows",
+  requireAuth,
+  requireRole("admin"),
+  async (_req, res) => {
+    try {
+      const allRides = await storage.getAllRides();
+      const snapshot = buildAdminEscrowSnapshot(allRides, {
+        chainId: Number(
+          process.env.CHAIN_ID ||
+            process.env.VITE_CHAIN_ID ||
+            BASE_SEPOLIA_CHAIN_ID
+        ),
+        tokenAddress:
+          process.env.USDC_TOKEN_ADDRESS ||
+          process.env.USDC_CONTRACT_ADDRESS_TESTNET ||
+          process.env.VITE_USDC_TOKEN_ADDRESS ||
+          "unknown",
+        verificationMode: process.env.ESCROW_VERIFIER_MODE || "mock",
+      });
+
+      res.json(snapshot);
+    } catch (error: any) {
+      console.error("[Admin] Failed to fetch escrow monitor:", error);
+      res.status(500).json({ error: "Failed to fetch escrow monitor" });
+    }
+  }
+);
+
+/**
  * GET /api/admin/users
  *
  * List users for admin moderation.
@@ -253,5 +291,3 @@ router.get(
 );
 
 export default router;
-
-

@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { AdminEscrowFilters } from "@/components/admin/AdminEscrowFilters";
+import { AdminEscrowSummaryCards } from "@/components/admin/AdminEscrowSummaryCards";
+import { AdminEscrowTable } from "@/components/admin/AdminEscrowTable";
 import {
   Table,
   TableBody,
@@ -11,12 +14,79 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Users, Car, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import type { AdminEscrowFilters as EscrowFilters, AdminEscrowRecord, AdminEscrowSnapshot } from "@/types/adminEscrow";
+import { useQuery } from "@tanstack/react-query";
+import { DollarSign, Users, Car, AlertTriangle, CheckCircle, XCircle, WalletCards } from "lucide-react";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+const defaultEscrowFilters: EscrowFilters = {
+  escrowStatus: "all",
+  rideStatus: "all",
+  token: "all",
+  chain: "all",
+  verificationMode: "all",
+  manualReview: "all",
+  search: "",
+};
+
+async function fetchAdminEscrows(): Promise<AdminEscrowSnapshot> {
+  const response = await apiRequest("GET", "/api/admin/escrows");
+  return response.json();
+}
+
+function matchesFilter(record: AdminEscrowRecord, filters: EscrowFilters): boolean {
+  const search = filters.search.trim().toLowerCase();
+  const searchable = [
+    record.rideId,
+    record.riderWallet,
+    record.driverWallet,
+    record.depositTxHash,
+    record.releaseTxHash,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (search && !searchable.includes(search)) return false;
+  if (filters.escrowStatus !== "all" && record.escrowStatus !== filters.escrowStatus) {
+    return false;
+  }
+  if (filters.rideStatus !== "all" && record.rideStatus !== filters.rideStatus) {
+    return false;
+  }
+  if (
+    filters.token !== "all" &&
+    !record.token.toLowerCase().includes(filters.token.toLowerCase())
+  ) {
+    return false;
+  }
+  if (filters.chain !== "all" && String(record.chainId) !== filters.chain) return false;
+  if (
+    filters.verificationMode !== "all" &&
+    record.verificationMode !== filters.verificationMode
+  ) {
+    return false;
+  }
+  if (
+    filters.manualReview !== "all" &&
+    String(record.manualReview) !== filters.manualReview
+  ) {
+    return false;
+  }
+
+  return true;
+}
 
 export default function Admin() {
-  const [selectedTab, setSelectedTab] = useState("rides");
+  const [selectedTab, setSelectedTab] = useState("escrow");
+  const [escrowFilters, setEscrowFilters] = useState(defaultEscrowFilters);
+  const escrowQuery = useQuery({
+    queryKey: ["/api/admin/escrows"],
+    queryFn: fetchAdminEscrows,
+    refetchInterval: 10_000,
+  });
 
   const adminStats = {
     totalRevenue: 124567.89,
@@ -26,6 +96,12 @@ export default function Admin() {
     pendingDisputes: 3,
     sosAlerts: 1,
   };
+
+  const filteredEscrowRecords = useMemo(() => {
+    return (escrowQuery.data?.records || []).filter((record) =>
+      matchesFilter(record, escrowFilters)
+    );
+  }, [escrowFilters, escrowQuery.data?.records]);
 
   const mockRides = [
     { id: "1", rider: "Alice Johnson", driver: "Bob Smith", status: "completed", fare: "$24.50", timestamp: "10 min ago" },
@@ -104,6 +180,15 @@ export default function Admin() {
         {/* Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
           <TabsList className="bg-muted/20">
+            <TabsTrigger value="escrow" data-testid="tab-escrow">
+              <WalletCards className="mr-2 h-4 w-4" />
+              Escrow
+              {(escrowQuery.data?.summary.manualReviewNeeded || 0) > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1 text-xs">
+                  {escrowQuery.data?.summary.manualReviewNeeded}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="rides" data-testid="tab-rides">Rides</TabsTrigger>
             <TabsTrigger value="disputes" data-testid="tab-disputes">
               Disputes
@@ -122,6 +207,46 @@ export default function Admin() {
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="escrow" className="space-y-4">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Escrow Monitor</h2>
+                <p className="text-sm text-muted-foreground">
+                  Polls every 10 seconds. TODO: upgrade to WebSocket push for dispute alerting.
+                </p>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {escrowQuery.data?.generatedAt
+                  ? `Last updated ${new Date(escrowQuery.data.generatedAt).toLocaleTimeString()}`
+                  : "Waiting for admin escrow data"}
+              </div>
+            </div>
+
+            {escrowQuery.isError && (
+              <Card className="border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+                Admin escrow data is protected. Sign in as an admin to view live ride payment
+                details.
+              </Card>
+            )}
+
+            {escrowQuery.data && (
+              <>
+                <AdminEscrowSummaryCards summary={escrowQuery.data.summary} />
+                <Card className="border-white/10 bg-white/5 p-4">
+                  <AdminEscrowFilters
+                    filters={escrowFilters}
+                    onFiltersChange={setEscrowFilters}
+                  />
+                </Card>
+              </>
+            )}
+
+            <AdminEscrowTable
+              records={filteredEscrowRecords}
+              isLoading={escrowQuery.isLoading}
+            />
+          </TabsContent>
 
           {/* Rides Table */}
           <TabsContent value="rides">

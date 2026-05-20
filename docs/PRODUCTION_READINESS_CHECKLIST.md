@@ -22,6 +22,7 @@ Libre Ride should be treated as a staging MVP until every gate below is satisfie
 - [ ] Rider can complete a real wallet-signed deposit on Base Sepolia.
 - [ ] Backend verifies escrow deposit from on-chain events, not only client callbacks.
 - [ ] Release, refund, and dispute flows are tested on Base Sepolia.
+- [ ] Admin escrow monitoring is available for locked, pending, failed, disputed, released, refunded, and stuck deposits.
 - [ ] Every payment endpoint requires an idempotency key.
 - [ ] Transaction hashes are unique in the database.
 - [ ] One ride cannot be tied to multiple active escrow deposits.
@@ -109,4 +110,3 @@ Libre Ride should be treated as a staging MVP until every gate below is satisfie
 - [ ] At least one toll-road quote is tested.
 - [ ] At least one airport-eligible ride is tested.
 - [ ] At least one accessibility-category ride is tested or explicitly deferred before launch.
-

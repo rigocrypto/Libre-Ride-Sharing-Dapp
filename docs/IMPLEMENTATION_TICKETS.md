@@ -158,6 +158,21 @@ Implementation Notes:
 - Final completion still requires a live two-wallet Base Sepolia run with a registered driver wallet.
 - Manual proof checklist: `docs/STAGING_QA_PLAN.md`.
 
+### TICKET-026: Admin Escrow Monitoring Dashboard
+
+Priority: Critical  
+Status: In Progress
+
+Acceptance Criteria:
+
+- Admin can inspect escrowed rides from a protected admin endpoint.
+- Dashboard shows locked, pending, failed, disputed, released, refunded, and manual-review counts.
+- Dashboard table includes ride ID, rider wallet, driver wallet, ride status, escrow status, amount, token, chain ID, deposit tx hash, verification mode, and timestamps.
+- Operators can filter by escrow status, ride status, token, chain, verification mode, manual review, and ride/wallet search.
+- Pending deposits older than 15 minutes are flagged for manual review.
+- Admin endpoint remains protected by admin authentication and authorization.
+- Operator actions are disabled placeholders until release/refund/retry backend support is added.
+
 ## Phase 2 - Driver Compliance And Admin Operations
 
 ### TICKET-007: Production Driver Approval Workflow
