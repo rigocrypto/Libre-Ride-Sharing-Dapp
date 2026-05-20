@@ -7,6 +7,8 @@ import { AdminEscrowDetailDialog } from "@/components/admin/AdminEscrowDetailDia
 import { AdminEscrowSummaryCards } from "@/components/admin/AdminEscrowSummaryCards";
 import { AdminEscrowTable } from "@/components/admin/AdminEscrowTable";
 import { AdminAuditLogTable } from "@/components/admin/AdminAuditLogTable";
+import { AdminDriverComplianceDetailDialog } from "@/components/admin/AdminDriverComplianceDetailDialog";
+import { AdminDriverComplianceTable } from "@/components/admin/AdminDriverComplianceTable";
 import {
   Table,
   TableBody,
@@ -25,6 +27,10 @@ import type {
   AdminEscrowSnapshot,
   AuditLogEntry,
 } from "@/types/adminEscrow";
+import type {
+  AdminDriverComplianceAction,
+  AdminDriverComplianceRecord,
+} from "@/types/adminDriverCompliance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DollarSign, Users, Car, AlertTriangle, CheckCircle, XCircle, WalletCards } from "lucide-react";
 import { Link } from "wouter";
@@ -74,6 +80,40 @@ async function fetchAdminAuditLogs(filters: {
   if (filters.actorId.trim()) search.set("actorId", filters.actorId.trim());
   const query = search.toString();
   const response = await apiRequest("GET", `/api/admin/audit-logs${query ? `?${query}` : ""}`);
+  return response.json();
+}
+
+async function fetchAdminDriverCompliance(filters: {
+  status: string;
+  search: string;
+}): Promise<{ drivers: AdminDriverComplianceRecord[] }> {
+  const query = new URLSearchParams();
+  if (filters.status !== "all") query.set("status", filters.status);
+  if (filters.search.trim()) query.set("search", filters.search.trim());
+  const response = await apiRequest(
+    "GET",
+    `/api/admin/drivers${query.toString() ? `?${query.toString()}` : ""}`
+  );
+  return response.json();
+}
+
+async function fetchAdminDriverDetail(
+  driverId: string
+): Promise<AdminDriverComplianceRecord> {
+  const response = await apiRequest("GET", `/api/admin/drivers/${driverId}`);
+  return response.json();
+}
+
+async function runAdminDriverComplianceAction(args: {
+  driverId: string;
+  action: AdminDriverComplianceAction;
+  reason: string;
+}): Promise<{ driver: AdminDriverComplianceRecord }> {
+  const response = await apiRequest(
+    "POST",
+    `/api/admin/drivers/${args.driverId}/${args.action}`,
+    { reason: args.reason }
+  );
   return response.json();
 }
 
@@ -128,8 +168,14 @@ export default function Admin() {
     rideId: "",
     actorId: "",
   });
+  const [driverFilters, setDriverFilters] = useState({
+    status: "all",
+    search: "",
+  });
   const [selectedEscrowRideId, setSelectedEscrowRideId] = useState<string | null>(null);
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [driverActionError, setDriverActionError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const escrowQuery = useQuery({
     queryKey: ["/api/admin/escrows"],
@@ -158,6 +204,27 @@ export default function Admin() {
     queryKey: ["/api/admin/audit-logs", auditFilters],
     queryFn: () => fetchAdminAuditLogs(auditFilters),
     enabled: selectedTab === "audit",
+  });
+  const driverComplianceQuery = useQuery({
+    queryKey: ["/api/admin/drivers", driverFilters],
+    queryFn: () => fetchAdminDriverCompliance(driverFilters),
+    enabled: selectedTab === "drivers",
+    refetchInterval: 30_000,
+  });
+  const driverDetailQuery = useQuery({
+    queryKey: ["/api/admin/drivers", selectedDriverId],
+    queryFn: () => fetchAdminDriverDetail(selectedDriverId!),
+    enabled: !!selectedDriverId,
+  });
+  const driverActionMutation = useMutation({
+    mutationFn: runAdminDriverComplianceAction,
+    onSuccess: async (result) => {
+      setDriverActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/drivers"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/audit-logs"] });
+      queryClient.setQueryData(["/api/admin/drivers", selectedDriverId], result.driver);
+    },
+    onError: (error: Error) => setDriverActionError(error.message),
   });
 
   const adminStats = {
@@ -262,6 +329,26 @@ export default function Admin() {
               )}
             </TabsTrigger>
             <TabsTrigger value="rides" data-testid="tab-rides">Rides</TabsTrigger>
+            <TabsTrigger value="drivers" data-testid="tab-drivers">
+              Drivers
+              {(driverComplianceQuery.data?.drivers || []).filter(
+                (driver) =>
+                  driver.approvalStatus === "pending_review" ||
+                  driver.approvalStatus === "requires_manual_review" ||
+                  driver.approvalStatus === "expired_documents"
+              ).length > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1 text-xs">
+                  {
+                    (driverComplianceQuery.data?.drivers || []).filter(
+                      (driver) =>
+                        driver.approvalStatus === "pending_review" ||
+                        driver.approvalStatus === "requires_manual_review" ||
+                        driver.approvalStatus === "expired_documents"
+                    ).length
+                  }
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="audit" data-testid="tab-audit">Audit</TabsTrigger>
             <TabsTrigger value="disputes" data-testid="tab-disputes">
               Disputes
@@ -360,6 +447,50 @@ export default function Admin() {
               isLoading={auditQuery.isLoading}
               filters={auditFilters}
               onFiltersChange={setAuditFilters}
+            />
+          </TabsContent>
+
+          <TabsContent value="drivers" className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Driver Compliance</h2>
+              <p className="text-sm text-muted-foreground">
+                Review driver applications, document expiration, Orlando permit, and MCO eligibility before dispatch.
+              </p>
+            </div>
+            {driverComplianceQuery.isError && (
+              <Card className="border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+                Driver compliance data is protected. Sign in as an admin to view applications.
+              </Card>
+            )}
+            <AdminDriverComplianceTable
+              drivers={driverComplianceQuery.data?.drivers || []}
+              isLoading={driverComplianceQuery.isLoading}
+              status={driverFilters.status}
+              search={driverFilters.search}
+              onStatusChange={(status) => setDriverFilters((current) => ({ ...current, status }))}
+              onSearchChange={(search) => setDriverFilters((current) => ({ ...current, search }))}
+              onViewDetails={(driverId) => {
+                setDriverActionError(null);
+                setSelectedDriverId(driverId);
+              }}
+            />
+            <AdminDriverComplianceDetailDialog
+              driver={driverDetailQuery.data || null}
+              isOpen={!!selectedDriverId}
+              isLoading={driverDetailQuery.isLoading}
+              isActionPending={driverActionMutation.isPending}
+              actionError={driverActionError}
+              onOpenChange={(open) => {
+                if (!open) setSelectedDriverId(null);
+              }}
+              onAction={(action, reason) => {
+                if (!selectedDriverId) return;
+                driverActionMutation.mutate({
+                  driverId: selectedDriverId,
+                  action,
+                  reason,
+                });
+              }}
             />
           </TabsContent>
 

@@ -37,7 +37,16 @@ export const users = pgTable("users", {
 
   // Driver status
   driverStatus: text("driver_status")
-    .$type<"unverified" | "pending" | "approved" | "rejected">()
+    .$type<
+      | "unverified"
+      | "pending"
+      | "pending_review"
+      | "approved"
+      | "rejected"
+      | "suspended"
+      | "expired_documents"
+      | "requires_manual_review"
+    >()
     .default("unverified"),
 
   // Auth provider
@@ -50,4 +59,3 @@ export const users = pgTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-

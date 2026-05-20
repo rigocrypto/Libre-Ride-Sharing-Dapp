@@ -56,6 +56,11 @@ Libre Ride should be treated as a staging MVP until every gate below is satisfie
 
 - [ ] Persona/KYC production flow is tested with approved, rejected, and expired cases.
 - [ ] Driver license upload and expiration tracking are live.
+- [ ] Admin Driver Compliance dashboard is available behind admin auth.
+- [ ] Driver approval, rejection, suspension, and document-request actions require operator reason and audit logs.
+- [ ] Dispatch scoring excludes non-approved and expired-document drivers before ride offers are shown.
+- [ ] Daily compliance expiration check marks approved drivers with expired documents as `expired_documents`.
+- [ ] Orlando permit number/expiration and MCO airport eligibility fields are tracked.
 - [ ] Nationwide criminal background check proof is tracked.
 - [ ] Vehicle registration and inspection uploads are tracked.
 - [ ] Commercial/TNC insurance certificate is required before active rides.

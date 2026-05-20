@@ -14,6 +14,7 @@ let storage: IStorage;
 let acceptRideAtomic: typeof acceptRideAtomicType;
 let RideAlreadyAcceptedError: typeof import("./rideAcceptance").RideAlreadyAcceptedError;
 let RideNotFoundError: typeof import("./rideAcceptance").RideNotFoundError;
+let DriverNotEligibleError: typeof import("./rideAcceptance").DriverNotEligibleError;
 
 describe("Ride Acceptance - Isolation & Race Conditions", () => {
   let riderId: string;
@@ -32,6 +33,7 @@ describe("Ride Acceptance - Isolation & Race Conditions", () => {
     acceptRideAtomic = rideAcceptance.acceptRideAtomic;
     RideAlreadyAcceptedError = rideAcceptance.RideAlreadyAcceptedError;
     RideNotFoundError = rideAcceptance.RideNotFoundError;
+    DriverNotEligibleError = rideAcceptance.DriverNotEligibleError;
 
     const rider = await storage.createUser({
       firebaseUid: `test-rider-${Date.now()}`,
@@ -161,5 +163,55 @@ describe("Ride Acceptance - Isolation & Race Conditions", () => {
       acceptedAt: expect.any(Date),
     });
     expect(result.acceptedAt.getTime()).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("rejects suspended drivers before accepting a ride", async () => {
+    const suspended = await storage.createUser({
+      firebaseUid: `suspended-driver-${Date.now()}`,
+      email: `suspended-${Date.now()}@test.local`,
+      role: "driver",
+      walletAddress: "0x4444444444444444444444444444444444444444",
+      walletVerifiedAt: new Date(),
+      driverStatus: "suspended" as any,
+    });
+    await storage.createDriver({ userId: suspended.id, driverStatus: "suspended" as any } as any);
+    const freshRide = await storage.createRide({
+      riderId,
+      status: "OFFERED",
+      pickupLocation: { lat: 28.4, lng: -81.3, address: "Test pickup" },
+      dropoffLocation: { lat: 28.5, lng: -81.4, address: "Test dropoff" },
+      estimatedPrice: 30,
+    });
+
+    await expect(acceptRideAtomic(freshRide.id, suspended.id)).rejects.toThrow(
+      DriverNotEligibleError
+    );
+  });
+
+  it("rejects approved drivers with expired documents", async () => {
+    const expired = await storage.createUser({
+      firebaseUid: `expired-driver-${Date.now()}`,
+      email: `expired-${Date.now()}@test.local`,
+      role: "driver",
+      walletAddress: "0x5555555555555555555555555555555555555555",
+      walletVerifiedAt: new Date(),
+      driverStatus: "approved" as any,
+    });
+    await storage.createDriver({
+      userId: expired.id,
+      driverStatus: "approved" as any,
+      insuranceExpiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    } as any);
+    const freshRide = await storage.createRide({
+      riderId,
+      status: "OFFERED",
+      pickupLocation: { lat: 28.4, lng: -81.3, address: "Test pickup" },
+      dropoffLocation: { lat: 28.5, lng: -81.4, address: "Test dropoff" },
+      estimatedPrice: 30,
+    });
+
+    await expect(acceptRideAtomic(freshRide.id, expired.id)).rejects.toThrow(
+      DriverNotEligibleError
+    );
   });
 });

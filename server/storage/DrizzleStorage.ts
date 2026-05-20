@@ -11,6 +11,7 @@ import { db } from "../db/client";
 import { users, walletLinkNonces, driverDocuments, rides } from "../db/schema";
 import { eq, and, or, desc } from "drizzle-orm";
 import type { IStorage } from "../storage";
+import { isDispatchEligible } from "../services/driverCompliance";
 import type {
   User,
   InsertUser,
@@ -183,6 +184,25 @@ export class DrizzleStorage implements IStorage {
       licensePlate: null,
       licenseNumber: doc?.licenseUrl || null,
       insuranceDoc: doc?.insuranceUrl || null,
+      licenseStatus: (doc as any)?.licenseStatus || "pending",
+      insuranceStatus: (doc as any)?.insuranceStatus || "pending",
+      vehicleInspectionStatus: (doc as any)?.vehicleInspectionStatus || "pending",
+      backgroundCheckStatus: (doc as any)?.backgroundCheckStatus || "pending",
+      orlandoPermitStatus: (doc as any)?.orlandoPermitStatus || "pending",
+      airportEligibilityStatus: (doc as any)?.airportEligibilityStatus || "pending",
+      licenseExpiresAt: (doc as any)?.licenseExpiresAt || null,
+      insuranceExpiresAt: (doc as any)?.insuranceExpiresAt || null,
+      inspectionExpiresAt: (doc as any)?.inspectionExpiresAt || null,
+      permitExpiresAt: (doc as any)?.permitExpiresAt || null,
+      orlandoPermitNumber: (doc as any)?.orlandoPermitNumber || null,
+      orlandoPermitExpiresAt: (doc as any)?.orlandoPermitExpiresAt || null,
+      mcoAirportEligible: (doc as any)?.mcoAirportEligible || false,
+      mcoEligibilityGrantedAt: (doc as any)?.mcoEligibilityGrantedAt || null,
+      backgroundCheckProvider: (doc as any)?.backgroundCheckProvider || null,
+      backgroundCheckCompletedAt: (doc as any)?.backgroundCheckCompletedAt || null,
+      lastReviewedAt: (doc as any)?.lastReviewedAt || doc?.reviewedAt || null,
+      reviewedBy: (doc as any)?.reviewedBy || null,
+      nextReviewDueAt: (doc as any)?.nextReviewDueAt || null,
       vehicleRegistration: null,
       isVerified: (user as any).driverStatus === "approved",
       isAirportLicensed: false,
@@ -242,7 +262,31 @@ export class DrizzleStorage implements IStorage {
     }
 
     // Update driver documents if provided
-    if ((updates as any).licenseNumber || (updates as any).insuranceDoc) {
+    const documentFields = [
+      "licenseNumber",
+      "insuranceDoc",
+      "licenseStatus",
+      "insuranceStatus",
+      "vehicleInspectionStatus",
+      "backgroundCheckStatus",
+      "orlandoPermitStatus",
+      "airportEligibilityStatus",
+      "licenseExpiresAt",
+      "insuranceExpiresAt",
+      "inspectionExpiresAt",
+      "permitExpiresAt",
+      "orlandoPermitNumber",
+      "orlandoPermitExpiresAt",
+      "mcoAirportEligible",
+      "mcoEligibilityGrantedAt",
+      "backgroundCheckProvider",
+      "backgroundCheckCompletedAt",
+      "lastReviewedAt",
+      "reviewedBy",
+      "nextReviewDueAt",
+      "rejectionReason",
+    ];
+    if (documentFields.some((field) => Object.prototype.hasOwnProperty.call(updates as any, field))) {
       const [existing] = await db
         .select()
         .from(driverDocuments)
@@ -255,7 +299,37 @@ export class DrizzleStorage implements IStorage {
           .set({
             licenseUrl: (updates as any).licenseNumber || existing.licenseUrl,
             insuranceUrl: (updates as any).insuranceDoc || existing.insuranceUrl,
-          })
+            licenseStatus: (updates as any).licenseStatus ?? (existing as any).licenseStatus,
+            insuranceStatus: (updates as any).insuranceStatus ?? (existing as any).insuranceStatus,
+            vehicleInspectionStatus:
+              (updates as any).vehicleInspectionStatus ?? (existing as any).vehicleInspectionStatus,
+            backgroundCheckStatus:
+              (updates as any).backgroundCheckStatus ?? (existing as any).backgroundCheckStatus,
+            orlandoPermitStatus:
+              (updates as any).orlandoPermitStatus ?? (existing as any).orlandoPermitStatus,
+            airportEligibilityStatus:
+              (updates as any).airportEligibilityStatus ?? (existing as any).airportEligibilityStatus,
+            licenseExpiresAt: (updates as any).licenseExpiresAt ?? (existing as any).licenseExpiresAt,
+            insuranceExpiresAt: (updates as any).insuranceExpiresAt ?? (existing as any).insuranceExpiresAt,
+            inspectionExpiresAt: (updates as any).inspectionExpiresAt ?? (existing as any).inspectionExpiresAt,
+            permitExpiresAt: (updates as any).permitExpiresAt ?? (existing as any).permitExpiresAt,
+            orlandoPermitNumber:
+              (updates as any).orlandoPermitNumber ?? (existing as any).orlandoPermitNumber,
+            orlandoPermitExpiresAt:
+              (updates as any).orlandoPermitExpiresAt ?? (existing as any).orlandoPermitExpiresAt,
+            mcoAirportEligible:
+              (updates as any).mcoAirportEligible ?? (existing as any).mcoAirportEligible,
+            mcoEligibilityGrantedAt:
+              (updates as any).mcoEligibilityGrantedAt ?? (existing as any).mcoEligibilityGrantedAt,
+            backgroundCheckProvider:
+              (updates as any).backgroundCheckProvider ?? (existing as any).backgroundCheckProvider,
+            backgroundCheckCompletedAt:
+              (updates as any).backgroundCheckCompletedAt ?? (existing as any).backgroundCheckCompletedAt,
+            lastReviewedAt: (updates as any).lastReviewedAt ?? (existing as any).lastReviewedAt,
+            reviewedBy: (updates as any).reviewedBy ?? (existing as any).reviewedBy,
+            nextReviewDueAt: (updates as any).nextReviewDueAt ?? (existing as any).nextReviewDueAt,
+            rejectionReason: (updates as any).rejectionReason ?? existing.rejectionReason,
+          } as any)
           .where(eq(driverDocuments.userId, userId));
       } else {
         await db.insert(driverDocuments).values({
@@ -263,11 +337,32 @@ export class DrizzleStorage implements IStorage {
           licenseUrl: (updates as any).licenseNumber || null,
           insuranceUrl: (updates as any).insuranceDoc || null,
           status: "pending",
-        });
+          licenseStatus: (updates as any).licenseStatus || "pending",
+          insuranceStatus: (updates as any).insuranceStatus || "pending",
+          vehicleInspectionStatus: (updates as any).vehicleInspectionStatus || "pending",
+          backgroundCheckStatus: (updates as any).backgroundCheckStatus || "pending",
+          orlandoPermitStatus: (updates as any).orlandoPermitStatus || "pending",
+          airportEligibilityStatus: (updates as any).airportEligibilityStatus || "pending",
+          rejectionReason: (updates as any).rejectionReason || null,
+        } as any);
       }
     }
 
     return this.getDriver(userId);
+  }
+
+  async listDrivers(): Promise<DriverProfile[]> {
+    const driverUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.role, "driver"));
+
+    const profiles: DriverProfile[] = [];
+    for (const user of driverUsers) {
+      const profile = await this.getDriverProfile(user.id);
+      if (profile) profiles.push(profile);
+    }
+    return profiles;
   }
 
   async getOnlineDrivers(): Promise<DriverProfile[]> {
@@ -281,7 +376,12 @@ export class DrizzleStorage implements IStorage {
     const profiles: DriverProfile[] = [];
     for (const user of onlineUsers) {
       const profile = await this.getDriverProfile(user.id);
-      if (profile) profiles.push(profile);
+      if (
+        profile &&
+        isDispatchEligible(profile as any, (profile as any).driverDetails)
+      ) {
+        profiles.push(profile);
+      }
     }
     return profiles;
   }
@@ -540,4 +640,3 @@ export class DrizzleStorage implements IStorage {
     throw new Error("Document uploads not yet implemented");
   }
 }
-

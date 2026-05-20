@@ -6,7 +6,7 @@ This backlog converts the production roadmap into buildable engineering work. Ph
 
 ### TICKET-021: Resolve Dependabot Security Vulnerabilities
 
-Priority: Critical  
+Priority: Critical
 Status: Completed
 
 Acceptance Criteria:
@@ -161,7 +161,7 @@ Implementation Notes:
 ### TICKET-026: Admin Escrow Monitoring Dashboard
 
 Priority: Critical  
-Status: In Progress
+Status: Complete
 
 Acceptance Criteria:
 
@@ -192,7 +192,7 @@ Acceptance Criteria:
 ### TICKET-028: Persistent Audit Logs And Admin Activity Timeline
 
 Priority: High  
-Status: In Progress
+Status: Complete
 
 Acceptance Criteria:
 
@@ -207,10 +207,27 @@ Acceptance Criteria:
 
 ## Phase 2 - Driver Compliance And Admin Operations
 
+### TICKET-029: Driver Compliance Approval Workflow
+
+Priority: Critical
+Status: Complete
+
+Acceptance Criteria:
+
+- Admin can list and inspect driver compliance applications.
+- Admin can approve, reject, suspend, and request updated documents from protected routes.
+- Rejection, suspension, and document requests require a reason with at least 10 characters.
+- Compliance decisions write persistent audit entries when database storage is active.
+- Driver dispatch eligibility is blocked for rejected, suspended, manual-review, unverified, or expired-document states.
+- Document expiration detection runs on startup and every 24 hours.
+- Orlando permit number/expiration, MCO eligibility, and background-check provider fields are represented in schema.
+- Admin UI includes a Driver Compliance tab with filters, review modal, warnings, and action buttons.
+- Existing check, unit tests, build, and E2E verification remain passing.
+
 ### TICKET-007: Production Driver Approval Workflow
 
 Priority: Critical  
-Status: Not Started
+Status: Superseded by TICKET-029
 
 Acceptance Criteria:
 

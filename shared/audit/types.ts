@@ -7,7 +7,11 @@ export type AuditAction =
   | "ESCROW_DISPUTE_RESOLVED"
   | "RIDE_FORCE_COMPLETED"
   | "DRIVER_APPROVED"
-  | "DRIVER_SUSPENDED";
+  | "DRIVER_REJECTED"
+  | "DRIVER_SUSPENDED"
+  | "DRIVER_DOCUMENTS_REQUESTED"
+  | "DRIVER_MANUAL_REVIEW"
+  | "DRIVER_DOCUMENTS_EXPIRED";
 
 export interface AuditLogEntry {
   id: string;

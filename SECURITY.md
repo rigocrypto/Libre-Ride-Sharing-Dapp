@@ -51,6 +51,8 @@ The Firebase finding should be revisited when Firebase Admin or Google Cloud Sto
 
 Sensitive admin escrow actions now flow through a typed audit abstraction and require an operator reason. The audit log uses a Postgres-backed `audit_log` table when database storage is active, with an in-memory fallback reserved for MemStorage/test paths.
 
+Driver compliance actions use the same audit trail. Approval, rejection, suspension, document re-request, manual review, and automatic document-expiration events record actor, previous state, next state, reason, and metadata before a driver can become dispatch eligible again.
+
 ## Verification Requirement
 
 After dependency changes, run:

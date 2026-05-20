@@ -10,6 +10,8 @@ import express, {
 import { registerRoutes } from "./routes";
 import { createRouteHandler } from "uploadthing/express";
 import { uploadRouter } from "./uploadthing";
+import { storage } from "./storage-factory";
+import { startComplianceExpiryJob } from "./jobs/complianceExpiry";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -82,6 +84,7 @@ app.use((req, res, next) => {
 export default async function runApp(
   setup: (app: Express, server: Server) => Promise<void>,
 ) {
+  startComplianceExpiryJob(storage);
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -22,12 +22,23 @@ import {
   type AdminEscrowAction,
 } from "../services/adminEscrowActions";
 import { getAuditLogForRide, listAuditLogEntries } from "../services/auditLog";
+import {
+  applyDriverComplianceAction,
+  DriverComplianceActionError,
+  getDriverComplianceDetail,
+  listDriverComplianceProfiles,
+  type AdminDriverComplianceAction,
+} from "../services/adminDriverCompliance";
 
 const router = Router();
 
 const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 const adminEscrowReasonSchema = z.object({
+  reason: z.string().min(10),
+});
+
+const adminDriverReasonSchema = z.object({
   reason: z.string().min(10),
 });
 
@@ -68,7 +79,7 @@ router.get(
         db
           .select({ pendingDrivers: sql<number>`count(*)` })
           .from(users)
-          .where(sql`driver_status = 'pending'`) as any,
+          .where(sql`driver_status in ('pending', 'pending_review', 'requires_manual_review', 'expired_documents')`) as any,
         db
           .select({ approvedDrivers: sql<number>`count(*)` })
           .from(users)
@@ -121,29 +132,62 @@ router.get(
 );
 
 /**
- * GET /api/admin/drivers/pending
+ * GET /api/admin/drivers
  *
- * List pending drivers for approval.
+ * Driver compliance queue with dispatch eligibility and document warnings.
  */
+router.get(
+  "/api/admin/drivers",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const query = z
+        .object({
+          status: z.string().optional(),
+          search: z.string().optional(),
+        })
+        .parse(req.query);
+      const drivers = await listDriverComplianceProfiles(storage);
+      const filtered = drivers.filter((driver) => {
+        if (query.status && query.status !== "all" && driver.approvalStatus !== query.status) {
+          return false;
+        }
+        const search = query.search?.trim().toLowerCase();
+        if (!search) return true;
+        return [
+          driver.driverId,
+          driver.email,
+          driver.username,
+          driver.walletAddress,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      });
+
+      res.json({ drivers: filtered });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("[Admin] Failed to fetch driver compliance queue:", error);
+      res.status(500).json({ error: "Failed to fetch driver compliance queue" });
+    }
+  }
+);
+
 router.get(
   "/api/admin/drivers/pending",
   requireAuth,
   requireRole("admin"),
   async (_req, res) => {
     try {
-      const rows = await db
-        .select({
-          id: users.id,
-          email: users.email,
-          walletAddress: users.walletAddress,
-          driverStatus: sql<string>`driver_status`,
-          createdAt: users.createdAt,
-        })
-        .from(users)
-        .where(sql`driver_status = 'pending'`)
-        .orderBy(users.createdAt);
-
-      res.json(rows);
+      const drivers = (await listDriverComplianceProfiles(storage)).filter((driver) =>
+        ["pending_review", "requires_manual_review", "expired_documents"].includes(driver.approvalStatus)
+      );
+      res.json(drivers);
     } catch (error: any) {
       console.error("[Admin] Failed to fetch pending drivers:", error);
       res.status(500).json({ error: "Failed to fetch pending drivers" });
@@ -151,87 +195,75 @@ router.get(
   }
 );
 
-/**
- * POST /api/admin/drivers/:id/approve
- *
- * Approve a driver (by userId).
- */
-router.post(
-  "/api/admin/drivers/:id/approve",
+router.get(
+  "/api/admin/drivers/:driverId",
   requireAuth,
   requireRole("admin"),
   async (req, res) => {
     try {
-      const { id } = z.object({ id: z.string() }).parse(req.params);
-
-      const user = await storage.getUser(id);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      const updated = await storage.updateDriver(id, {
-        driverStatus: "approved" as any,
-        isVerified: true as any,
-      });
-
-      if (!updated) {
+      const { driverId } = z.object({ driverId: z.string() }).parse(req.params);
+      const detail = await getDriverComplianceDetail(storage, driverId);
+      if (!detail) {
         return res.status(404).json({ error: "Driver not found" });
       }
-
-      res.json({ success: true, driverStatus: (updated as any).driverStatus });
+      res.json(detail);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors[0].message });
       }
-      console.error("[Admin] Failed to approve driver:", error);
-      res.status(500).json({ error: "Failed to approve driver" });
+      console.error("[Admin] Failed to fetch driver compliance detail:", error);
+      res.status(500).json({ error: "Failed to fetch driver compliance detail" });
     }
   }
 );
 
-/**
- * POST /api/admin/drivers/:id/reject
- *
- * Reject a driver (by userId) with reason.
- */
-router.post(
-  "/api/admin/drivers/:id/reject",
-  requireAuth,
-  requireRole("admin"),
-  async (req, res) => {
-    try {
-      const { id } = z.object({ id: z.string() }).parse(req.params);
-      const { reason } = z
-        .object({ reason: z.string().min(10) })
-        .parse(req.body);
+function registerAdminDriverActionRoute(
+  path: string,
+  action: AdminDriverComplianceAction,
+  requiresReason = true
+) {
+  router.post(
+    path,
+    requireAuth,
+    requireRole("admin"),
+    async (req, res) => {
+      try {
+        const { driverId } = z.object({ driverId: z.string() }).parse(req.params);
+        const reason = requiresReason
+          ? adminDriverReasonSchema.parse(req.body).reason
+          : adminDriverReasonSchema.partial().parse(req.body).reason;
+        const result = await applyDriverComplianceAction({
+          storage,
+          driverId,
+          actor: {
+            userId: req.user!.userId,
+            role: req.user!.role,
+            walletAddress: (req.user as any).walletAddress,
+          },
+          action,
+          reason,
+        });
 
-      const user = await storage.getUser(id);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        res.json(result);
+      } catch (error: any) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ error: error.errors[0].message });
+        }
+        if (error instanceof DriverComplianceActionError) {
+          return res.status(error.statusCode).json({ error: error.message });
+        }
+        console.error(`[Admin] Failed driver compliance action ${action}:`, error);
+        res.status(500).json({ error: `Failed driver compliance action ${action}` });
       }
-
-      const updated = await storage.updateDriver(id, {
-        driverStatus: "rejected" as any,
-      });
-
-      if (!updated) {
-        return res.status(404).json({ error: "Driver not found" });
-      }
-
-      res.json({
-        success: true,
-        driverStatus: (updated as any).driverStatus,
-        reason,
-      });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors[0].message });
-      }
-      console.error("[Admin] Failed to reject driver:", error);
-      res.status(500).json({ error: "Failed to reject driver" });
     }
-  }
-);
+  );
+}
+
+registerAdminDriverActionRoute("/api/admin/drivers/:driverId/approve", "approve", false);
+registerAdminDriverActionRoute("/api/admin/drivers/:driverId/reject", "reject");
+registerAdminDriverActionRoute("/api/admin/drivers/:driverId/suspend", "suspend");
+registerAdminDriverActionRoute("/api/admin/drivers/:driverId/request-documents", "request-documents");
+registerAdminDriverActionRoute("/api/admin/drivers/:driverId/manual-review", "manual-review");
 
 /**
  * GET /api/admin/rides

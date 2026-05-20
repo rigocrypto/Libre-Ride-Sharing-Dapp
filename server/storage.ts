@@ -23,6 +23,7 @@ import {
   BADGE_TYPES,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { isDispatchEligible } from "./services/driverCompliance";
 
 export interface IStorage {
   // Users
@@ -44,6 +45,7 @@ export interface IStorage {
   getDriverProfile(userId: string): Promise<DriverProfile | undefined>;
   createDriver(driver: InsertDriver): Promise<Driver>;
   updateDriver(userId: string, updates: Partial<Driver>): Promise<Driver | undefined>;
+  listDrivers(): Promise<DriverProfile[]>;
   getOnlineDrivers(): Promise<DriverProfile[]>;
 
   // Rides
@@ -188,7 +190,7 @@ export class MemStorage implements IStorage {
 
   async createDriver(insertDriver: InsertDriver): Promise<Driver> {
     const id = randomUUID();
-    const driver: Driver = {
+    const driver: any = {
       id,
       userId: insertDriver.userId,
       isOnline: insertDriver.isOnline ?? false,
@@ -214,9 +216,28 @@ export class MemStorage implements IStorage {
       driverApprovedAt: null,
       driverRejectedAt: null,
       rejectionReason: null,
+      licenseStatus: (insertDriver as any).licenseStatus || "pending",
+      insuranceStatus: (insertDriver as any).insuranceStatus || "pending",
+      vehicleInspectionStatus: (insertDriver as any).vehicleInspectionStatus || "pending",
+      backgroundCheckStatus: (insertDriver as any).backgroundCheckStatus || "pending",
+      orlandoPermitStatus: (insertDriver as any).orlandoPermitStatus || "pending",
+      airportEligibilityStatus: (insertDriver as any).airportEligibilityStatus || "pending",
+      licenseExpiresAt: (insertDriver as any).licenseExpiresAt || null,
+      insuranceExpiresAt: (insertDriver as any).insuranceExpiresAt || null,
+      inspectionExpiresAt: (insertDriver as any).inspectionExpiresAt || null,
+      permitExpiresAt: (insertDriver as any).permitExpiresAt || null,
+      orlandoPermitNumber: (insertDriver as any).orlandoPermitNumber || null,
+      orlandoPermitExpiresAt: (insertDriver as any).orlandoPermitExpiresAt || null,
+      mcoAirportEligible: (insertDriver as any).mcoAirportEligible || false,
+      mcoEligibilityGrantedAt: (insertDriver as any).mcoEligibilityGrantedAt || null,
+      backgroundCheckProvider: (insertDriver as any).backgroundCheckProvider || null,
+      backgroundCheckCompletedAt: (insertDriver as any).backgroundCheckCompletedAt || null,
+      lastReviewedAt: (insertDriver as any).lastReviewedAt || null,
+      reviewedBy: (insertDriver as any).reviewedBy || null,
+      nextReviewDueAt: (insertDriver as any).nextReviewDueAt || null,
     };
-    this.drivers.set(id, driver);
-    return driver; 
+    this.drivers.set(id, driver as Driver);
+    return driver as Driver;
   }
 
   async updateDriver(userId: string, updates: Partial<Driver>): Promise<Driver | undefined> {
@@ -227,13 +248,27 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
+  async listDrivers(): Promise<DriverProfile[]> {
+    const profiles: DriverProfile[] = [];
+    for (const driver of Array.from(this.drivers.values())) {
+      const profile = await this.getDriverProfile(driver.userId);
+      if (profile) profiles.push(profile);
+    }
+    return profiles;
+  }
+
   async getOnlineDrivers(): Promise<DriverProfile[]> {
     const onlineDrivers = Array.from(this.drivers.values()).filter((d) => d.isOnline);
     const profiles: DriverProfile[] = [];
 
     for (const driver of onlineDrivers) {
       const profile = await this.getDriverProfile(driver.userId);
-      if (profile) profiles.push(profile);
+      if (
+        profile &&
+        isDispatchEligible(profile as any, (profile as any).driverDetails)
+      ) {
+        profiles.push(profile);
+      }
     }
 
     return profiles;

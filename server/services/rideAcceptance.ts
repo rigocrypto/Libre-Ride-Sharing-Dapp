@@ -11,6 +11,8 @@
  * - Database is the single source of truth
  */
 
+import { getDriverIneligibilityReason, isDispatchEligible } from "./driverCompliance";
+
 async function getDbModules() {
   const [{ db }, schema, drizzle] = await Promise.all([
     import("../db/client"),
@@ -57,7 +59,7 @@ export class DriverNotEligibleError extends Error {
 }
 
 function isApprovedDriver(user: any, driver: any): boolean {
-  return user?.role === "driver" && (user?.driverStatus === "approved" || driver?.driverStatus === "approved");
+  return isDispatchEligible(user, driver);
 }
 
 /**
@@ -123,7 +125,7 @@ export async function acceptRideAtomic(
       const driverUser = await storage.getUser(driverId);
       const driver = await storage.getDriver(driverId);
       if (!driverUser?.walletAddress || !driverUser.walletVerifiedAt || !isApprovedDriver(driverUser, driver)) {
-        throw new DriverNotEligibleError();
+        throw new DriverNotEligibleError(getDriverIneligibilityReason(driverUser, driver));
       }
 
       const ride = await storage.getRide(rideId);
@@ -160,8 +162,10 @@ export async function acceptRideAtomic(
       .where(eq(users.id, driverId))
       .limit(1);
 
-    if (!driverUser?.walletAddress || !(driverUser as any).walletVerifiedAt || !isApprovedDriver(driverUser, null)) {
-      throw new DriverNotEligibleError();
+    const { storage } = await import("../storage-factory");
+    const driver = await storage.getDriver(driverId);
+    if (!driverUser?.walletAddress || !(driverUser as any).walletVerifiedAt || !isApprovedDriver(driverUser, driver)) {
+      throw new DriverNotEligibleError(getDriverIneligibilityReason(driverUser, driver));
     }
 
     /**

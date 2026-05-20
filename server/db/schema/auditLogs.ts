@@ -11,7 +11,7 @@ export const auditLogs = pgTable(
   "audit_log",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    actorUserId: uuid("actor_user_id").notNull(),
+    actorUserId: text("actor_user_id").notNull(),
     actorRole: text("actor_role").notNull(),
     actorWallet: text("actor_wallet"),
     actionType: text("action_type").$type<AuditAction>().notNull(),
