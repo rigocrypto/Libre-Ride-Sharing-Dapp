@@ -13,10 +13,37 @@ import { db } from "../db/client";
 import { users, rides } from "../db/schema";
 import { sql, inArray } from "drizzle-orm";
 import { buildAdminEscrowSnapshot } from "../services/adminEscrowMonitor";
+import {
+  buildAdminEscrowDetail,
+  DisabledAdminEscrowActionError,
+  InvalidAdminEscrowTransitionError,
+  prepareAdminEscrowAction,
+  type AdminEscrowAction,
+} from "../services/adminEscrowActions";
 
 const router = Router();
 
 const BASE_SEPOLIA_CHAIN_ID = 84532;
+
+const adminEscrowReasonSchema = z.object({
+  reason: z.string().min(10),
+});
+
+function getAdminEscrowOptions() {
+  return {
+    chainId: Number(
+      process.env.CHAIN_ID ||
+        process.env.VITE_CHAIN_ID ||
+        BASE_SEPOLIA_CHAIN_ID
+    ),
+    tokenAddress:
+      process.env.USDC_TOKEN_ADDRESS ||
+      process.env.USDC_CONTRACT_ADDRESS_TESTNET ||
+      process.env.VITE_USDC_TOKEN_ADDRESS ||
+      "unknown",
+    verificationMode: process.env.ESCROW_VERIFIER_MODE || "mock",
+  };
+}
 
 /**
  * GET /api/admin/stats
@@ -237,19 +264,7 @@ router.get(
   async (_req, res) => {
     try {
       const allRides = await storage.getAllRides();
-      const snapshot = buildAdminEscrowSnapshot(allRides, {
-        chainId: Number(
-          process.env.CHAIN_ID ||
-            process.env.VITE_CHAIN_ID ||
-            BASE_SEPOLIA_CHAIN_ID
-        ),
-        tokenAddress:
-          process.env.USDC_TOKEN_ADDRESS ||
-          process.env.USDC_CONTRACT_ADDRESS_TESTNET ||
-          process.env.VITE_USDC_TOKEN_ADDRESS ||
-          "unknown",
-        verificationMode: process.env.ESCROW_VERIFIER_MODE || "mock",
-      });
+      const snapshot = buildAdminEscrowSnapshot(allRides, getAdminEscrowOptions());
 
       res.json(snapshot);
     } catch (error: any) {
@@ -258,6 +273,94 @@ router.get(
     }
   }
 );
+
+/**
+ * GET /api/admin/escrows/:rideId
+ *
+ * Escrow detail view with allowed admin actions and audit trail.
+ */
+router.get(
+  "/api/admin/escrows/:rideId",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const { rideId } = z.object({ rideId: z.string() }).parse(req.params);
+      const ride = await storage.getRide(rideId);
+      if (!ride) {
+        return res.status(404).json({ error: "Ride not found" });
+      }
+
+      res.json(await buildAdminEscrowDetail(ride, getAdminEscrowOptions()));
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("[Admin] Failed to fetch escrow detail:", error);
+      res.status(500).json({ error: "Failed to fetch escrow detail" });
+    }
+  }
+);
+
+function registerAdminEscrowActionRoute(path: string, action: AdminEscrowAction) {
+  router.post(
+    path,
+    requireAuth,
+    requireRole("admin"),
+    async (req, res) => {
+      try {
+        const { rideId } = z.object({ rideId: z.string() }).parse(req.params);
+        const { reason } = adminEscrowReasonSchema.parse(req.body);
+        const ride = await storage.getRide(rideId);
+        if (!ride) {
+          return res.status(404).json({ error: "Ride not found" });
+        }
+
+        const result = await prepareAdminEscrowAction({
+          ride,
+          actor: {
+            userId: req.user!.userId,
+            walletAddress: (req.user as any).walletAddress,
+          },
+          action,
+          reason,
+        });
+
+        if (result.updates) {
+          await storage.updateRide(rideId, result.updates as any);
+        }
+
+        const updatedRide = (await storage.getRide(rideId)) || ride;
+        res.json({
+          success: true,
+          action,
+          previousState: result.previousState,
+          nextState: result.nextState,
+          audit: result.audit,
+          detail: await buildAdminEscrowDetail(updatedRide, getAdminEscrowOptions()),
+        });
+      } catch (error: any) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ error: error.errors[0].message });
+        }
+        if (error instanceof InvalidAdminEscrowTransitionError) {
+          return res.status(409).json({ error: error.message });
+        }
+        if (error instanceof DisabledAdminEscrowActionError) {
+          return res.status(403).json({ error: error.message });
+        }
+        console.error(`[Admin] Failed escrow action ${action}:`, error);
+        res.status(500).json({ error: `Failed escrow action ${action}` });
+      }
+    }
+  );
+}
+
+registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/mark-review", "mark-review");
+registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/retry-verification", "retry-verification");
+registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/release", "release");
+registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/refund", "refund");
+registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/dispute", "dispute");
 
 /**
  * GET /api/admin/users

@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AdminEscrowFilters } from "@/components/admin/AdminEscrowFilters";
+import { AdminEscrowDetailDialog } from "@/components/admin/AdminEscrowDetailDialog";
 import { AdminEscrowSummaryCards } from "@/components/admin/AdminEscrowSummaryCards";
 import { AdminEscrowTable } from "@/components/admin/AdminEscrowTable";
 import {
@@ -15,8 +16,14 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
-import type { AdminEscrowFilters as EscrowFilters, AdminEscrowRecord, AdminEscrowSnapshot } from "@/types/adminEscrow";
-import { useQuery } from "@tanstack/react-query";
+import type {
+  AdminEscrowAction,
+  AdminEscrowDetail,
+  AdminEscrowFilters as EscrowFilters,
+  AdminEscrowRecord,
+  AdminEscrowSnapshot,
+} from "@/types/adminEscrow";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DollarSign, Users, Car, AlertTriangle, CheckCircle, XCircle, WalletCards } from "lucide-react";
 import { Link } from "wouter";
 import { useMemo, useState } from "react";
@@ -33,6 +40,24 @@ const defaultEscrowFilters: EscrowFilters = {
 
 async function fetchAdminEscrows(): Promise<AdminEscrowSnapshot> {
   const response = await apiRequest("GET", "/api/admin/escrows");
+  return response.json();
+}
+
+async function fetchAdminEscrowDetail(rideId: string): Promise<AdminEscrowDetail> {
+  const response = await apiRequest("GET", `/api/admin/escrows/${rideId}`);
+  return response.json();
+}
+
+async function runAdminEscrowAction(args: {
+  rideId: string;
+  action: AdminEscrowAction;
+  reason: string;
+}): Promise<{ detail: AdminEscrowDetail }> {
+  const response = await apiRequest(
+    "POST",
+    `/api/admin/escrows/${args.rideId}/${args.action}`,
+    { reason: args.reason }
+  );
   return response.json();
 }
 
@@ -82,10 +107,30 @@ function matchesFilter(record: AdminEscrowRecord, filters: EscrowFilters): boole
 export default function Admin() {
   const [selectedTab, setSelectedTab] = useState("escrow");
   const [escrowFilters, setEscrowFilters] = useState(defaultEscrowFilters);
+  const [selectedEscrowRideId, setSelectedEscrowRideId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const escrowQuery = useQuery({
     queryKey: ["/api/admin/escrows"],
     queryFn: fetchAdminEscrows,
     refetchInterval: 10_000,
+  });
+  const escrowDetailQuery = useQuery({
+    queryKey: ["/api/admin/escrows", selectedEscrowRideId],
+    queryFn: () => fetchAdminEscrowDetail(selectedEscrowRideId!),
+    enabled: !!selectedEscrowRideId,
+  });
+  const escrowActionMutation = useMutation({
+    mutationFn: runAdminEscrowAction,
+    onSuccess: async (result) => {
+      setActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/escrows"] });
+      queryClient.setQueryData(
+        ["/api/admin/escrows", selectedEscrowRideId],
+        result.detail
+      );
+    },
+    onError: (error: Error) => setActionError(error.message),
   });
 
   const adminStats = {
@@ -245,6 +290,28 @@ export default function Admin() {
             <AdminEscrowTable
               records={filteredEscrowRecords}
               isLoading={escrowQuery.isLoading}
+              onViewDetails={(rideId) => {
+                setActionError(null);
+                setSelectedEscrowRideId(rideId);
+              }}
+            />
+            <AdminEscrowDetailDialog
+              detail={escrowDetailQuery.data || null}
+              isOpen={!!selectedEscrowRideId}
+              isLoading={escrowDetailQuery.isLoading}
+              isActionPending={escrowActionMutation.isPending}
+              actionError={actionError}
+              onOpenChange={(open) => {
+                if (!open) setSelectedEscrowRideId(null);
+              }}
+              onAction={(action, reason) => {
+                if (!selectedEscrowRideId) return;
+                escrowActionMutation.mutate({
+                  rideId: selectedEscrowRideId,
+                  action,
+                  reason,
+                });
+              }}
             />
           </TabsContent>
 

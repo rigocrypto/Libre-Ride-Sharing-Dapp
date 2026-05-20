@@ -16,6 +16,7 @@ import type { AdminEscrowRecord } from "@/types/adminEscrow";
 interface AdminEscrowTableProps {
   records: AdminEscrowRecord[];
   isLoading: boolean;
+  onViewDetails: (rideId: string) => void;
 }
 
 function shortValue(value: string | null, leading = 6, trailing = 4): string {
@@ -41,7 +42,11 @@ function formatDate(value: string | null): string {
   }).format(new Date(value));
 }
 
-export function AdminEscrowTable({ records, isLoading }: AdminEscrowTableProps) {
+export function AdminEscrowTable({
+  records,
+  isLoading,
+  onViewDetails,
+}: AdminEscrowTableProps) {
   if (isLoading) {
     return (
       <Card className="border-white/10 bg-white/5 p-6 text-sm text-muted-foreground">
@@ -115,9 +120,13 @@ export function AdminEscrowTable({ records, isLoading }: AdminEscrowTableProps) 
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" disabled>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewDetails(record.rideId)}
+                    >
                       <ExternalLink className="mr-1 h-3.5 w-3.5" />
-                      Ride
+                      Details
                     </Button>
                     <Button variant="outline" size="sm" disabled>
                       Retry

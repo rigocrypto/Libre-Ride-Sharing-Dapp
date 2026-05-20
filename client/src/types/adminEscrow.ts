@@ -44,6 +44,32 @@ export type AdminEscrowSnapshot = {
   stuckDepositThresholdMinutes: number;
 };
 
+export type AdminEscrowAction =
+  | "mark-review"
+  | "retry-verification"
+  | "release"
+  | "refund"
+  | "dispute";
+
+export type AuditLogEntry = {
+  id: string;
+  actorId: string;
+  actorWallet?: string;
+  action: string;
+  rideId?: string;
+  previousState?: string;
+  nextState?: string;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type AdminEscrowDetail = {
+  escrow: AdminEscrowRecord;
+  allowedActions: Record<AdminEscrowAction, boolean>;
+  auditLog: AuditLogEntry[];
+};
+
 export type AdminEscrowFilters = {
   escrowStatus: string;
   rideStatus: string;

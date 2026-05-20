@@ -72,7 +72,7 @@ Acceptance Criteria:
 ### TICKET-004: Enforce Escrow State Machine In Code
 
 Priority: Critical  
-Status: In Progress
+Status: Complete
 
 Acceptance Criteria:
 
@@ -172,6 +172,22 @@ Acceptance Criteria:
 - Pending deposits older than 15 minutes are flagged for manual review.
 - Admin endpoint remains protected by admin authentication and authorization.
 - Operator actions are disabled placeholders until release/refund/retry backend support is added.
+
+### TICKET-027: Escrow Release, Refund, And Dispute Admin Workflow
+
+Priority: Critical  
+Status: In Progress
+
+Acceptance Criteria:
+
+- Admin can open escrow detail for a monitored ride.
+- Detail view shows ride ID, rider wallet, driver wallet, ride status, escrow status, amount, token, chain, tx hash, verifier mode, timestamps, manual-review signal, and audit history.
+- Admin action routes are protected by `requireAuth` and `requireRole("admin")`.
+- Admin actions require a reason with at least 10 characters.
+- Invalid escrow transitions are rejected before mutation.
+- Mark manual review, retry verification, and dispute review create typed audit entries.
+- Release/refund remain backend-disabled outside explicit mock admin action mode until live contract execution is wired.
+- Mock admin action mode can deterministically exercise release/refund without touching real funds.
 
 ## Phase 2 - Driver Compliance And Admin Operations
 

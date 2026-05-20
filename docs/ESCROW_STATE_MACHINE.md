@@ -111,6 +111,7 @@ DISPUTE_RESOLVED_SPLIT
 - Backend must verify on-chain events before marking `DEPOSIT_CONFIRMED`, `RELEASED`, or `REFUNDED`.
 - Disputes freeze release/refund actions until resolved.
 - Admin overrides require reason, role permission, and audit log entry.
+- Admin release/refund actions must remain disabled unless on-chain execution and verification are explicitly wired or a mock admin action mode is enabled for deterministic tests.
 
 ## API Mapping
 
@@ -127,6 +128,19 @@ DISPUTE_RESOLVED_SPLIT
 | Refund verified | `REFUND_PENDING` | `REFUNDED` |
 | Dispute filed | `DEPOSIT_CONFIRMED`, `RIDE_ACCEPTED`, `RIDE_IN_PROGRESS`, `RELEASE_PENDING` | `DISPUTED` |
 | Admin dispute decision | `DISPUTED` | resolved dispute state |
+
+## Admin Operations
+
+Admin escrow review must use the same transition rules from `shared/escrow/transitions.ts`.
+
+- `mark-review` is an operational review flag and audit event. It does not represent a contract release/refund.
+- `retry-verification` is allowed only for pending, failed, or manual-review escrow records and creates an audit event without moving funds.
+- `dispute` must map to the canonical `DISPUTED` transition.
+- `release` must map to `RELEASE_PENDING -> RELEASED`.
+- `refund` must map through the refund branch and is not production-enabled until the live contract refund path is wired.
+- Every admin action must include an admin-entered reason and a typed audit log entry containing previous and next state.
+
+Production admin release/refund routes must not mutate escrow state unless on-chain execution and verification are explicitly wired.
 
 ## UI Mapping
 
@@ -177,4 +191,3 @@ DISPUTE_RESOLVED_SPLIT
 - Refund cannot happen after `RELEASED`.
 - Admin split decision records audit log.
 - Expired deposit intent cannot be confirmed without re-initiation.
-
