@@ -43,13 +43,22 @@ describe("Ride Acceptance - Isolation & Race Conditions", () => {
       firebaseUid: `test-driver-1-${Date.now()}`,
       email: `driver1-${Date.now()}@test.local`,
       role: "driver",
+      walletAddress: "0x1111111111111111111111111111111111111111",
+      walletVerifiedAt: new Date(),
+      driverStatus: "approved" as any,
     });
 
     const driver2 = await storage.createUser({
       firebaseUid: `test-driver-2-${Date.now()}`,
       email: `driver2-${Date.now()}@test.local`,
       role: "driver",
+      walletAddress: "0x2222222222222222222222222222222222222222",
+      walletVerifiedAt: new Date(),
+      driverStatus: "approved" as any,
     });
+
+    await storage.createDriver({ userId: driver1.id, driverStatus: "approved" as any } as any);
+    await storage.createDriver({ userId: driver2.id, driverStatus: "approved" as any } as any);
 
     riderId = rider.id;
     driver1Id = driver1.id;

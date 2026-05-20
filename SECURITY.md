@@ -2,7 +2,7 @@
 
 ## Vulnerability Triage Log
 
-Last reviewed: 2026-05-17
+Last reviewed: 2026-05-20
 
 Initial local `npm audit` status before hardening:
 
@@ -20,10 +20,10 @@ GitHub also reported a broader Dependabot backlog on push:
 
 Current local `npm audit` status after hardening:
 
-- 9 total vulnerabilities
+- 32 total vulnerabilities
 - 0 critical
 - 0 high
-- 0 moderate
+- 23 moderate
 - 9 low
 
 | Package | Severity | Direct/Transitive | Reachable | Resolution | Status |
@@ -39,10 +39,11 @@ Current local `npm audit` status after hardening:
 
 ## Remaining Low-Severity Risk
 
-The remaining audit findings are low-severity:
+The remaining audit findings are low and moderate transitive advisories:
 
 - Firebase Admin transitive chain through `@tootallnate/once`. The current installed `firebase-admin` is newer than the version npm recommends through `audit fix --force`; applying that forced fix would downgrade a core authentication dependency and is not appropriate without a Firebase integration review.
 - AWS SDK v2 direct advisory. The code still uses `aws-sdk` as a dynamic S3 fallback in `server/utils/upload.ts`. The recommended fix is a planned migration to modular AWS SDK v3 clients, not a forced downgrade.
+- `ws` moderate advisories appear through transitive WalletConnect/Reown/Wagmi/Viem and `react-email` dependency paths. No direct reachable exploit path has been confirmed in current payment/auth routes, and npm's available force fix would introduce breaking package changes. Revisit during the next Web3 dependency upgrade pass.
 
 The Firebase finding should be revisited when Firebase Admin or Google Cloud Storage publishes a dependency path that replaces `http-proxy-agent@5` or `teeny-request`. The AWS finding should be revisited when upload storage is productionized.
 

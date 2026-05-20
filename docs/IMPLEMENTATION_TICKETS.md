@@ -139,7 +139,7 @@ Caveat:
 ### TICKET-025: Wire Real Driver Auth For Escrow-Gated Ride Start
 
 Priority: Critical  
-Status: Not Started
+Status: In Progress
 
 Acceptance Criteria:
 
@@ -150,6 +150,12 @@ Acceptance Criteria:
 - `/api/rides/:id/start` still returns 402 when escrow is not locked.
 - Live test uses two real wallets: rider and driver.
 - No dev seed wallet override is required for the authenticated happy path.
+
+Implementation Notes:
+
+- Server-side ride start guard now checks assigned driver ID, assigned driver wallet, ride state, and escrow status.
+- Driver acceptance now requires an approved, wallet-verified driver account.
+- Final completion still requires a live two-wallet Base Sepolia run with a registered driver wallet.
 
 ## Phase 2 - Driver Compliance And Admin Operations
 

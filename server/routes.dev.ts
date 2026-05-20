@@ -140,8 +140,19 @@ export function registerDevRoutes(app: Express) {
         identityVerifiedAt: new Date(),
       } as any);
 
-      await storage.updateUser(driver.id, { driverStatus: "approved" } as any);
+      await storage.updateUser(driver.id, {
+        driverStatus: "approved",
+        walletVerifiedAt: new Date(),
+        siweVerifiedAt: new Date(),
+        identityVerified: true,
+        identityVerifiedAt: new Date(),
+      } as any);
       await storage.createDriver({ userId: driver.id } as any).catch(() => {});
+      await storage.updateDriver(driver.id, {
+        driverStatus: "approved" as any,
+        driverApprovedAt: new Date() as any,
+        isVerified: true,
+      } as any);
 
       setDevToken("dev-token", {
         firebaseUid: riderFirebaseUid,

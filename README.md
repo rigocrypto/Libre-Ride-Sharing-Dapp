@@ -163,7 +163,7 @@ Compliance areas include:
 - Admin compliance queue
 - Retention and privacy policies
 
-The project includes planning for Florida TNC insurance considerations, Orlando driver requirements, airport pickup eligibility, toll-aware route planning, ADA/accessibility considerations, and driver/rider safety workflows.
+The project includes planning for Florida TNC insurance considerations, including Florida Statutes Section 627.748, Orlando driver requirements, airport pickup eligibility, toll-aware route planning, ADA/accessibility considerations, and driver/rider safety workflows.
 
 ## Driver Founding Program
 
@@ -572,7 +572,7 @@ LIBRE is an early-stage software project. It is not currently a live licensed tr
 Before public launch, the project should receive legal review for:
 
 - Transportation/TNC operations
-- Insurance requirements
+- Insurance requirements, including Florida Statutes Section 627.748
 - Airport pickup rules
 - Driver onboarding
 - KYC/background checks

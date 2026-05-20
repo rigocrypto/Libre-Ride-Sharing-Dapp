@@ -13,12 +13,11 @@ import { Router } from 'express';
 import { requireAuth, requireWallet, requireSIWE } from '../middleware/auth';
 import {
   acceptRideAtomic,
+  DriverNotEligibleError,
   RideAlreadyAcceptedError,
   RideNotFoundError,
 } from '../services/rideAcceptance';
-import { db } from '../db/client';
-import { rides } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { storage } from '../storage-factory';
 import { getRideStartEligibility } from '../services/rideStartGuard';
 
 const router = Router();
@@ -45,7 +44,7 @@ const router = Router();
  * - 409: Ride already accepted by another driver
  * - 500: Database error
  */
-router.post('/api/rides/:id/accept', requireAuth, async (req, res) => {
+router.post('/api/rides/:id/accept', requireAuth, requireWallet, requireSIWE, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -92,6 +91,13 @@ router.post('/api/rides/:id/accept', requireAuth, async (req, res) => {
       return res.status(409).json({
         success: false,
         error: 'Ride was already accepted by another driver',
+      });
+    }
+
+    if (err instanceof DriverNotEligibleError) {
+      return res.status(403).json({
+        success: false,
+        error: 'Driver is not approved or wallet verified',
       });
     }
 
@@ -152,101 +158,48 @@ router.post(
         return res.status(400).json({ error: 'Invalid ride ID' });
       }
 
-      /**
-       * Transaction: Atomically verify all conditions and update state
-       * Uses FOR UPDATE lock to prevent race conditions
-       */
-      const result = await db.transaction(async (tx) => {
-        /**
-         * 1. Lock ride row
-         * Prevents concurrent start attempts
-         */
-        const rideResult = await tx
-          .select()
-          .from(rides)
-          .where(eq(rides.id, rideId))
-          .for('update');
-
-        if (rideResult.length === 0) {
-          return { error: 'not_found' };
-        }
-
-        const ride = rideResult[0];
-
-        const eligibility = getRideStartEligibility(ride, driverId);
-        if (!eligibility.ok) {
-          return {
-            error: eligibility.code,
-            current: "current" in eligibility ? eligibility.current : undefined,
-            code: eligibility.code === "escrow_not_funded" ? "ESCROW_REQUIRED" : undefined,
-          };
-        }
-
-        /**
-         * 5. State transition
-         * Update ride to IN_PROGRESS and record the start time
-         */
-        const updatedRides = await tx
-          .update(rides)
-          .set({
-            status: 'IN_PROGRESS',
-            startedAt: new Date(),
-          })
-          .where(eq(rides.id, rideId))
-          .returning();
-
-        if (updatedRides.length === 0) {
-          return { error: 'update_failed' };
-        }
-
-        return { success: true, ride: updatedRides[0] };
-      });
-
-      /**
-       * Handle transaction results
-       */
-      if (result.error === 'not_found') {
+      const ride = await storage.getRide(rideId);
+      if (!ride) {
         return res.status(404).json({
           success: false,
           error: 'Ride not found',
         });
       }
 
-      if (result.error === 'not_authorized') {
-        return res.status(403).json({
-          success: false,
-          error: 'Not authorized to start this ride',
-        });
-      }
+      const eligibility = getRideStartEligibility(ride, driverId, req.user.walletAddress);
+      if (!eligibility.ok) {
+        const current = "current" in eligibility ? eligibility.current : undefined;
+        if (eligibility.code === 'not_authorized' || eligibility.code === 'wallet_mismatch') {
+          return res.status(403).json({
+            success: false,
+            error: 'Not the assigned driver',
+          });
+        }
 
-      if (result.error === 'invalid_state') {
-        return res.status(409).json({
-          success: false,
-          error: `Ride cannot be started from status: ${result.current}`,
-        });
-      }
+        if (eligibility.code === 'invalid_state') {
+          return res.status(409).json({
+            success: false,
+            error: `Ride cannot be started from status: ${current}`,
+          });
+        }
 
-      if (result.error === 'escrow_not_funded') {
         return res.status(402).json({
           success: false,
-          error: 'Escrow not funded',
-          code: result.code,
-          escrowStatus: result.current,
+          error: 'Escrow not confirmed',
+          code: 'ESCROW_REQUIRED',
+          escrowStatus: current,
         });
       }
 
-      if (result.error === 'update_failed') {
+      const updatedRide = await storage.updateRide(rideId, {
+        status: 'IN_PROGRESS',
+        startedAt: new Date(),
+      } as any);
+
+      if (!updatedRide) {
         return res.status(500).json({
           success: false,
           error: 'Failed to start ride',
-        });
-      }
-
-      // Type guard: success case
-      if (!result.success || !result.ride) {
-        return res.status(500).json({
-          success: false,
-          error: 'Unexpected state',
         });
       }
 
@@ -256,10 +209,10 @@ router.post(
       return res.status(200).json({
         success: true,
         data: {
-          rideId: result.ride.id,
-          driverId: result.ride.driverId,
-          status: result.ride.status,
-          startedAt: result.ride.startedAt,
+          rideId: updatedRide.id,
+          driverId: updatedRide.driverId,
+          status: updatedRide.status,
+          startedAt: updatedRide.startedAt,
         },
       });
     } catch (err) {

@@ -21,6 +21,7 @@ async function getDbModules() {
   return {
     db,
     rides: schema.rides,
+    users: schema.users,
     driverStatus: schema.driverStatus,
     eq: drizzle.eq,
     sql: drizzle.sql,
@@ -46,6 +47,17 @@ export class RideNotFoundError extends Error {
     super(`Ride ${rideId} not found`);
     this.name = "RideNotFoundError";
   }
+}
+
+export class DriverNotEligibleError extends Error {
+  constructor(message = "Driver is not eligible to accept rides") {
+    super(message);
+    this.name = "DriverNotEligibleError";
+  }
+}
+
+function isApprovedDriver(user: any, driver: any): boolean {
+  return user?.role === "driver" && (user?.driverStatus === "approved" || driver?.driverStatus === "approved");
 }
 
 /**
@@ -108,6 +120,12 @@ export async function acceptRideAtomic(
     locks.set(rideId, true);
 
     try {
+      const driverUser = await storage.getUser(driverId);
+      const driver = await storage.getDriver(driverId);
+      if (!driverUser?.walletAddress || !driverUser.walletVerifiedAt || !isApprovedDriver(driverUser, driver)) {
+        throw new DriverNotEligibleError();
+      }
+
       const ride = await storage.getRide(rideId);
       if (!ride) throw new RideNotFoundError(rideId);
       if (ride.status !== 'OFFERED') throw new RideAlreadyAcceptedError(rideId);
@@ -133,9 +151,19 @@ export async function acceptRideAtomic(
   }
 
   // Default: use the database transaction with FOR UPDATE (Postgres)
-  const { db, rides, eq, sql } = await getDbModules();
+  const { db, rides, users, eq, sql } = await getDbModules();
 
   return await db.transaction(async (tx) => {
+    const [driverUser] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, driverId))
+      .limit(1);
+
+    if (!driverUser?.walletAddress || !(driverUser as any).walletVerifiedAt || !isApprovedDriver(driverUser, null)) {
+      throw new DriverNotEligibleError();
+    }
+
     /**
      * STEP 1: Lock the ride row
      *
