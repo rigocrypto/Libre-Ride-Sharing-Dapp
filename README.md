@@ -453,17 +453,18 @@ VITE_API_BASE_URL=https://your-backend.example.com
 
 The Pages workflow reads `VITE_API_BASE_URL` from GitHub Actions secrets during build.
 
-## Railway Backend Deploy
+## Render Backend Deploy
 
-The Express API can be deployed separately to Railway using `railway.json`.
+The Express API can be deployed separately to Render using `render.yaml`. This is the recommended first hosted backend for Founding Access lead capture because it supports a persistent Node web service, WebSockets, sessions, and a managed Postgres database without refactoring the Express app.
 
-Recommended Railway variables:
+Recommended Render variables:
 
 ```txt
 NODE_ENV=production
-DATABASE_URL=postgresql://...
+DATABASE_URL=postgresql://...  # provided by the Render Postgres database
 SESSION_SECRET=...
 FRONTEND_ORIGIN=https://rigocrypto.github.io
+STORAGE_ENGINE=drizzle
 RESEND_API_KEY=
 ESCROW_CONTRACT_ADDRESS=0xE4995d77BffAcB05AF23764bf2831FCC35B4888F
 USDC_TOKEN_ADDRESS=0xcb27336B232eA62469D0d2DEcDAC016d23CE1414
@@ -479,7 +480,7 @@ The production API exposes:
 GET /health
 ```
 
-After first deploy, run Drizzle migrations against the Railway database:
+After first deploy, run Drizzle migrations against the Render database:
 
 ```powershell
 npx drizzle-kit push
@@ -488,7 +489,7 @@ npx drizzle-kit push
 Then set the GitHub Actions secret:
 
 ```txt
-VITE_API_BASE_URL=https://your-railway-app.up.railway.app
+VITE_API_BASE_URL=https://your-render-service.onrender.com
 ```
 
 Trigger the Pages workflow again so the static frontend points at the live API.
