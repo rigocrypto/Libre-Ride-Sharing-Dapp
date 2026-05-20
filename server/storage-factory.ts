@@ -20,6 +20,10 @@ export function getStorage(): IStorage {
       return storageInstance;
     } catch (error: any) {
       console.warn("[storage] Failed to initialize DrizzleStorage:", error.message);
+      if (process.env.NODE_ENV === "production") {
+        throw error;
+      }
+
       console.warn("[storage] Falling back to MemStorage");
       storageInstance = new MemStorage();
       return storageInstance;

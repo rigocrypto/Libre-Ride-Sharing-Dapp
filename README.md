@@ -474,25 +474,31 @@ ARBITER_ADDRESS=0xb4CfAB88357D0f8C817a0b4E8C95D7B067C49Ac0
 ESCROW_VERIFIER_MODE=mock
 ```
 
+Render runs `npm run db:push` during the Blueprint build before compiling the app, so the Postgres schema is created before the API starts. In production, Drizzle/Postgres initialization fails hard instead of falling back to in-memory storage.
+
 The production API exposes:
 
 ```txt
 GET /health
 ```
 
-After first deploy, run Drizzle migrations against the Render database:
-
-```powershell
-npx drizzle-kit push
-```
-
-Then set the GitHub Actions secret:
+After deploy, set the GitHub Actions secret:
 
 ```txt
 VITE_API_BASE_URL=https://your-render-service.onrender.com
 ```
 
 Trigger the Pages workflow again so the static frontend points at the live API.
+
+Render smoke test:
+
+```txt
+GET /health
+POST /api/leads/founding-driver
+POST the same email again and expect 409
+GET /api/admin/leads/drivers without auth and expect 401 or 403
+Restart the Render service and confirm the lead remains in Postgres
+```
 
 ## Docker
 

@@ -2,7 +2,7 @@ services:
   - type: web
     name: libre-api
     runtime: node
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci && npm run db:push && npm run build
     startCommand: node dist/index.js
     healthCheckPath: /health
     envVars:

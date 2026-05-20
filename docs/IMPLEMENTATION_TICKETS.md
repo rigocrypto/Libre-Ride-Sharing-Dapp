@@ -281,10 +281,25 @@ Acceptance Criteria:
 - Express exposes `GET /health` for Render health checks.
 - API CORS allows the GitHub Pages origin and optional `FRONTEND_ORIGIN`.
 - `render.yaml` provisions a Node web service and free Render Postgres database.
+- `render.yaml` runs `npm run db:push` before build so fresh Render deploys create the Drizzle schema.
 - Render healthcheck path points to `/health`.
+- Production storage initialization fails hard if Drizzle/Postgres cannot initialize, preventing silent MemStorage fallback.
 - GitHub Pages workflow passes `VITE_API_BASE_URL` from Actions secrets into the frontend build.
-- README documents Render environment variables, backend/frontend split, Drizzle migration step, and GitHub secret setup.
+- README documents Render environment variables, backend/frontend split, migration behavior, smoke test steps, and GitHub secret setup.
 - Existing check, unit tests, build, and E2E verification remain passing.
+
+### TICKET-034A: Harden Render Production Storage and Migration
+
+Priority: Critical
+Status: Complete
+
+Acceptance Criteria:
+
+- Production does not fall back to MemStorage if Drizzle/Postgres fails.
+- Render deployment runs `npm run db:push` before the production build.
+- `/health` works after deploy.
+- Founding driver and investor leads can persist across service restart.
+- Duplicate email handling still returns friendly `409` responses.
 
 ### TICKET-007: Production Driver Approval Workflow
 
