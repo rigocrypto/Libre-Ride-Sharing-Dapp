@@ -451,6 +451,48 @@ as the asset/router base path. If forms or admin pages should work from GitHub P
 VITE_API_BASE_URL=https://your-backend.example.com
 ```
 
+The Pages workflow reads `VITE_API_BASE_URL` from GitHub Actions secrets during build.
+
+## Railway Backend Deploy
+
+The Express API can be deployed separately to Railway using `railway.json`.
+
+Recommended Railway variables:
+
+```txt
+NODE_ENV=production
+DATABASE_URL=postgresql://...
+SESSION_SECRET=...
+FRONTEND_ORIGIN=https://rigocrypto.github.io
+RESEND_API_KEY=
+ESCROW_CONTRACT_ADDRESS=0xE4995d77BffAcB05AF23764bf2831FCC35B4888F
+USDC_TOKEN_ADDRESS=0xcb27336B232eA62469D0d2DEcDAC016d23CE1414
+RPC_URL_BASE_SEPOLIA=
+PLATFORM_WALLET_ADDRESS=0xb4CfAB88357D0f8C817a0b4E8C95D7B067C49Ac0
+ARBITER_ADDRESS=0xb4CfAB88357D0f8C817a0b4E8C95D7B067C49Ac0
+ESCROW_VERIFIER_MODE=mock
+```
+
+The production API exposes:
+
+```txt
+GET /health
+```
+
+After first deploy, run Drizzle migrations against the Railway database:
+
+```powershell
+npx drizzle-kit push
+```
+
+Then set the GitHub Actions secret:
+
+```txt
+VITE_API_BASE_URL=https://your-railway-app.up.railway.app
+```
+
+Trigger the Pages workflow again so the static frontend points at the live API.
+
 ## Docker
 
 The repository includes `docker-compose.yml` for local service orchestration. Confirm required environment variables first, then run:

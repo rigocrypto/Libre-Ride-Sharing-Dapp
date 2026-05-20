@@ -26,6 +26,36 @@ export function log(message: string, source = "express") {
 
 export const app = express();
 
+const allowedCorsOrigins = new Set(
+  [
+    "https://rigocrypto.github.io",
+    process.env.FRONTEND_ORIGIN,
+    process.env.NODE_ENV === "development" ? "http://localhost:5173" : undefined,
+    process.env.NODE_ENV === "development" ? "http://localhost:5000" : undefined,
+  ].filter((origin): origin is string => Boolean(origin))
+);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedCorsOrigins.has(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  return next();
+});
+
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", service: "libre-api", ts: Date.now() });
+});
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown

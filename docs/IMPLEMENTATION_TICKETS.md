@@ -271,6 +271,21 @@ Acceptance Criteria:
 - robots.txt and sitemap.xml point to the GitHub Pages URL.
 - Existing check, unit tests, build, and E2E verification remain passing.
 
+### TICKET-033: Railway Backend API Deployment Prep
+
+Priority: Critical
+Status: Complete
+
+Acceptance Criteria:
+
+- Express exposes `GET /health` for Railway health checks.
+- API CORS allows the GitHub Pages origin and optional `FRONTEND_ORIGIN`.
+- `railway.json` builds with Nixpacks and starts `node dist/index.js`.
+- Railway healthcheck path points to `/health`.
+- GitHub Pages workflow passes `VITE_API_BASE_URL` from Actions secrets into the frontend build.
+- README documents Railway environment variables, backend/frontend split, Drizzle migration step, and GitHub secret setup.
+- Existing check, unit tests, build, and E2E verification remain passing.
+
 ### TICKET-007: Production Driver Approval Workflow
 
 Priority: Critical  
