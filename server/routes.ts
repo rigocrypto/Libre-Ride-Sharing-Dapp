@@ -8,6 +8,7 @@ import referralRoutes from "./routes/referrals.js";
 import identityRoutes from "./routes/identity.js";
 import userRoutes from "./routes/user.js";
 import adminRoutes from "./routes/admin.js";
+import leadsRoutes from "./routes/leads.js";
 import { sendEmail, generateOnboardingStartedEmail, generateVerificationCompleteEmail, generateDocumentRejectedEmail, generateRideReceiptEmail } from "./email";
 import {
   insertWaitlistSchema,
@@ -53,6 +54,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin routes (stats, drivers, rides, users)
   app.use(adminRoutes);
+
+  // Public lead capture routes for Founding Access landing page
+  app.use(leadsRoutes);
 
   // Wallet linking routes
   const walletRoutes = (await import('./routes/wallet.js')).default;

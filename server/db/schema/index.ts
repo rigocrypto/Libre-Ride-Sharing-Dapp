@@ -11,3 +11,4 @@ export * from "./rides";
 export * from "./driverStatus";
 export * from "./authEvents";
 export * from "./auditLogs";
+export * from "./leads";

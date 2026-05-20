@@ -224,6 +224,21 @@ Acceptance Criteria:
 - Admin UI includes a Driver Compliance tab with filters, review modal, warnings, and action buttons.
 - Existing check, unit tests, build, and E2E verification remain passing.
 
+### TICKET-030: LIBRE Founding Access Landing Page
+
+Priority: High
+Status: Complete
+
+Acceptance Criteria:
+
+- Public `/founding-access` landing page targets Orlando drivers, investors, sponsors, and partners.
+- Page includes hero, problem, Orlando market, product demo, founding driver, investor, technology, use-of-funds, and compliance notice sections.
+- Driver and investor/partner lead forms persist to Drizzle/Postgres lead tables with MemStorage/test fallback.
+- Duplicate lead emails return friendly duplicate messages.
+- Admin lead list endpoints are protected by `requireAuth` and `requireRole("admin")`.
+- Page avoids investment-return promises and clearly states interest collection only.
+- Existing check, unit tests, build, and E2E verification remain passing.
+
 ### TICKET-007: Production Driver Approval Workflow
 
 Priority: Critical  

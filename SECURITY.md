@@ -18,12 +18,12 @@ GitHub also reported a broader Dependabot backlog on push:
 - 2 critical
 - 32 high
 
-Current local `npm audit` status after hardening:
+Current local `npm audit` status after hardening and Founding Access implementation:
 
-- 32 total vulnerabilities
+- 27 total vulnerabilities
 - 0 critical
 - 0 high
-- 23 moderate
+- 18 moderate
 - 9 low
 
 | Package | Severity | Direct/Transitive | Reachable | Resolution | Status |

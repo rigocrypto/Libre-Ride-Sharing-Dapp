@@ -128,6 +128,9 @@ const LandingPage: React.FC = () => {
             <Link href="/become-driver" className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 px-6 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
                 Become a Driver 🚀
             </Link>
+            <Link href="/founding-access" className="hidden rounded-lg border border-cyan-400/50 px-4 py-2 transition hover:text-cyan-200 md:inline-block">
+              Founding Access
+            </Link>
             <Web3Connect />
           </div>
         </div>

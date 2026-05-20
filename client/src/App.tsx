@@ -13,6 +13,7 @@ import BecomeDriver from "@/pages/BecomeDriver";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import Verify from "@/pages/Verify";
+import FoundingAccess from "@/pages/FoundingAccess";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={Admin} />
       <Route path="/verify" component={Verify} />
+      <Route path="/founding-access" component={FoundingAccess} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -12,6 +12,7 @@ Libre Ride should be treated as a staging MVP until every gate below is satisfie
 - [ ] Production environment variables are documented and validated at startup.
 - [ ] No `.env` secrets are committed.
 - [ ] CI includes secret scanning and dependency audit.
+- [ ] Public Founding Access lead forms persist to production storage and feed CRM/email follow-up.
 
 ## Escrow And Payments
 
@@ -51,6 +52,7 @@ Libre Ride should be treated as a staging MVP until every gate below is satisfie
 - [ ] WebSocket events are authorized by user role and ride membership.
 - [ ] Admin RBAC is implemented.
 - [ ] Admin actions require explicit permissions and are audit logged.
+- [ ] Admin lead access endpoints require admin authorization.
 
 ## Driver Compliance
 
