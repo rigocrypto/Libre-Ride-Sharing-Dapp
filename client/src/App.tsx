@@ -14,6 +14,7 @@ import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import Verify from "@/pages/Verify";
 import FoundingAccess from "@/pages/FoundingAccess";
+import Privacy from "@/pages/Privacy";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/verify" component={Verify} />
       <Route path="/founding-access" component={FoundingAccess} />
+      <Route path="/privacy" component={Privacy} />
       <Route component={NotFound} />
     </Switch>
   );

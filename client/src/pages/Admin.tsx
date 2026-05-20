@@ -9,6 +9,7 @@ import { AdminEscrowTable } from "@/components/admin/AdminEscrowTable";
 import { AdminAuditLogTable } from "@/components/admin/AdminAuditLogTable";
 import { AdminDriverComplianceDetailDialog } from "@/components/admin/AdminDriverComplianceDetailDialog";
 import { AdminDriverComplianceTable } from "@/components/admin/AdminDriverComplianceTable";
+import { AdminLeadManagement } from "@/components/admin/AdminLeadManagement";
 import {
   Table,
   TableBody,
@@ -349,6 +350,7 @@ export default function Admin() {
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="leads" data-testid="tab-leads">Leads</TabsTrigger>
             <TabsTrigger value="audit" data-testid="tab-audit">Audit</TabsTrigger>
             <TabsTrigger value="disputes" data-testid="tab-disputes">
               Disputes
@@ -428,6 +430,16 @@ export default function Admin() {
                 });
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="leads" className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Founding Access Leads</h2>
+              <p className="text-sm text-muted-foreground">
+                Manage scored driver, investor, sponsor, and partner interest from the public landing page.
+              </p>
+            </div>
+            <AdminLeadManagement />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-4">

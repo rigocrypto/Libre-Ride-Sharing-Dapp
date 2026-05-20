@@ -58,6 +58,7 @@ LIBRE includes or is being built toward:
 - AI dispatch and smart matching roadmap
 - Driver document upload and compliance review
 - Orlando permit and airport-eligibility workflow
+- Founding Access landing page with persistent lead capture and CRM scoring
 - Safety/SOS structures
 - Dispute center planning
 - Driver and rider subscription models
@@ -91,10 +92,10 @@ Current progress:
 - Dev seed routes are isolated from production route registration.
 - Security hardening reduced local audit results to low-only issues.
 - Production roadmap and implementation tickets are documented.
+- `/founding-access` captures founding driver and investor/partner interest with consent, source/referral tracking, lead scoring, CSV export, and an admin Lead CRM tab.
 
 Not production-live yet:
 
-- Real driver wallet auth and escrow-gated ride start is the next milestone.
 - Basescan source verification still needs a valid API key.
 - Production database validation is still needed.
 - Production Firebase/KYC/storage/notification keys must be validated.

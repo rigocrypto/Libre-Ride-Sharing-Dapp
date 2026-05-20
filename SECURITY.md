@@ -53,6 +53,10 @@ Sensitive admin escrow actions now flow through a typed audit abstraction and re
 
 Driver compliance actions use the same audit trail. Approval, rejection, suspension, document re-request, manual review, and automatic document-expiration events record actor, previous state, next state, reason, and metadata before a driver can become dispatch eligible again.
 
+## Lead Capture Privacy
+
+Founding Access lead forms require explicit contact, privacy, and compliance acknowledgments before submission. Lead records include source/referral and qualification data for pilot follow-up, so admin lead exports are protected by `requireAuth` and `requireRole("admin")`. Production launch should add a formal privacy policy review, retention policy, and CRM/email vendor data-processing review.
+
 ## Verification Requirement
 
 After dependency changes, run:

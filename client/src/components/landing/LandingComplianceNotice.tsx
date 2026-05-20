@@ -2,7 +2,7 @@ export function LandingComplianceNotice() {
   return (
     <section id="compliance" className="bg-slate-950 px-4 py-20 text-white md:px-6">
       <div className="mx-auto max-w-5xl rounded-3xl border border-amber-300/30 bg-amber-300/10 p-6 md:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100">Compliance-first notice</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100">Risk & compliance notice</p>
         <h2 className="mt-3 text-3xl font-black md:text-4xl">Interest collection only</h2>
         <p className="mt-5 text-base leading-8 text-amber-50">
           LIBRE is not currently a licensed transportation company, securities issuer, insurance
@@ -19,6 +19,10 @@ export function LandingComplianceNotice() {
           <p>
             SEC Regulation Crowdfunding requires compliant funding processes through registered
             intermediaries where applicable.
+          </p>
+          <p className="md:col-span-2">
+            Participation in the founding driver program does not guarantee earnings, ride volume,
+            employment, equity, token value, investment access, or investment returns.
           </p>
         </div>
       </div>

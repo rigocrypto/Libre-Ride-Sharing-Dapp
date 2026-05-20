@@ -239,6 +239,23 @@ Acceptance Criteria:
 - Page avoids investment-return promises and clearly states interest collection only.
 - Existing check, unit tests, build, and E2E verification remain passing.
 
+### TICKET-031: Founding Access CRM and Conversion Upgrade
+
+Priority: High
+Status: Complete
+
+Acceptance Criteria:
+
+- Founding driver and investor leads include CRM status, source, referral, score, follow-up, notes, and intent fields.
+- Lead scoring prioritizes Orlando drivers, active rideshare drivers, airport interest, insurance readiness, investor range, accredited status, deck/demo requests, and strategic partnership signals.
+- Forms require contact/privacy/compliance consent before submission.
+- Driver form captures source, preferred Orlando zones, airport experience, WhatsApp invite, and demo access intent.
+- Investor form captures source, preferred next step, deck request, demo access intent, and investment-offering acknowledgment.
+- Confirmation email attempts use Resend when configured and gracefully fall back in dev/test.
+- Admin lead CRM tab supports filtering, status updates, and protected CSV exports.
+- Landing page includes traction, roadmap, stronger risk disclosure, privacy page link, robots.txt, and sitemap.xml.
+- Existing check, unit tests, build, and E2E verification remain passing.
+
 ### TICKET-007: Production Driver Approval Workflow
 
 Priority: Critical  

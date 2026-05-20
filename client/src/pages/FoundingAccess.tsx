@@ -5,9 +5,12 @@ import { LandingInvestorSection } from "@/components/landing/LandingInvestorSect
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingProblem } from "@/components/landing/LandingProblem";
 import { LandingProductCards } from "@/components/landing/LandingProductCards";
+import { LandingRoadmap } from "@/components/landing/LandingRoadmap";
 import { LandingTechStack } from "@/components/landing/LandingTechStack";
+import { LandingTraction } from "@/components/landing/LandingTraction";
 import { LandingUseOfFunds } from "@/components/landing/LandingUseOfFunds";
 import { LandingWhyOrlando } from "@/components/landing/LandingWhyOrlando";
+import { trackLandingEvent } from "@/lib/landingAnalytics";
 import { Github, MessageCircle, Twitter } from "lucide-react";
 import { useEffect } from "react";
 import { Link } from "wouter";
@@ -32,6 +35,11 @@ export default function FoundingAccess() {
     setMeta("og:title", "LIBRE Ride - Web3 Rideshare for Orlando", true);
     setMeta("og:description", description, true);
     setMeta("og:image", "/founding-orlando-skyline.png", true);
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:title", "LIBRE Ride - Web3 Rideshare for Orlando");
+    setMeta("twitter:description", description);
+    setMeta("twitter:image", "/founding-orlando-skyline.png");
+    trackLandingEvent("founding_access_viewed");
   }, []);
 
   return (
@@ -42,9 +50,11 @@ export default function FoundingAccess() {
         <LandingProblem />
         <LandingWhyOrlando />
         <LandingProductCards />
+        <LandingTraction />
         <LandingDriverProgram />
         <LandingInvestorSection />
         <LandingTechStack />
+        <LandingRoadmap />
         <LandingUseOfFunds />
         <LandingComplianceNotice />
       </main>
@@ -57,7 +67,7 @@ export default function FoundingAccess() {
             <p className="mt-2 text-sm text-slate-400">© 2026 LIBRE Ride. Built in Orlando.</p>
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-            <a href="#compliance">Privacy Policy</a>
+            <Link href="/privacy">Privacy Policy</Link>
             <a href="#compliance">Terms</a>
             <a href="mailto:hello@libreride.local">Contact</a>
           </div>

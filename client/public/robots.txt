@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /founding-access
+Disallow: /admin
+Disallow: /api/
+Sitemap: https://libreride.io/sitemap.xml
+

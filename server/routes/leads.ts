@@ -1,12 +1,16 @@
 import { Router } from "express";
 import { z } from "zod";
+import { sendEmail } from "../email";
 import { requireAuth, requireRole } from "../middleware/auth";
 import {
   createFoundingDriverLead,
   createInvestorInterestLead,
   DuplicateLeadError,
+  leadsToCsv,
   listFoundingDriverLeads,
   listInvestorInterestLeads,
+  updateFoundingDriverLead,
+  updateInvestorInterestLead,
 } from "../services/leadsService";
 
 const router = Router();
@@ -34,9 +38,22 @@ const driverLeadSchema = z.object({
   city: z.string().optional(),
   currentApps: z.array(z.string()).default([]),
   yearsDriving: z.coerce.number().int().min(0).max(60).optional(),
+  driverType: z.string().optional(),
   vehicleType: z.string().optional(),
+  vehicleYear: z.coerce.number().int().min(1980).max(2035).optional(),
+  vehicleMakeModel: z.string().optional(),
   hasCommercialInsurance: z.boolean().optional(),
   interestedInAirport: z.boolean().optional(),
+  airportExperience: z.string().optional(),
+  preferredZones: z.array(z.string()).default([]),
+  source: z.string().optional(),
+  referralCode: z.string().optional(),
+  referralName: z.string().optional(),
+  wantsDemoAccess: z.boolean().default(false),
+  wantsWhatsAppInvite: z.boolean().default(false),
+  consentContact: z.literal(true),
+  consentVerification: z.literal(true),
+  consentPrivacy: z.literal(true),
   notes: z.string().max(1000).optional(),
 });
 
@@ -48,8 +65,34 @@ const investorLeadSchema = z.object({
   interestRange: z.string().optional(),
   accredited: z.string().optional(),
   interestType: z.string().optional(),
+  preferredNextStep: z.string().optional(),
+  source: z.string().optional(),
+  referralCode: z.string().optional(),
+  referralName: z.string().optional(),
+  wantsDemoAccess: z.boolean().default(false),
+  wantsInvestorDeck: z.boolean().default(false),
+  wantsWhatsAppInvite: z.boolean().default(false),
+  consentContact: z.literal(true),
+  consentNotOffering: z.literal(true),
+  consentPrivacy: z.literal(true),
   message: z.string().max(500).optional(),
-  complianceAcknowledged: z.literal(true),
+});
+
+const leadUpdateSchema = z.object({
+  status: z.enum(["new", "contacted", "qualified", "rejected", "converted"]).optional(),
+  adminNotes: z.string().max(3000).optional(),
+  followUpAt: z
+    .string()
+    .datetime()
+    .optional()
+    .nullable()
+    .transform((value) => (value ? new Date(value) : value)),
+  lastContactedAt: z
+    .string()
+    .datetime()
+    .optional()
+    .nullable()
+    .transform((value) => (value ? new Date(value) : value)),
 });
 
 function handleLeadError(res: any, error: unknown, fallback: string) {
@@ -63,15 +106,50 @@ function handleLeadError(res: any, error: unknown, fallback: string) {
   return res.status(500).json({ error: fallback });
 }
 
+function sendLeadConfirmation(kind: "driver" | "investor", lead: { fullName: string; email: string }) {
+  const isDriver = kind === "driver";
+  const subject = isDriver
+    ? "LIBRE Founding Driver application received"
+    : "LIBRE investor and partner interest received";
+  const html = isDriver
+    ? `<p>Hi ${lead.fullName},</p><p>Thank you for applying to become a LIBRE Founding Driver.</p><p>We received your information and will review your application for the Orlando pilot. If selected, you may be invited to early onboarding, app demo access, and driver feedback sessions.</p><p>LIBRE Ride</p>`
+    : `<p>Hi ${lead.fullName},</p><p>Thank you for your interest in LIBRE.</p><p>We are collecting investor and partner interest for a future compliant funding process. This is not a public securities offering. Our team may contact you with demo access, investor materials, or a partner meeting invitation.</p><p>LIBRE Ride</p>`;
+
+  if (!process.env.RESEND_API_KEY && process.env.NODE_ENV !== "production") {
+    console.info("[Leads] Email fallback payload", { to: lead.email, subject });
+  }
+
+  sendEmail({ to: lead.email, subject, html }).catch((error) => {
+    console.warn("[Leads] Confirmation email failed:", error);
+  });
+}
+
+function filterLeads(leads: any[], query: any, driver = false) {
+  const minScore = query.minScore ? Number(query.minScore) : undefined;
+  const now = new Date();
+  return leads.filter((lead) => {
+    if (query.status && lead.status !== query.status) return false;
+    if (query.source && lead.source !== query.source) return false;
+    if (Number.isFinite(minScore) && (lead.leadScore || 0) < minScore!) return false;
+    if (query.wantsDemo === "true" && !lead.wantsDemoAccess) return false;
+    if (driver && query.wantsWhatsApp === "true" && !lead.wantsWhatsAppInvite) return false;
+    if (query.followUpDue === "true") {
+      const due = lead.followUpAt ? new Date(lead.followUpAt) : null;
+      if (!due || due > now) return false;
+    }
+    return true;
+  });
+}
+
 router.post("/api/leads/founding-driver", rateLimitByIp, async (req, res) => {
   try {
     const data = driverLeadSchema.parse(req.body);
     // TODO: integrate CRM webhook (HubSpot/Airtable/Notion)
-    // TODO: send confirmation email via Resend/Postmark
-    await createFoundingDriverLead({
+    const lead = await createFoundingDriverLead({
       ...data,
       ipAddress: req.ip,
     });
+    sendLeadConfirmation("driver", lead);
     res.json({
       success: true,
       message:
@@ -84,14 +162,13 @@ router.post("/api/leads/founding-driver", rateLimitByIp, async (req, res) => {
 
 router.post("/api/leads/investor-interest", rateLimitByIp, async (req, res) => {
   try {
-    const { complianceAcknowledged: _complianceAcknowledged, ...data } =
-      investorLeadSchema.parse(req.body);
+    const data = investorLeadSchema.parse(req.body);
     // TODO: integrate CRM webhook (HubSpot/Airtable/Notion)
-    // TODO: send confirmation email via Resend/Postmark
-    await createInvestorInterestLead({
+    const lead = await createInvestorInterestLead({
       ...data,
       ipAddress: req.ip,
     });
+    sendLeadConfirmation("investor", lead);
     res.json({
       success: true,
       message:
@@ -103,11 +180,73 @@ router.post("/api/leads/investor-interest", rateLimitByIp, async (req, res) => {
 });
 
 router.get(
+  "/api/admin/leads/drivers.csv",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    const leads = filterLeads(await listFoundingDriverLeads(), req.query, true);
+    const csv = leadsToCsv(leads as Array<Record<string, unknown>>, [
+      "id",
+      "fullName",
+      "email",
+      "phone",
+      "city",
+      "status",
+      "leadScore",
+      "source",
+      "currentApps",
+      "yearsDriving",
+      "driverType",
+      "vehicleType",
+      "vehicleYear",
+      "interestedInAirport",
+      "wantsDemoAccess",
+      "wantsWhatsAppInvite",
+      "followUpAt",
+      "lastContactedAt",
+      "createdAt",
+    ]);
+    res.header("Content-Type", "text/csv");
+    res.attachment("founding-driver-leads.csv").send(csv);
+  }
+);
+
+router.get(
+  "/api/admin/leads/investors.csv",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    const leads = filterLeads(await listInvestorInterestLeads(), req.query);
+    const csv = leadsToCsv(leads as Array<Record<string, unknown>>, [
+      "id",
+      "fullName",
+      "email",
+      "phone",
+      "leadType",
+      "status",
+      "leadScore",
+      "source",
+      "interestRange",
+      "accredited",
+      "interestType",
+      "preferredNextStep",
+      "wantsInvestorDeck",
+      "wantsDemoAccess",
+      "followUpAt",
+      "lastContactedAt",
+      "createdAt",
+    ]);
+    res.header("Content-Type", "text/csv");
+    res.attachment("investor-interest-leads.csv").send(csv);
+  }
+);
+
+router.get(
   "/api/admin/leads/drivers",
   requireAuth,
   requireRole("admin"),
-  async (_req, res) => {
-    res.json({ leads: await listFoundingDriverLeads() });
+  async (req, res) => {
+    res.json({ leads: filterLeads(await listFoundingDriverLeads(), req.query, true) });
   }
 );
 
@@ -115,8 +254,40 @@ router.get(
   "/api/admin/leads/investors",
   requireAuth,
   requireRole("admin"),
-  async (_req, res) => {
-    res.json({ leads: await listInvestorInterestLeads() });
+  async (req, res) => {
+    res.json({ leads: filterLeads(await listInvestorInterestLeads(), req.query) });
+  }
+);
+
+router.patch(
+  "/api/admin/leads/drivers/:id",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const data = leadUpdateSchema.parse(req.body);
+      const lead = await updateFoundingDriverLead(req.params.id, data as Parameters<typeof updateFoundingDriverLead>[1]);
+      if (!lead) return res.status(404).json({ error: "Driver lead not found" });
+      return res.json({ lead });
+    } catch (error) {
+      return handleLeadError(res, error, "Failed to update driver lead");
+    }
+  }
+);
+
+router.patch(
+  "/api/admin/leads/investors/:id",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const data = leadUpdateSchema.parse(req.body);
+      const lead = await updateInvestorInterestLead(req.params.id, data as Parameters<typeof updateInvestorInterestLead>[1]);
+      if (!lead) return res.status(404).json({ error: "Investor lead not found" });
+      return res.json({ lead });
+    } catch (error) {
+      return handleLeadError(res, error, "Failed to update investor lead");
+    }
   }
 );
 
