@@ -176,7 +176,7 @@ Acceptance Criteria:
 ### TICKET-027: Escrow Release, Refund, And Dispute Admin Workflow
 
 Priority: Critical  
-Status: In Progress
+Status: Complete
 
 Acceptance Criteria:
 
@@ -188,6 +188,22 @@ Acceptance Criteria:
 - Mark manual review, retry verification, and dispute review create typed audit entries.
 - Release/refund remain backend-disabled outside explicit mock admin action mode until live contract execution is wired.
 - Mock admin action mode can deterministically exercise release/refund without touching real funds.
+
+### TICKET-028: Persistent Audit Logs And Admin Activity Timeline
+
+Priority: High  
+Status: In Progress
+
+Acceptance Criteria:
+
+- Audit logs persist to Postgres when database storage is active.
+- MemStorage/test mode keeps deterministic in-memory audit fallback.
+- Audit entries include actor user ID, actor role, actor wallet, action, ride ID, previous state, next state, reason, metadata, and timestamp.
+- Admin can fetch global audit logs from a protected endpoint.
+- Admin can fetch ride-scoped audit logs from a protected endpoint.
+- Escrow detail modal shows the action timeline.
+- Admin Activity tab supports filtering by action, ride ID, and actor.
+- Non-admin users cannot access audit log routes.
 
 ## Phase 2 - Driver Compliance And Admin Operations
 

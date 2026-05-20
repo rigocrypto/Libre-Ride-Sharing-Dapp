@@ -47,6 +47,10 @@ The remaining audit findings are low and moderate transitive advisories:
 
 The Firebase finding should be revisited when Firebase Admin or Google Cloud Storage publishes a dependency path that replaces `http-proxy-agent@5` or `teeny-request`. The AWS finding should be revisited when upload storage is productionized.
 
+## Admin Auditability
+
+Sensitive admin escrow actions now flow through a typed audit abstraction and require an operator reason. The audit log uses a Postgres-backed `audit_log` table when database storage is active, with an in-memory fallback reserved for MemStorage/test paths.
+
 ## Verification Requirement
 
 After dependency changes, run:

@@ -54,6 +54,7 @@ export type AdminEscrowAction =
 export type AuditLogEntry = {
   id: string;
   actorId: string;
+  actorRole?: string;
   actorWallet?: string;
   action: string;
   rideId?: string;

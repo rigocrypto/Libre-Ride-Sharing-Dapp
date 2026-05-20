@@ -13,6 +13,7 @@ export type AdminEscrowAction =
 
 export type AdminActor = {
   userId: string;
+  role?: string;
   walletAddress?: string | null;
 };
 
@@ -158,6 +159,7 @@ export async function prepareAdminEscrowAction(params: {
 
   const audit = await appendAuditLogEntry({
     actorId: actor.userId,
+    actorRole: actor.role || "admin",
     actorWallet: actor.walletAddress || undefined,
     action: auditAction,
     rideId: ride.id,

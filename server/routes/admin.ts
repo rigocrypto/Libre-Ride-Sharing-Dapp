@@ -12,6 +12,7 @@ import { storage } from "../storage-factory";
 import { db } from "../db/client";
 import { users, rides } from "../db/schema";
 import { sql, inArray } from "drizzle-orm";
+import type { AuditAction } from "@shared/audit/types";
 import { buildAdminEscrowSnapshot } from "../services/adminEscrowMonitor";
 import {
   buildAdminEscrowDetail,
@@ -20,6 +21,7 @@ import {
   prepareAdminEscrowAction,
   type AdminEscrowAction,
 } from "../services/adminEscrowActions";
+import { getAuditLogForRide, listAuditLogEntries } from "../services/auditLog";
 
 const router = Router();
 
@@ -320,6 +322,7 @@ function registerAdminEscrowActionRoute(path: string, action: AdminEscrowAction)
           ride,
           actor: {
             userId: req.user!.userId,
+            role: req.user!.role,
             walletAddress: (req.user as any).walletAddress,
           },
           action,
@@ -361,6 +364,64 @@ registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/retry-verification", 
 registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/release", "release");
 registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/refund", "refund");
 registerAdminEscrowActionRoute("/api/admin/escrows/:rideId/dispute", "dispute");
+
+/**
+ * GET /api/admin/audit-logs
+ *
+ * Admin activity timeline, optionally filtered by ride, actor, or action.
+ */
+router.get(
+  "/api/admin/audit-logs",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const query = z
+        .object({
+          rideId: z.string().optional(),
+          actorId: z.string().optional(),
+          action: z.string().optional(),
+        })
+        .parse(req.query);
+
+      const entries = await listAuditLogEntries({
+        rideId: query.rideId,
+        actorId: query.actorId,
+        action: query.action as AuditAction | undefined,
+      });
+      res.json({ entries });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("[Admin] Failed to fetch audit logs:", error);
+      res.status(500).json({ error: "Failed to fetch audit logs" });
+    }
+  }
+);
+
+/**
+ * GET /api/admin/escrows/:rideId/audit-logs
+ *
+ * Ride-scoped admin activity timeline.
+ */
+router.get(
+  "/api/admin/escrows/:rideId/audit-logs",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const { rideId } = z.object({ rideId: z.string() }).parse(req.params);
+      res.json({ entries: await getAuditLogForRide(rideId) });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("[Admin] Failed to fetch ride audit logs:", error);
+      res.status(500).json({ error: "Failed to fetch ride audit logs" });
+    }
+  }
+);
 
 /**
  * GET /api/admin/users

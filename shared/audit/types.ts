@@ -12,6 +12,7 @@ export type AuditAction =
 export interface AuditLogEntry {
   id: string;
   actorId: string;
+  actorRole?: string;
   actorWallet?: string;
   action: AuditAction;
   rideId?: string;

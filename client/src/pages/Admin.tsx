@@ -6,6 +6,7 @@ import { AdminEscrowFilters } from "@/components/admin/AdminEscrowFilters";
 import { AdminEscrowDetailDialog } from "@/components/admin/AdminEscrowDetailDialog";
 import { AdminEscrowSummaryCards } from "@/components/admin/AdminEscrowSummaryCards";
 import { AdminEscrowTable } from "@/components/admin/AdminEscrowTable";
+import { AdminAuditLogTable } from "@/components/admin/AdminAuditLogTable";
 import {
   Table,
   TableBody,
@@ -22,6 +23,7 @@ import type {
   AdminEscrowFilters as EscrowFilters,
   AdminEscrowRecord,
   AdminEscrowSnapshot,
+  AuditLogEntry,
 } from "@/types/adminEscrow";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DollarSign, Users, Car, AlertTriangle, CheckCircle, XCircle, WalletCards } from "lucide-react";
@@ -58,6 +60,20 @@ async function runAdminEscrowAction(args: {
     `/api/admin/escrows/${args.rideId}/${args.action}`,
     { reason: args.reason }
   );
+  return response.json();
+}
+
+async function fetchAdminAuditLogs(filters: {
+  action: string;
+  rideId: string;
+  actorId: string;
+}): Promise<{ entries: AuditLogEntry[] }> {
+  const search = new URLSearchParams();
+  if (filters.action.trim()) search.set("action", filters.action.trim());
+  if (filters.rideId.trim()) search.set("rideId", filters.rideId.trim());
+  if (filters.actorId.trim()) search.set("actorId", filters.actorId.trim());
+  const query = search.toString();
+  const response = await apiRequest("GET", `/api/admin/audit-logs${query ? `?${query}` : ""}`);
   return response.json();
 }
 
@@ -107,6 +123,11 @@ function matchesFilter(record: AdminEscrowRecord, filters: EscrowFilters): boole
 export default function Admin() {
   const [selectedTab, setSelectedTab] = useState("escrow");
   const [escrowFilters, setEscrowFilters] = useState(defaultEscrowFilters);
+  const [auditFilters, setAuditFilters] = useState({
+    action: "",
+    rideId: "",
+    actorId: "",
+  });
   const [selectedEscrowRideId, setSelectedEscrowRideId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -125,12 +146,18 @@ export default function Admin() {
     onSuccess: async (result) => {
       setActionError(null);
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/escrows"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/audit-logs"] });
       queryClient.setQueryData(
         ["/api/admin/escrows", selectedEscrowRideId],
         result.detail
       );
     },
     onError: (error: Error) => setActionError(error.message),
+  });
+  const auditQuery = useQuery({
+    queryKey: ["/api/admin/audit-logs", auditFilters],
+    queryFn: () => fetchAdminAuditLogs(auditFilters),
+    enabled: selectedTab === "audit",
   });
 
   const adminStats = {
@@ -235,6 +262,7 @@ export default function Admin() {
               )}
             </TabsTrigger>
             <TabsTrigger value="rides" data-testid="tab-rides">Rides</TabsTrigger>
+            <TabsTrigger value="audit" data-testid="tab-audit">Audit</TabsTrigger>
             <TabsTrigger value="disputes" data-testid="tab-disputes">
               Disputes
               {adminStats.pendingDisputes > 0 && (
@@ -312,6 +340,26 @@ export default function Admin() {
                   reason,
                 });
               }}
+            />
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Admin Activity</h2>
+              <p className="text-sm text-muted-foreground">
+                Persistent audit trail for sensitive escrow and operator actions.
+              </p>
+            </div>
+            {auditQuery.isError && (
+              <Card className="border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+                Admin audit logs are protected. Sign in as an admin to view activity.
+              </Card>
+            )}
+            <AdminAuditLogTable
+              entries={auditQuery.data?.entries || []}
+              isLoading={auditQuery.isLoading}
+              filters={auditFilters}
+              onFiltersChange={setAuditFilters}
             />
           </TabsContent>
 

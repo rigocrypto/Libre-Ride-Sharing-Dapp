@@ -24,6 +24,7 @@ Libre Ride should be treated as a staging MVP until every gate below is satisfie
 - [ ] Release, refund, and dispute flows are tested on Base Sepolia.
 - [ ] Admin escrow monitoring is available for locked, pending, failed, disputed, released, refunded, and stuck deposits.
 - [ ] Admin release/refund/dispute workflow enforces allowed escrow transitions and records typed audit logs.
+- [ ] Admin audit logs persist to the production database and survive server restarts.
 - [ ] Production release/refund actions cannot mutate escrow state without verified on-chain contract execution.
 - [ ] Every payment endpoint requires an idempotency key.
 - [ ] Transaction hashes are unique in the database.
