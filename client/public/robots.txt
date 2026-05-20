@@ -3,5 +3,4 @@ Allow: /
 Allow: /founding-access
 Disallow: /admin
 Disallow: /api/
-Sitemap: https://libreride.io/sitemap.xml
-
+Sitemap: https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/sitemap.xml

@@ -256,6 +256,21 @@ Acceptance Criteria:
 - Landing page includes traction, roadmap, stronger risk disclosure, privacy page link, robots.txt, and sitemap.xml.
 - Existing check, unit tests, build, and E2E verification remain passing.
 
+### TICKET-032: GitHub Pages Frontend Deployment
+
+Priority: High
+Status: Complete
+
+Acceptance Criteria:
+
+- Vite uses `/Libre-Ride-Sharing-Dapp/` as the base path only when `GITHUB_PAGES=true`.
+- Wouter receives the same base path so direct GitHub Pages routes resolve correctly.
+- GitHub Actions Pages workflow builds `dist/public`, creates `404.html` SPA fallback, uploads the artifact, and deploys via Pages.
+- README documents GitHub Pages as frontend-only and explains `VITE_API_BASE_URL` for separately hosted backend APIs.
+- Founding Access includes JSON-LD metadata and a real `og-libre-founding.png` social preview image.
+- robots.txt and sitemap.xml point to the GitHub Pages URL.
+- Existing check, unit tests, build, and E2E verification remain passing.
+
 ### TICKET-007: Production Driver Approval Workflow
 
 Priority: Critical  

@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
@@ -35,13 +35,18 @@ function Router() {
 }
 
 function App() {
+  const routerBase =
+    import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "");
+
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
           <TooltipProvider>
             <Toaster />
-            <Router />
+            <WouterRouter base={routerBase}>
+              <Router />
+            </WouterRouter>
           </TooltipProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

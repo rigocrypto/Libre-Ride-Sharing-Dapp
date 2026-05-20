@@ -423,6 +423,34 @@ Client/API dev server: http://localhost:5000
 
 Use `STORAGE_ENGINE=mem` for local development and tests when you do not want PostgreSQL startup checks.
 
+## GitHub Pages Frontend Deploy
+
+The static React/Vite frontend can be deployed to GitHub Pages at:
+
+```txt
+https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/
+```
+
+GitHub Pages is frontend-only. It can host the landing page, `/founding-access`, `/privacy`, and static demo routes, but it cannot run Express API routes, auth sessions, PostgreSQL/Drizzle, escrow verification, WebSockets, lead capture persistence, or admin CRM routes.
+
+For Pages builds, the workflow sets:
+
+```txt
+GITHUB_PAGES=true
+```
+
+That makes Vite use:
+
+```txt
+/Libre-Ride-Sharing-Dapp/
+```
+
+as the asset/router base path. If forms or admin pages should work from GitHub Pages, deploy the backend separately and set:
+
+```txt
+VITE_API_BASE_URL=https://your-backend.example.com
+```
+
 ## Docker
 
 The repository includes `docker-compose.yml` for local service orchestration. Confirm required environment variables first, then run:

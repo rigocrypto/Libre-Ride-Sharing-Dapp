@@ -26,19 +26,52 @@ function setMeta(name: string, content: string, property = false) {
   tag.content = content;
 }
 
+function setJsonLd(id: string, data: Record<string, unknown>) {
+  let tag = document.head.querySelector(`script[data-json-ld="${id}"]`) as HTMLScriptElement | null;
+  if (!tag) {
+    tag = document.createElement("script");
+    tag.type = "application/ld+json";
+    tag.dataset.jsonLd = id;
+    document.head.appendChild(tag);
+  }
+  tag.textContent = JSON.stringify(data);
+}
+
 export default function FoundingAccess() {
   useEffect(() => {
     document.title = "LIBRE Ride - Web3 Rideshare for Orlando";
     const description =
       "Join the founding driver program or request the investor deck for LIBRE Ride, the Web3 AI-powered rideshare platform built for Orlando.";
+    const pageUrl = "https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/founding-access";
+    const imageUrl = "https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/og-libre-founding.png";
     setMeta("description", description);
+    setMeta("keywords", "Orlando rideshare driver, Web3 ride sharing, USDC escrow, MCO airport rides, Orlando transportation, founding driver program");
     setMeta("og:title", "LIBRE Ride - Web3 Rideshare for Orlando", true);
     setMeta("og:description", description, true);
-    setMeta("og:image", "/founding-orlando-skyline.png", true);
+    setMeta("og:url", pageUrl, true);
+    setMeta("og:image", imageUrl, true);
+    setMeta("og:type", "website", true);
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", "LIBRE Ride - Web3 Rideshare for Orlando");
     setMeta("twitter:description", description);
-    setMeta("twitter:image", "/founding-orlando-skyline.png");
+    setMeta("twitter:image", imageUrl);
+    setJsonLd("founding-access", {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "LIBRE Ride",
+      description: "Web3 AI-powered ride-sharing platform built for Orlando",
+      url: pageUrl,
+      foundingDate: "2025",
+      areaServed: {
+        "@type": "City",
+        name: "Orlando, Florida",
+      },
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "Driver Recruitment",
+        url: pageUrl,
+      },
+    });
     trackLandingEvent("founding_access_viewed");
   }, []);
 
