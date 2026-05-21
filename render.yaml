@@ -20,6 +20,12 @@ services:
         generateValue: true
       - key: ESCROW_VERIFIER_MODE
         value: mock
+      - key: FIREBASE_ADMIN_PROJECT_ID
+        sync: false
+      - key: FIREBASE_ADMIN_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_ADMIN_PRIVATE_KEY
+        sync: false
 
 databases:
   - name: libre-db
