@@ -8,7 +8,7 @@
     "start:dev:detached": "node scripts/start-dev-detached.js",
     "stop:dev": "node scripts/stop-dev.js",
     "test:e2e": "playwright test --reporter=list",
-    "build": "vite build && esbuild server/index-prod.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
+    "build": "npx --no-install vite build && npx --no-install esbuild server/index-prod.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
     "build:pages": "vite build",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "check": "tsc",
