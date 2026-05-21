@@ -12,6 +12,7 @@ import { createRouteHandler } from "uploadthing/express";
 import { uploadRouter } from "./uploadthing";
 import { storage } from "./storage-factory";
 import { startComplianceExpiryJob } from "./jobs/complianceExpiry";
+import { runProductionMigrations } from "./db/migrate";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -114,6 +115,7 @@ app.use((req, res, next) => {
 export default async function runApp(
   setup: (app: Express, server: Server) => Promise<void>,
 ) {
+  await runProductionMigrations();
   startComplianceExpiryJob(storage);
   const server = await registerRoutes(app);
 
