@@ -5,7 +5,20 @@ import type { IStorage } from "../storage";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function runComplianceExpiryCheck(storage: IStorage, now = new Date()) {
-  const profiles = await storage.listDrivers();
+  let profiles: any[] = [];
+  try {
+    profiles = await storage.listDrivers();
+  } catch (error: any) {
+    if (error?.code === "42P01") {
+      console.warn(
+        "[ComplianceExpiry] Skipping check: missing database table or relation",
+        error.message,
+      );
+      return { checked: 0, expired: 0 };
+    }
+    throw error;
+  }
+
   let expired = 0;
 
   for (const profile of profiles) {
@@ -39,6 +52,10 @@ export async function runComplianceExpiryCheck(storage: IStorage, now = new Date
 
 export function startComplianceExpiryJob(storage: IStorage) {
   if (process.env.NODE_ENV === "test") return;
+  if (process.env.SKIP_STARTUP_JOBS === "true") {
+    console.warn("[ComplianceExpiry] Startup job disabled by SKIP_STARTUP_JOBS.");
+    return;
+  }
 
   runComplianceExpiryCheck(storage).catch((error) => {
     console.error("[ComplianceExpiry] Startup check failed:", error);
