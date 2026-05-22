@@ -99,9 +99,31 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
 
 # Firebase Admin (for backend)
-FIREBASE_ADMIN_PROJECT_ID=...
-FIREBASE_ADMIN_CLIENT_EMAIL=...
-FIREBASE_ADMIN_PRIVATE_KEY="..."
+# **Important:** When setting the private key in your host (Render, Heroku, etc.), DO NOT paste the entire service account JSON.
+# Only paste the PEM private key value and escape newlines as `\n`. Do NOT wrap the value in quotes.
+#
+# Correct example (no surrounding quotes):
+#
+# ```env
+# FIREBASE_ADMIN_PROJECT_ID=your-project-id
+# FIREBASE_ADMIN_CLIENT_EMAIL=your-client-email@your-project.iam.gserviceaccount.com
+# FIREBASE_ADMIN_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIE...rest-of-key...\n-----END PRIVATE KEY-----\n
+# ```
+#
+# Common mistakes to avoid:
+# - Including surrounding quotes: `"-----BEGIN PRIVATE KEY-----\n..."` (wrong)
+# - Pasting the whole JSON service account object (wrong)
+# - Leaving literal newlines (depends on host) instead of escaped `\n` sequences
+
+### Startup jobs safety toggle (Render)
+
+If you want to prevent background startup jobs from running while you validate migrations, set:
+
+```env
+SKIP_STARTUP_JOBS=true
+```
+
+Unset it after the first successful deploy so scheduled jobs resume.
 
 # Database (NEW - Required for DrizzleStorage)
 DATABASE_URL=postgresql://user:password@host:5432/database
