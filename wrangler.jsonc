@@ -1,4 +1,5 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "libre-frontend",
   "compatibility_date": "2026-05-31"
 }
