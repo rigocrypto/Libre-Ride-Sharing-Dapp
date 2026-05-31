@@ -1,14 +1,4 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "libreridesharing",
-  "main": "dist/index.js",
-  "compatibility_date": "2026-05-31",
-  "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true
-  },
-  "assets": {
-    "directory": "./dist/public",
-    "not_found_handling": "single-page-application"
-  }
+  "name": "libre-frontend",
+  "compatibility_date": "2026-05-31"
 }
