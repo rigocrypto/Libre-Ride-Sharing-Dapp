@@ -9,6 +9,7 @@ import identityRoutes from "./routes/identity.js";
 import userRoutes from "./routes/user.js";
 import adminRoutes from "./routes/admin.js";
 import leadsRoutes from "./routes/leads.js";
+import complianceRoutes from "./routes/compliance.js";
 import { sendEmail, generateOnboardingStartedEmail, generateVerificationCompleteEmail, generateDocumentRejectedEmail, generateRideReceiptEmail } from "./email";
 import {
   insertWaitlistSchema,
@@ -57,6 +58,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Public lead capture routes for Founding Access landing page
   app.use(leadsRoutes);
+
+  // Compliance & Audit routes (insurance, eligibility, audit trail)
+  app.use(complianceRoutes);
 
   // Wallet linking routes
   const walletRoutes = (await import('./routes/wallet.js')).default;

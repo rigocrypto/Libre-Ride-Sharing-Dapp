@@ -1,9 +1,10 @@
+// Only valid inside WalletProviders-wrapped routes (/rider, /driver, /admin).
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getAddress, isAddress, type Hex } from "viem";
 import { useAccount, useChainId, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
 import { erc20Abi, rideEscrowAbi } from "@shared/escrow";
-import { escrowClientConfig, libreChain } from "@/lib/web3/config";
+import { escrowClientConfig, libreChain } from "@/lib/web3/chains";
 
 export type DepositStatus =
   | "WALLET_NOT_CONNECTED"

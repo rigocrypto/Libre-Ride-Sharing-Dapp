@@ -31,6 +31,23 @@ test('Rider payment-first flow smoke test', async ({ page }) => {
     localStorage.setItem('firebaseToken', t);
   }, token);
 
+  // Inspect console for unexpected errors (wallet routes may log benign dev noise).
+  const consoleErrors: string[] = [];
+  const ignoredConsoleErrorPatterns = [
+    /WebSocket connection to 'ws:\/\/127\.0\.0\.1:5000\/ws' failed/i,
+    /\[useRiderRide\] WS error/i,
+    /web3modal\.org/i,
+    /pulse\.walletconnect\.org/i,
+    /Failed to load resource: the server responded with a status of (400|403)/i,
+    /\[Reown Config\] Failed to fetch remote project configuration/i,
+  ];
+  page.on('console', (msg) => {
+    if (msg.type() !== 'error') return;
+    const text = msg.text();
+    if (ignoredConsoleErrorPatterns.some((pattern) => pattern.test(text))) return;
+    consoleErrors.push(text);
+  });
+
   // Start at the Rider route
   await page.goto(`http://127.0.0.1:5000/rider?rideId=${rideId}`, {
     waitUntil: 'domcontentloaded',
@@ -40,14 +57,7 @@ test('Rider payment-first flow smoke test', async ({ page }) => {
   await expect(page.locator('text=Loading ride details...').first()).toBeVisible({ timeout: 5000 }).catch(() => {});
 
   // Wait for either Finding Driver panel or Payment CTA
-  const finding = page.locator('text=Finding driver');
   const payCTA = page.locator('text=Pay $25.00 with USDC');
-
-  // Inspect console for errors
-  const consoleErrors: string[] = [];
-  page.on('console', msg => {
-    if (msg.type() === 'error') consoleErrors.push(msg.text());
-  });
 
   // 2) Simulate driver assigned by calling the production accept endpoint as the driver
   // Ensure accept succeeded

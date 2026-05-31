@@ -295,6 +295,107 @@ export const riderPhotos = pgTable("rider_photos", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// =============================================================================
+// COMPLIANCE GATE FOUNDATION - Phase 1 Critical Blockers
+// =============================================================================
+
+// Audit Events - Immutable log of all critical actions (append-only)
+export const auditEvents = pgTable("audit_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+
+  // Event classification
+  eventType: text("event_type").notNull(), // See AUDIT_EVENT_TYPES constant below
+  actorUserId: varchar("actor_user_id").references(() => users.id), // Who triggered it
+  actorRole: text("actor_role"), // "driver" | "rider" | "admin"
+
+  // Target tracking
+  targetType: text("target_type").notNull(), // "driver" | "ride" | "escrow" | "insurance" | "eligibility"
+  targetId: varchar("target_id").notNull(), // The primary resource ID
+
+  // Contextual IDs (denormalized for query performance)
+  rideId: varchar("ride_id").references(() => rides.id),
+  driverId: varchar("driver_id").references(() => users.id),
+  riderId: varchar("rider_id").references(() => users.id),
+  escrowTxHash: text("escrow_tx_hash"),
+
+  // Payload & metadata
+  metadata: jsonb("metadata").default({}), // Flexible JSON for event-specific data
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+
+  // Immutable timestamp (no updates)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insurance Policies - Detailed insurance tracking with verification
+export const insurancePolicies = pgTable("insurance_policies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+
+  // Association
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+  vehicleId: varchar("vehicle_id").references(() => users.id), // TODO: link to vehicle table if created
+
+  // Policy details
+  carrierName: text("carrier_name").notNull(),
+  policyNumber: text("policy_number").notNull(),
+  coverageType: text("coverage_type").notNull(), // "personal" | "commercial" | "tnc_endorsement"
+  hasTncEndorsement: boolean("has_tnc_endorsement").default(false), // Critical for TNC compliance
+  hasCommercialCoverage: boolean("has_commercial_coverage").default(false),
+  coverageAmount: real("coverage_amount"), // In USD
+
+  // Validity windows
+  effectiveDate: text("effective_date").notNull(), // YYYY-MM-DD
+  expirationDate: text("expiration_date").notNull(), // YYYY-MM-DD
+
+  // Documentation
+  documentUrl: text("document_url").notNull(),
+  documentHash: text("document_hash"),
+
+  // Review & verification
+  status: text("status").default("pending").notNull(), // "pending" | "approved" | "rejected" | "expired"
+  rejectionReason: text("rejection_reason"),
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: varchar("verified_by").references(() => users.id), // Admin who verified
+
+  // Tracking
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Driver Eligibility Snapshots - Single source of truth for ride eligibility
+// Recalculated whenever compliance status changes
+export const driverEligibilitySnapshots = pgTable("driver_eligibility_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+
+  driverId: varchar("driver_id").notNull().references(() => users.id),
+
+  // Individual verification gates
+  identityVerified: boolean("identity_verified").default(false),
+  licenseVerified: boolean("license_verified").default(false),
+  backgroundCheckApproved: boolean("background_check_approved").default(false),
+  insuranceVerified: boolean("insurance_verified").default(false),
+  vehicleApproved: boolean("vehicle_approved").default(false),
+  vehicleInspectionApproved: boolean("vehicle_inspection_approved").default(false),
+  walletVerified: boolean("wallet_verified").default(false),
+
+  // Optional gates
+  airportEligible: boolean("airport_eligible").default(false),
+  subscriptionActive: boolean("subscription_active").default(false),
+
+  // Composite eligibility (calculated from gates)
+  canGoOnline: boolean("can_go_online").default(false),
+  canAcceptGeneralRides: boolean("can_accept_general_rides").default(false),
+  canAcceptAirportRides: boolean("can_accept_airport_rides").default(false),
+
+  // Reasoning for audit trail
+  blockingReasons: jsonb("blocking_reasons").default(sql`'[]'::jsonb`), // Array of strings explaining why gates failed
+  warnings: jsonb("warnings").default(sql`'[]'::jsonb`), // Array of non-blocking warnings
+
+  // Versioning for audit trail
+  calculatedAt: timestamp("calculated_at").defaultNow().notNull(),
+  previousEligibilitySnapshotId: varchar("previous_eligibility_snapshot_id"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertDriverSchema = createInsertSchema(drivers).omit({ id: true });
@@ -332,6 +433,41 @@ export const insertVehiclePhotosSchema = createInsertSchema(vehiclePhotos).omit(
 export const insertInsuranceDocumentsSchema = createInsertSchema(insuranceDocuments).omit({ id: true, createdAt: true });
 export const insertBackgroundCheckDocumentsSchema = createInsertSchema(backgroundCheckDocuments).omit({ id: true, createdAt: true });
 export const insertRiderPhotosSchema = createInsertSchema(riderPhotos).omit({ id: true, createdAt: true });
+
+// Compliance Gate Foundation Schemas
+export const insertAuditEventSchema = createInsertSchema(auditEvents).omit({ id: true, createdAt: true });
+export const insertInsurancePolicySchema = createInsertSchema(insurancePolicies).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDriverEligibilitySnapshotSchema = createInsertSchema(driverEligibilitySnapshots).omit({ id: true, calculatedAt: true });
+
+// Audit event type constant
+export const AUDIT_EVENT_TYPES = [
+  "DRIVER_CREATED",
+  "DRIVER_DOCUMENT_UPLOADED",
+  "INSURANCE_SUBMITTED",
+  "INSURANCE_APPROVED",
+  "INSURANCE_REJECTED",
+  "DRIVER_ELIGIBILITY_RECALCULATED",
+  "DRIVER_APPROVED",
+  "DRIVER_SUSPENDED",
+  "RIDE_REQUESTED",
+  "RIDE_ACCEPTED",
+  "RIDE_ACCEPT_BLOCKED",
+  "RIDE_STARTED",
+  "RIDE_COMPLETED",
+  "RIDE_CANCELLED",
+  "ESCROW_DEPOSIT_INITIATED",
+  "ESCROW_FUNDED",
+  "ESCROW_RELEASED",
+  "ESCROW_REFUNDED",
+  "ESCROW_DISPUTED",
+  "PIN_VERIFICATION_CREATED",
+  "PIN_VERIFICATION_PASSED",
+  "PIN_VERIFICATION_FAILED",
+  "INCIDENT_REPORTED",
+  "ADMIN_OVERRIDE_USED",
+] as const;
+
+export type AuditEventType = typeof AUDIT_EVENT_TYPES[number];
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -373,6 +509,35 @@ export type RiderProfile = User & {
   badges: Badge[];
   totalRides: number;
   totalSpent: number;
+};
+
+// Compliance Gate Foundation Types
+export type AuditEvent = typeof auditEvents.$inferSelect;
+export type InsertAuditEvent = z.infer<typeof insertAuditEventSchema>;
+
+export type InsurancePolicy = typeof insurancePolicies.$inferSelect;
+export type InsertInsurancePolicy = z.infer<typeof insertInsurancePolicySchema>;
+
+export type DriverEligibilitySnapshot = typeof driverEligibilitySnapshots.$inferSelect;
+export type InsertDriverEligibilitySnapshot = z.infer<typeof insertDriverEligibilitySnapshotSchema>;
+
+// Eligibility calculation result (runtime type)
+export type DriverEligibilityResult = {
+  driverId: string;
+  identityVerified: boolean;
+  licenseVerified: boolean;
+  backgroundCheckApproved: boolean;
+  insuranceVerified: boolean;
+  vehicleApproved: boolean;
+  vehicleInspectionApproved: boolean;
+  walletVerified: boolean;
+  airportEligible: boolean;
+  subscriptionActive: boolean;
+  canGoOnline: boolean;
+  canAcceptGeneralRides: boolean;
+  canAcceptAirportRides: boolean;
+  blockingReasons: string[];
+  warnings: string[];
 };
 
 // Orlando-specific constants

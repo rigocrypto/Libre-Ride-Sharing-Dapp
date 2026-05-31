@@ -6,8 +6,8 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 
-// Debug: Log environment variables (remove in production)
-if (import.meta.env.DEV) {
+// Dev-only: never log Firebase env details in production builds.
+if (import.meta.env.DEV && import.meta.env.MODE === "development") {
   console.log('[Firebase Config] Environment variables check:');
   console.log('  VITE_FIREBASE_API_KEY:', import.meta.env.VITE_FIREBASE_API_KEY ? `${import.meta.env.VITE_FIREBASE_API_KEY.slice(0, 10)}...` : '❌ UNDEFINED');
   console.log('  VITE_FIREBASE_AUTH_DOMAIN:', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '❌ UNDEFINED');

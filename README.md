@@ -412,8 +412,11 @@ npm.cmd run test:e2e
 Start local dev server:
 
 ```powershell
+Remove-Item Env:GITHUB_PAGES -ErrorAction SilentlyContinue
 npm.cmd run dev
 ```
+
+Do **not** leave `GITHUB_PAGES=true` in your shell when running `npm run dev`. That flag is only for GitHub Pages builds and switches Vite to base path `/Libre-Ride-Sharing-Dapp/`, which can make `http://localhost:5000` render a blank page.
 
 Depending on your local setup, the app generally runs on:
 
@@ -422,6 +425,16 @@ Client/API dev server: http://localhost:5000
 ```
 
 Use `STORAGE_ENGINE=mem` for local development and tests when you do not want PostgreSQL startup checks.
+
+Copy `.env.example` to `.env` before configuring Firebase, Reown, or production API URLs.
+
+### WalletConnect / Reown dev warnings
+
+Public routes such as `/founding-access` should not load wallet providers or make WalletConnect/Reown requests.
+
+Wallet routes such as `/rider`, `/driver`, and `/admin` load RainbowKit/Wagmi lazily. If `VITE_WALLETCONNECT_PROJECT_ID` is missing, dev mode may show 403/400 requests to Web3Modal/Reown endpoints. This is expected until a real Reown project ID is configured.
+
+Get a project ID at [cloud.reown.com](https://cloud.reown.com), add it to `.env`, and restart `npm run dev`. Use the same value in Render env vars when deploying the API for production wallet flows.
 
 ## GitHub Pages Frontend Deploy
 
@@ -452,6 +465,8 @@ VITE_API_BASE_URL=https://your-backend.example.com
 ```
 
 The Pages workflow reads `VITE_API_BASE_URL` from GitHub Actions secrets during build.
+
+For wallet UI on deployed static pages that link to `/rider` or `/driver`, set `VITE_WALLETCONNECT_PROJECT_ID` in the GitHub Actions build environment or document that users configure wallets only after the Pages rebuild includes a valid Reown project ID.
 
 ## Render Backend Deploy
 
@@ -641,6 +656,8 @@ Near-term priorities:
 | Upload errors | Confirm UploadThing keys and callback URLs. |
 | Push notifications not working | Confirm OneSignal sandbox/app credentials. |
 | E2E port conflicts | Ensure no dev server is already listening on port 5000. |
+| Local dev shows blank page or broken assets | Clear `GITHUB_PAGES` from your shell (`Remove-Item Env:GITHUB_PAGES`) and restart `npm run dev`. Use `GITHUB_PAGES=true` only for `npm run build:pages`. |
+| WalletConnect 403/400 on `/rider` or `/driver` only | Expected without `VITE_WALLETCONNECT_PROJECT_ID`. Public routes (`/founding-access`, `/privacy`) should not load wallet code. |
 | GitHub Dependabot count looks stale | Wait for GitHub rescan and compare against local `npm audit`. |
 
 ## Legal and Compliance Notice

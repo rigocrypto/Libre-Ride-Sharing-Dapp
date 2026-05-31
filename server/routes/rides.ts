@@ -17,6 +17,7 @@ import {
   RideAlreadyAcceptedError,
   RideNotFoundError,
 } from '../services/rideAcceptance';
+import { createAuditEvent } from '../lib/compliance/audit-events';
 import { storage } from '../storage-factory';
 import { getRideStartEligibility } from '../services/rideStartGuard';
 
@@ -95,9 +96,27 @@ router.post('/api/rides/:id/accept', requireAuth, requireWallet, requireSIWE, as
     }
 
     if (err instanceof DriverNotEligibleError) {
+      try {
+        await createAuditEvent({
+          eventType: 'RIDE_ACCEPT_BLOCKED',
+          actorUserId: driverId,
+          actorRole: 'driver',
+          targetType: 'ride',
+          targetId: rideId,
+          rideId,
+          driverId,
+          metadata: {
+            reason: err.message,
+          },
+          req,
+        });
+      } catch (auditError) {
+        console.error('[Rides] Failed to log blocked acceptance audit event:', auditError);
+      }
+
       return res.status(403).json({
         success: false,
-        error: 'Driver is not approved or wallet verified',
+        error: err.message || 'Driver is not eligible to accept rides',
       });
     }
 

@@ -301,6 +301,22 @@ Acceptance Criteria:
 - Founding driver and investor leads can persist across service restart.
 - Duplicate email handling still returns friendly `409` responses.
 
+### TICKET-035: Public Landing Performance and Deployment Verification
+
+Priority: High
+Status: Complete
+
+Goal: Keep marketing routes wallet-free, GitHub Pages safe, and wallet features isolated to app routes.
+
+Acceptance Criteria:
+
+- `/founding-access` loads without WalletConnect, web3modal, reown, or pulse.wallet network requests.
+- `/founding-access` works after direct refresh.
+- `/rider` still loads wallet providers via lazy `WalletProviders`.
+- `VITE_WALLETCONNECT_PROJECT_ID` dev warning only appears when wallet routes load.
+- README documents clearing `GITHUB_PAGES` for local `npm run dev`.
+- Playwright `public-routes.spec.ts` verifies wallet-free public routes separately from rider smoke tests.
+
 ### TICKET-007: Production Driver Approval Workflow
 
 Priority: Critical  

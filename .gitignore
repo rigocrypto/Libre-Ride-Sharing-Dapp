@@ -16,6 +16,7 @@ client/.env.*
 .local/
 test-results/
 playwright-report/
+Libre-RideSharing/
 
 # Dev server PID file (detached helper)
 .dev-server.pid
