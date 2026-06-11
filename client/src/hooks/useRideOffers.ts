@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { getWebSocketUrl } from '@/lib/websocket';
 
 export interface RideOffer {
   rideId: string;
@@ -45,8 +46,13 @@ export function useRideOffers() {
       }
 
       // Connect to WS with token
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`;
+      const baseWsUrl = getWebSocketUrl();
+      if (!baseWsUrl) {
+        setError('WebSocket not available: no backend configured');
+        setIsLoading(false);
+        return;
+      }
+      const wsUrl = `${baseWsUrl}?token=${encodeURIComponent(token)}`;
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

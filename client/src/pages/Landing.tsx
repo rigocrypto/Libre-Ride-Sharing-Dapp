@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
+import { getWebSocketUrl } from '@/lib/websocket';
 import { Web3Connect } from "@/components/Web3Connect";
 import { EmailSignup } from "@/components/EmailSignup";
 import { EarningsCalculator } from "@/components/EarningsCalculator";
@@ -23,12 +24,16 @@ const LandingPage: React.FC = () => {
     let reconnectTimeout: NodeJS.Timeout | null = null;
     let isMounted = true;
 
+    const wsUrl = getWebSocketUrl();
+    if (!wsUrl) {
+      console.info('[WebSocket] Disabled: no backend WebSocket URL configured. Using polling fallback.');
+      return;
+    }
+
     const connect = () => {
       if (!isMounted) return;
 
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {

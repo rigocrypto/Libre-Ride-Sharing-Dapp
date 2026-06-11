@@ -8,6 +8,7 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getWebSocketUrl } from '@/lib/websocket';
 import { useEffect, useRef } from 'react';
 
 interface Ride {
@@ -112,10 +113,11 @@ export function useRiderRide(rideId: string) {
     const token = localStorage.getItem('firebaseToken');
     if (!token) return;
 
+    const wsUrl = getWebSocketUrl();
+    if (!wsUrl) return;
+
     try {
-      wsRef.current = new WebSocket(
-        `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`
-      );
+      wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.addEventListener('open', () => {
         wsRef.current?.send(JSON.stringify({ type: 'auth', token }));

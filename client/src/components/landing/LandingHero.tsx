@@ -11,7 +11,7 @@ export function LandingHero() {
   return (
     <section className="relative min-h-[92vh] overflow-hidden pt-24 text-white">
       <img
-        src="/founding-orlando-skyline.png"
+        src={`${import.meta.env.BASE_URL}founding-orlando-skyline.png`}
         alt="Orlando skyline at dusk"
         className="absolute inset-0 h-full w-full object-cover"
       />

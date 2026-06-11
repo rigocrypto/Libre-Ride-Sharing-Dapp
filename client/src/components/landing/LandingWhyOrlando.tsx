@@ -22,7 +22,7 @@ export function LandingWhyOrlando() {
             demand create constant mobility needs.
           </p>
           <img
-            src="/founding-fleet-collage.png"
+            src={`${import.meta.env.BASE_URL}founding-fleet-collage.png`}
             alt="Modern rideshare vehicles in an Orlando-inspired visual collage"
             className="mt-8 aspect-[16/10] w-full rounded-3xl border border-white/10 object-cover shadow-2xl shadow-black/30"
           />
