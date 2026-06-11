@@ -7,6 +7,7 @@
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import * as schema from "./schema";
 
 const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 const isMemStorage = process.env.STORAGE_ENGINE === 'mem';
@@ -45,7 +46,7 @@ pool.on('remove', () => {
   console.log('[DB] Connection removed from pool');
 });
 
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });
 
 // Test connection on startup outside unit tests.
 if (!isTest && !isMemStorage) {

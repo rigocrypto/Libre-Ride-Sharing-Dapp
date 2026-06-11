@@ -46,13 +46,13 @@ const router = Router();
  * - 500: Database error
  */
 router.post('/api/rides/:id/accept', requireAuth, requireWallet, requireSIWE, async (req, res) => {
+  const rideId = req.params.id;
+  const driverId = req.user?.userId;
+
   try {
-    if (!req.user) {
+    if (!req.user || !driverId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-
-    const driverId = req.user.userId;
-    const rideId = req.params.id;
 
     // Validate rideId is UUID-like
     if (!rideId || rideId.length < 36) {
