@@ -183,11 +183,17 @@ const LandingPage: React.FC = () => {
             <div className="group p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all hover:scale-105 cursor-pointer">
               <div className="text-5xl mb-4 animate-bounce group-hover:animate-none">🚗</div>
               <h3 className="text-2xl font-bold mb-2">For Drivers</h3>
-              <p className="text-white/80 mb-6">
+              <p className="text-white/80 mb-4">
                 Keep 97% of every fare. Get paid instantly after each ride. Fully Florida-compliant.
               </p>
-              <Link href="/become-driver" className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 transition font-bold w-full text-center">
+              <p className="text-sm text-emerald-300/80 mb-4">
+                LIBRE only shows you rides after payment is escrow-confirmed — no wasted trips.
+              </p>
+              <Link href="/become-driver" className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 transition font-bold w-full text-center mb-3">
                 Start Driving 🚀
+              </Link>
+              <Link href="/driver" className="inline-block px-6 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-emerald-400/30 transition font-semibold w-full text-center text-emerald-200 text-sm">
+                Try the Driver Demo →
               </Link>
             </div>
           </div>
