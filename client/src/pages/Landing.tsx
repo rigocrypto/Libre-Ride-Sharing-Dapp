@@ -18,11 +18,13 @@ const LandingPage: React.FC = () => {
   const [activeRides, setActiveRides] = useState<number>(0);
   const { toast } = useToast();
 
-  // WebSocket connection for live stats
+  // WebSocket connection for live stats (online driver count only — purely cosmetic)
   useEffect(() => {
     let ws: WebSocket | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
     let isMounted = true;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 3;
 
     const wsUrl = getWebSocketUrl();
     if (!wsUrl) {
@@ -32,13 +34,17 @@ const LandingPage: React.FC = () => {
 
     const connect = () => {
       if (!isMounted) return;
+      if (attempts >= MAX_ATTEMPTS) {
+        console.info('[WebSocket] Stats socket gave up after', MAX_ATTEMPTS, 'attempts. Live stats unavailable.');
+        return;
+      }
+      attempts++;
 
       try {
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log('[WebSocket] Connected for stats');
-          // Send auth message (optional, but helps with connection stability)
+          attempts = 0; // reset on successful connect
           ws?.send(JSON.stringify({ type: 'stats_subscribe' }));
         };
 
@@ -54,26 +60,22 @@ const LandingPage: React.FC = () => {
           }
         };
 
-        ws.onerror = (error) => {
-          console.error('[WebSocket] Error:', error);
-        };
+        ws.onerror = () => { /* handled in onclose */ };
 
         ws.onclose = (event) => {
-          console.log('[WebSocket] Disconnected', { code: event.code, reason: event.reason });
           ws = null;
-          
-          // Only reconnect if component is still mounted and it wasn't a clean close
-          if (isMounted && event.code !== 1000) {
-            reconnectTimeout = setTimeout(() => {
-              console.log('[WebSocket] Reconnecting...');
-              connect();
-            }, 3000);
+          // Only retry on transient failures; 1000=clean, 1008/1011=server error (don't retry)
+          const retryable = event.code !== 1000 && event.code !== 1008 && event.code !== 1011;
+          if (isMounted && retryable && attempts < MAX_ATTEMPTS) {
+            const delay = Math.min(3000 * attempts, 15000); // 3s, 6s, 9s
+            reconnectTimeout = setTimeout(connect, delay);
           }
         };
       } catch (error) {
         console.error('[WebSocket] Connection error:', error);
-        if (isMounted) {
-          reconnectTimeout = setTimeout(() => connect(), 5000);
+        if (isMounted && attempts < MAX_ATTEMPTS) {
+          const delay = Math.min(3000 * attempts, 15000);
+          reconnectTimeout = setTimeout(connect, delay);
         }
       }
     };
