@@ -187,6 +187,30 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Demo CTA Banner */}
+          <div className="max-w-3xl mx-auto mb-10 p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 backdrop-blur-md border border-emerald-500/30">
+            <div className="flex items-center justify-center mb-3">
+              <span className="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full font-medium">
+                Demo Mode · Base Sepolia · No real funds
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-white text-center mb-2">Try the Live Demo</h3>
+            <p className="text-center text-white/70 text-sm mb-5">
+              See how escrow-confirmed rides protect drivers, riders, and platform operators.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/rider" className="flex-1 sm:flex-none inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 transition font-bold text-center">
+                🧍 Rider Demo
+              </Link>
+              <Link href="/driver" className="flex-1 sm:flex-none inline-block px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 transition font-semibold text-center">
+                🚗 Driver Demo
+              </Link>
+              <Link href="/admin" className="flex-1 sm:flex-none inline-block px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 transition font-semibold text-center">
+                📊 Admin Demo
+              </Link>
+            </div>
+          </div>
+
           {/* Primary CTA: Social Login */}
           <div className="max-w-md mx-auto mb-8">
             <div className="space-y-4">
@@ -304,6 +328,75 @@ const LandingPage: React.FC = () => {
               <p className="text-white/70">{step.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* How the LIBRE Demo Works */}
+      <section className="py-24 px-6 bg-gradient-to-b from-emerald-900/20 to-cyan-900/10">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="inline-block text-xs px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full font-medium mb-4">
+              Live Demo Available
+            </span>
+            <h2 className="text-4xl font-black text-white mb-4">How the LIBRE Demo Works</h2>
+            <p className="text-white/70 max-w-2xl mx-auto">
+              This demo runs the full escrow-gated ride lifecycle — no real passengers, no real funds.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-10">
+            {[
+              {
+                step: '1',
+                icon: '🔒',
+                title: 'Rider locks payment',
+                desc: 'The rider requests a ride, receives an Orlando fare estimate, and confirms escrow payment before the ride is offered to any driver.',
+                cta: 'Try Rider Demo',
+                href: '/rider',
+              },
+              {
+                step: '2',
+                icon: '🚗',
+                title: 'Driver sees confirmed rides only',
+                desc: 'Drivers only see rides after escrow is confirmed, eliminating wasted time on unconfirmed or unpaid trips.',
+                cta: 'Try Driver Demo',
+                href: '/driver',
+              },
+              {
+                step: '3',
+                icon: '📊',
+                title: 'Admin tracks the lifecycle',
+                desc: 'The admin view shows ride status, escrow state, driver assignment, fare breakdown, and transaction reference.',
+                cta: 'Try Admin Demo',
+                href: '/admin',
+              },
+            ].map((card) => (
+              <div
+                key={card.step}
+                className="p-8 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all hover:scale-105 flex flex-col"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="w-8 h-8 bg-emerald-500/30 text-emerald-300 rounded-full flex items-center justify-center text-sm font-black">
+                    {card.step}
+                  </span>
+                  <span className="text-3xl">{card.icon}</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">{card.title}</h3>
+                <p className="text-white/70 text-sm flex-1 mb-5">{card.desc}</p>
+                <Link
+                  href={card.href}
+                  className="inline-block text-center px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-sm font-semibold transition"
+                >
+                  {card.cta} →
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-white/60 text-sm italic">
+            This demo shows LIBRE's core trust layer: escrow-gated ride matching.
+            Drivers only see payment-confirmed rides.
+          </p>
         </div>
       </section>
 

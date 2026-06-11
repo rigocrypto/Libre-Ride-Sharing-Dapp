@@ -65,6 +65,84 @@ LIBRE includes or is being built toward:
 - Admin command center roadmap
 - Security hardening and production readiness documentation
 
+## Demo Walkthrough
+
+LIBRE Ride includes a self-guided demo that shows the core ride-sharing flow behind the platform:
+
+> **LIBRE protects driver time by only showing rides after rider payment is escrow-confirmed.**
+
+This is the key product difference. Riders get payment protection, drivers avoid unpaid or unconfirmed trips, and admins can monitor the full ride lifecycle.
+
+### What the Demo Proves
+
+- Rider ride request and Orlando fare estimate
+- Escrow/payment confirmation before the ride is offered to drivers
+- Driver-only visibility for escrow-confirmed rides
+- Driver accept, start, and complete actions
+- Admin ride lifecycle monitoring: status, escrow state, driver assignment, fare, and transaction reference
+
+This is a demo/staging flow only. It does not use real passengers, real dispatch, real production funds, or production compliance checks.
+
+### Audience Framing
+
+**For investors:** Driver time is money. LIBRE reduces wasted driver time by only exposing payment-confirmed rides.
+
+**For drivers:** No wasted trips. You only see rides after the rider has confirmed payment.
+
+**For riders:** Your payment is protected through the escrow flow before the ride moves forward.
+
+### Demo Paths
+
+| Page | Purpose |
+| ---- | ------- |
+| `/rider` | Rider creates a ride, estimates fare, and confirms escrow |
+| `/driver` | Driver sees only escrow-confirmed rides and completes the trip |
+| `/admin` | Admin monitors ride status, escrow state, fare, driver, and transaction reference |
+
+### Recommended Walkthrough
+
+1. Open `/rider`
+2. Choose Orlando pickup and destination
+3. Estimate fare
+4. Create the ride
+5. Simulate escrow confirmation
+6. Open `/driver`
+7. Switch driver status online
+8. Confirm that only escrow-confirmed rides appear
+9. Accept the ride
+10. Start the ride
+11. Complete the ride and release escrow
+12. Open `/admin`
+13. Review the full lifecycle, status, fare, driver, and transaction hash
+
+### Local Demo
+
+```bash
+npm install
+npm run dev
+# http://localhost:5000
+```
+
+Verify:
+
+```bash
+npm run check
+npm test -- --run
+npm run build:pages
+```
+
+### GitHub Pages Note
+
+The GitHub Pages frontend can display the demo UI. API-backed demo routes (`/api/demo/*`) require the backend URL to be configured through:
+
+```env
+VITE_API_BASE_URL=https://your-backend-url.com
+```
+
+For deployed demos, set `VITE_API_BASE_URL` to the active backend service URL and rebuild the Pages frontend.
+
+---
+
 ## Current Status
 
 The project is currently in **QA/staging-ready MVP** state.
