@@ -7,7 +7,21 @@
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "./schema";
+import * as serverSchema from "./schema";
+import {
+  drivers,
+  auditEvents,
+  insurancePolicies,
+  driverEligibilitySnapshots,
+} from "../../shared/schema";
+
+const schema = {
+  ...serverSchema,
+  drivers,
+  auditEvents,
+  insurancePolicies,
+  driverEligibilitySnapshots,
+};
 
 const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 const isMemStorage = process.env.STORAGE_ENGINE === 'mem';

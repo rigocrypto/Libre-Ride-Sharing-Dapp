@@ -88,11 +88,12 @@ export async function calculateDriverEligibility(
   });
 
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-  const insuranceVerified =
+  const insuranceVerified = !!(
     latestInsurance &&
     latestInsurance.status === "approved" &&
     latestInsurance.expirationDate >= today &&
-    (latestInsurance.hasTncEndorsement || latestInsurance.hasCommercialCoverage);
+    (latestInsurance.hasTncEndorsement || latestInsurance.hasCommercialCoverage)
+  );
 
   const airportEligible = driver.isAirportLicensed === true;
   const subscriptionActive = true; // Simplified; would check subscriptions table
@@ -234,7 +235,7 @@ export async function getDriverEligibility(
   return await db.query.driverEligibilitySnapshots.findFirst({
     where: eq(driverEligibilitySnapshots.driverId, driverId),
     orderBy: (table, { desc }) => desc(table.calculatedAt),
-  });
+  }) ?? null;
 }
 
 /**
