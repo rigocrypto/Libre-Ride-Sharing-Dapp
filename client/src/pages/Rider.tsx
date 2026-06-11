@@ -1,13 +1,3 @@
-/**
- * Rider.tsx - Phase 5 Implementation (Payment-First)
- *
- * Orchestrates rider experience:
- * Finding Driver → Payment CTA → Driver Assigned → In Progress → Completed
- *
- * All state from hooks (REST + WS). Backend is authoritative.
- */
-
-import { useEffect } from 'react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,16 +12,27 @@ import { RiderEscrowPaymentCard } from '@/components/rider/RiderEscrowPaymentCar
 import { DriverAssignedPanel } from '@/components/DriverAssignedPanel';
 import { RideInProgressPanel } from '@/components/RideInProgressPanel';
 import { RideCompleteSummary } from '@/components/RideCompleteSummary';
+import DemoRiderFlow from '@/components/demo/DemoRiderFlow';
+
+function isAuthenticated(): boolean {
+  try {
+    // Check for Firebase auth token in localStorage (any firebase:authUser key)
+    return Object.keys(localStorage).some((k) => k.startsWith('firebase:authUser'));
+  } catch {
+    return false;
+  }
+}
 
 export default function Rider() {
   // Get rideId from URL query params
   const searchParams = new URLSearchParams(window.location.search);
   const rideId = searchParams.get('rideId');
+  const isDemoMode = !isAuthenticated();
 
-  // Hooks: REST for truth, WS for signals
-  const ride = useRiderRide(rideId || '');
-  const escrow = useEscrowStatus(rideId || '', !!rideId);
-  const deposit = useEscrowDeposit(rideId || '');
+  // Hooks: REST for truth, WS for signals (disabled in demo mode)
+  const ride = useRiderRide(isDemoMode ? '' : (rideId || ''));
+  const escrow = useEscrowStatus(isDemoMode ? '' : (rideId || ''), !isDemoMode && !!rideId);
+  const deposit = useEscrowDeposit(isDemoMode ? '' : (rideId || ''));
 
   // Deterministic state
   const viewState = getRiderViewState(ride.data, escrow.data);
@@ -69,8 +70,12 @@ export default function Rider() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Loading */}
-        {!rideId || (ride.isLoading && !ride.data) ? (
+        {/* Demo mode: no Firebase auth */}
+        {isDemoMode ? (
+          <div className="max-w-lg mx-auto">
+            <DemoRiderFlow />
+          </div>
+        ) : /* Authenticated ride flow */ !rideId || (ride.isLoading && !ride.data) ? (
           <Card className="p-8 bg-white/5 backdrop-blur-lg border-white/10 text-center">
             <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-neon-teal" />
             <p className="text-muted-foreground">Loading ride details...</p>
@@ -160,7 +165,7 @@ export default function Rider() {
               <Button>Book a Ride</Button>
             </Link>
           </Card>
-        ) : null}
+        ) : null /* end authenticated flow */}
       </div>
     </div>
   );

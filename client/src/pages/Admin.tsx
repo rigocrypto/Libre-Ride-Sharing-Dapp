@@ -84,6 +84,27 @@ async function fetchAdminAuditLogs(filters: {
   return response.json();
 }
 
+interface DemoAdminRide {
+  id: string;
+  riderName: string;
+  pickup: string;
+  destination: string;
+  fareUsdc: number;
+  driverPayoutUsd: number;
+  status: string;
+  driverName?: string;
+  escrowTxHash?: string;
+  createdAt: string;
+}
+
+const DEMO_API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+
+async function fetchDemoAdminRides(): Promise<{ rides: DemoAdminRide[]; total: number }> {
+  const res = await fetch(`${DEMO_API_BASE}/api/demo/admin/rides`);
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
 async function fetchAdminDriverCompliance(filters: {
   status: string;
   search: string;
@@ -212,6 +233,12 @@ export default function Admin() {
     enabled: selectedTab === "drivers",
     refetchInterval: 30_000,
   });
+  const demoRidesQuery = useQuery({
+    queryKey: ["/api/demo/admin/rides"],
+    queryFn: fetchDemoAdminRides,
+    enabled: selectedTab === "rides",
+    refetchInterval: selectedTab === "rides" ? 5_000 : false,
+  });
   const driverDetailQuery = useQuery({
     queryKey: ["/api/admin/drivers", selectedDriverId],
     queryFn: () => fetchAdminDriverDetail(selectedDriverId!),
@@ -265,6 +292,10 @@ export default function Admin() {
     const statusConfig: Record<string, { variant: any; label: string }> = {
       completed: { variant: "default", label: "Completed" },
       on_trip: { variant: "default", label: "On Trip" },
+      in_progress: { variant: "default", label: "In Progress" },
+      driver_assigned: { variant: "secondary", label: "Driver Assigned" },
+      escrow_confirmed: { variant: "secondary", label: "Escrow Confirmed" },
+      payment_pending: { variant: "secondary", label: "Payment Pending" },
       en_route: { variant: "secondary", label: "En Route" },
       matching: { variant: "secondary", label: "Matching" },
       cancelled: { variant: "destructive", label: "Cancelled" },
@@ -510,41 +541,56 @@ export default function Admin() {
           <TabsContent value="rides">
             <Card className="bg-white/5 backdrop-blur-lg border-white/10">
               <div className="p-6 border-b border-border flex items-center justify-between">
-                <h2 className="text-xl font-bold">All Rides</h2>
-                <Input
-                  placeholder="Search rides..."
-                  className="max-w-xs bg-muted/20"
-                  data-testid="input-search-rides"
-                />
+                <div>
+                  <h2 className="text-xl font-bold">Demo Rides</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Live data from demo backend · auto-refreshes every 5s</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {demoRidesQuery.isFetching && (
+                    <span className="text-xs text-muted-foreground">Refreshing…</span>
+                  )}
+                  <Badge variant="outline" className="text-xs">
+                    {demoRidesQuery.data?.total ?? 0} rides
+                  </Badge>
+                </div>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Ride ID</TableHead>
                     <TableHead>Rider</TableHead>
+                    <TableHead>Pickup → Destination</TableHead>
                     <TableHead>Driver</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Fare</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Fare (USDC)</TableHead>
+                    <TableHead>Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockRides.map((ride) => (
-                    <TableRow key={ride.id} data-testid={`row-ride-${ride.id}`}>
-                      <TableCell className="font-mono text-sm">{ride.id}</TableCell>
-                      <TableCell>{ride.rider}</TableCell>
-                      <TableCell>{ride.driver || "-"}</TableCell>
-                      <TableCell>{getStatusBadge(ride.status)}</TableCell>
-                      <TableCell className="font-semibold">{ride.fare}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{ride.timestamp}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" data-testid={`button-view-ride-${ride.id}`}>
-                          View
-                        </Button>
+                  {(demoRidesQuery.data?.rides ?? []).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No demo rides yet. Use the Rider tab to request one.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    (demoRidesQuery.data?.rides ?? []).map((ride) => (
+                      <TableRow key={ride.id} data-testid={`row-ride-${ride.id}`}>
+                        <TableCell className="font-mono text-xs">{ride.id.slice(0, 8)}…</TableCell>
+                        <TableCell>{ride.riderName}</TableCell>
+                        <TableCell className="text-xs max-w-[220px]">
+                          <div className="truncate">{ride.pickup}</div>
+                          <div className="truncate text-muted-foreground">→ {ride.destination}</div>
+                        </TableCell>
+                        <TableCell>{ride.driverName ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                        <TableCell>{getStatusBadge(ride.status)}</TableCell>
+                        <TableCell className="font-semibold">{ride.fareUsdc} USDC</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          {new Date(ride.createdAt).toLocaleTimeString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </Card>

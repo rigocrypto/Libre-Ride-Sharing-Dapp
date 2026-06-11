@@ -82,6 +82,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const siweRoutes = (await import('./routes/siwe.js')).default;
   app.use(siweRoutes);
 
+  // Demo routes — no Firebase auth, in-memory store
+  const demoRoutes = (await import('./routes/demo.js')).default;
+  app.use(demoRoutes);
+
   if (process.env.NODE_ENV !== 'production') {
     const { registerDevRoutes } = await import('./routes.dev.js');
     registerDevRoutes(app);
