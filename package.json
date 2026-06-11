@@ -21,6 +21,7 @@
     "verify:acceptance": "tsx scripts/verify-acceptance.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1066.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
@@ -58,7 +59,6 @@
     "@uploadthing/react": "^7.3.3",
     "@uploadthing/shared": "^7.1.10",
     "@zerodev/sdk": "^5.5.7",
-    "aws-sdk": "^2.1693.0",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -141,6 +141,8 @@
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.12"
     },
-    "effect": "^3.21.2"
+    "effect": "^3.21.2",
+    "uuid": ">=11.1.1",
+    "ws": "^8.20.1"
   }
 }
