@@ -116,6 +116,9 @@ async function syncToAirtable(
   const apiKey = process.env.AIRTABLE_API_KEY!;
   const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`;
 
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), 15000);
+
   let response: Response;
   try {
     response = await fetch(url, {
@@ -125,11 +128,20 @@ async function syncToAirtable(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ fields }),
+      signal: abortController.signal,
     });
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === "AbortError") {
+      const error = "Request timed out after 15 seconds";
+      console.error(`[CRM] sync failed: ${error}`);
+      return { synced: false, provider: "airtable", error };
+    }
     const error = err instanceof Error ? err.message : String(err);
     console.error(`[CRM] sync failed: ${error}`);
     return { synced: false, provider: "airtable", error };
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (!response.ok) {
@@ -158,7 +170,8 @@ export async function syncLeadToCrm(
   const isDriver = kind === "founding_driver";
   const tableEnvVar = isDriver ? "AIRTABLE_FOUNDING_DRIVERS_TABLE" : "AIRTABLE_INVESTORS_TABLE";
   const tableDefault = isDriver ? "Founding Drivers" : "Investors";
-  const tableName = (process.env[tableEnvVar] || tableDefault).trim();
+  const tableFromEnv = process.env[tableEnvVar]?.trim();
+  const tableName = tableFromEnv && tableFromEnv.length > 0 ? tableFromEnv : tableDefault;
 
   const fields = isDriver
     ? buildFoundingDriverFields(payload as FoundingDriverCrmPayload)

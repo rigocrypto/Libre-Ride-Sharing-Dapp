@@ -97,6 +97,8 @@ export function AdminLeadManagement() {
     navigator.clipboard.writeText(message).then(() => {
       setCopiedId(lead.id);
       setTimeout(() => setCopiedId(null), 2000);
+    }).catch((error) => {
+      console.error("Failed to copy message to clipboard:", error);
     });
   }
 
@@ -208,20 +210,21 @@ export function AdminLeadManagement() {
                       if (!waUrl) return null;
                       return (
                         <div className="flex items-center gap-1">
-                          <a
-                            href={waUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-green-600/40 text-green-400 hover:bg-green-600/10 hover:text-green-300"
+                            asChild
                           >
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-green-600/40 text-green-400 hover:bg-green-600/10 hover:text-green-300"
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
                             >
                               <MessageCircle className="mr-1 h-3 w-3" />
                               WhatsApp Invite
-                            </Button>
-                          </a>
+                            </a>
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"

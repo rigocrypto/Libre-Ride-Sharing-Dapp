@@ -279,8 +279,9 @@ export async function createFoundingDriverLead(input: FoundingDriverLeadInput) {
   const email = normalizedEmail(rest.email);
   const leadScore = scoreFoundingDriverLead(input);
   const referralCode = await generateUniqueReferralCode(input.fullName);
-  const { referredByCode, referralStatus } = rawRefCode
-    ? await resolveReferredByCode(rawRefCode, email)
+  const trimmedRefCode = rawRefCode?.trim();
+  const { referredByCode, referralStatus } = trimmedRefCode
+    ? await resolveReferredByCode(trimmedRefCode, email)
     : { referredByCode: null, referralStatus: "none" };
 
   const values = { ...rest, email, leadScore, status: "new" as LeadStatus, referralCode, referredByCode };

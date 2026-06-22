@@ -20,8 +20,10 @@ import { useState } from "react";
 
 type DriverLeadResponse = {
   success: boolean;
-  message: string;
-  referralCode?: string;
+  data: {
+    message: string;
+    referralCode?: string;
+  };
 };
 
 const appOptions = ["Uber", "Lyft", "Empower", "HopSkipDrive", "Other"];
@@ -326,7 +328,7 @@ export function FoundingDriverForm() {
         </div>
 
         {mutation.isSuccess && (() => {
-          const code = mutation.data?.referralCode;
+          const code = mutation.data?.data?.referralCode;
           const inviteUrl = code
             ? `${window.location.origin}/founding-access?ref=${code}`
             : null;
@@ -345,10 +347,14 @@ export function FoundingDriverForm() {
                     <span className="truncate font-mono text-xs text-emerald-200">{inviteUrl}</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(inviteUrl);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(inviteUrl);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        } catch (error) {
+                          console.error("Failed to copy to clipboard:", error);
+                        }
                       }}
                       className="flex shrink-0 items-center gap-1 rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-2 py-1 text-xs hover:bg-emerald-300/20"
                     >

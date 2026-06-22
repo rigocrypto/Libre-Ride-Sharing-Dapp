@@ -145,13 +145,14 @@ async function sendLeadConfirmation(
 
   const result = await sendEmail({ to: lead.email, subject, html, text });
 
+  const maskedEmail = lead.email.charAt(0) + "***@" + lead.email.split("@")[1];
   if (result.sent) {
     const detail = isDriver && referralCode ? "with referral code" : "without referral link";
-    console.info(`[EMAIL] founding driver confirmation sent ${detail} to ${lead.email} (id: ${result.messageId})`);
+    console.info(`[EMAIL] founding driver confirmation sent ${detail} to ${maskedEmail} (id: ${result.messageId})`);
   } else if (result.skipped) {
-    console.warn(`[Leads] Confirmation email skipped for ${lead.email}: ${result.reason}`);
+    console.warn(`[Leads] Confirmation email skipped for ${maskedEmail}: ${result.reason}`);
   } else {
-    console.error(`[Leads] Confirmation email failed for ${lead.email}: ${result.error}`);
+    console.error(`[Leads] Confirmation email failed for ${maskedEmail}: ${result.error}`);
   }
 
   return result;
@@ -198,19 +199,18 @@ router.post("/api/leads/founding-driver", rateLimitByIp, async (req, res) => {
       wantsWhatsAppInvite: lead.wantsWhatsAppInvite,
       createdAt: lead.createdAt,
     });
-    const response: Record<string, unknown> = {
-      success: true,
+    const data: Record<string, unknown> = {
       message:
         "You're on the founding driver list. We'll reach out before the Orlando pilot. Watch your email.",
       referralCode: lead.referralCode,
     };
     if (process.env.NODE_ENV !== "production") {
-      response.emailStatus = emailResult;
-      response.referredByCode = lead.referredByCode ?? null;
-      response.referralStatus = referralStatus;
-      response.crmStatus = crmResult;
+      data.emailStatus = emailResult;
+      data.referredByCode = lead.referredByCode ?? null;
+      data.referralStatus = referralStatus;
+      data.crmStatus = crmResult;
     }
-    res.json(response);
+    res.json({ success: true, data });
   } catch (error) {
     return handleLeadError(res, error, "Failed to create founding driver lead");
   }
@@ -323,13 +323,13 @@ router.get(
     const allLeads = await listFoundingDriverLeads();
     const referralCounts = new Map<string, number>();
     for (const lead of allLeads) {
-      const code = (lead as any).referredByCode as string | null | undefined;
+      const code = lead.referredByCode;
       if (code) referralCounts.set(code, (referralCounts.get(code) ?? 0) + 1);
     }
     const filtered = filterLeads(allLeads, req.query, true);
     const withCount = filtered.map((lead) => ({
       ...lead,
-      referralCount: referralCounts.get((lead as any).referralCode ?? "") ?? 0,
+      referralCount: referralCounts.get(lead.referralCode ?? "") ?? 0,
     }));
     res.json({ leads: withCount });
   }

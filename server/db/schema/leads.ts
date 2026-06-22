@@ -17,7 +17,7 @@ export const foundingDriverLeads = pgTable("founding_driver_leads", {
   airportExperience: text("airport_experience"),
   preferredZones: text("preferred_zones").array(),
   source: text("source"),
-  referralCode: text("referral_code"),
+  referralCode: text("referral_code").unique(),
   referralName: text("referral_name"),
   referredByCode: text("referred_by_code"),
   status: text("status").default("new").notNull(),

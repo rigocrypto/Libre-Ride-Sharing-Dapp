@@ -11,7 +11,7 @@ function getSslConfig() {
   const url = process.env.DATABASE_URL || "";
 
   if (url.includes("neon.tech") || url.includes("sslmode=require")) {
-    return { rejectUnauthorized: false };
+    return { rejectUnauthorized: true };
   }
 
   return undefined;
