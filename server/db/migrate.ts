@@ -7,8 +7,7 @@ import { db } from "./client";
 
 const optionalMissingTableCodes = new Set(["42P01"]);
 
-export async function runProductionMigrations() {
-  if (process.env.NODE_ENV !== "production") return;
+async function applyMigrations() {
   if (process.env.STORAGE_ENGINE === "mem") return;
   if (!process.env.DATABASE_URL) {
     console.warn("[DB] Skipping migrations: DATABASE_URL is not set.");
@@ -59,4 +58,13 @@ export async function runProductionMigrations() {
       throw error;
     }
   }
+}
+
+export async function runProductionMigrations() {
+  if (process.env.NODE_ENV !== "production") return;
+  await applyMigrations();
+}
+
+export async function runMigrations() {
+  await applyMigrations();
 }
