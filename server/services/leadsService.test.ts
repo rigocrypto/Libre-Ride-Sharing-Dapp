@@ -4,6 +4,7 @@ import {
   createFoundingDriverLead,
   createInvestorInterestLead,
   DuplicateLeadError,
+  generateReferralCode,
   leadsToCsv,
   listFoundingDriverLeads,
   listInvestorInterestLeads,
@@ -34,6 +35,7 @@ describe("founding access lead capture", () => {
     expect(leads).toHaveLength(1);
     expect(leads[0].email).toBe("rigo@example.com");
     expect(leads[0].leadScore).toBeGreaterThan(0);
+    expect(leads[0].referralCode).toMatch(/^[A-Z]+-[A-Z0-9]{6}$/);
   });
 
   it("rejects duplicate founding driver lead emails", async () => {
@@ -136,7 +138,7 @@ describe("founding access lead capture", () => {
   });
 
   it("updates lead status and contact timestamp", async () => {
-    const lead = await createFoundingDriverLead({
+    const { lead } = await createFoundingDriverLead({
       fullName: "Follow Up Driver",
       email: "follow@example.com",
       consentContact: true,
@@ -168,5 +170,149 @@ describe("founding access lead capture", () => {
 
     expect(csv).toContain('"Driver, One"');
     expect(csv).toContain("Uber; Lyft");
+  });
+});
+
+describe("referral code generation", () => {
+  it("produces FIRSTNAME-XXXXXX format", () => {
+    const code = generateReferralCode("Rigo Vivas");
+    expect(code).toMatch(/^RIGO-[A-Z0-9]{6}$/);
+  });
+
+  it("strips non-alpha chars from prefix", () => {
+    const code = generateReferralCode("J0hn Doe");
+    expect(code).toMatch(/^JHN-[A-Z0-9]{6}$/);
+  });
+
+  it("falls back to LIBRE prefix when name has no letters", () => {
+    const code = generateReferralCode("123 456");
+    expect(code).toMatch(/^LIBRE-[A-Z0-9]{6}$/);
+  });
+
+  it("falls back to LIBRE prefix when name is undefined", () => {
+    const code = generateReferralCode();
+    expect(code).toMatch(/^LIBRE-[A-Z0-9]{6}$/);
+  });
+
+  it("caps prefix at 8 characters", () => {
+    const code = generateReferralCode("Bartholomew Smith");
+    const [prefix] = code.split("-");
+    expect(prefix.length).toBeLessThanOrEqual(8);
+  });
+
+  it("suffix contains only safe characters (no 0, O, I, 1)", () => {
+    for (let i = 0; i < 50; i++) {
+      const [, suffix] = generateReferralCode("Test").split("-");
+      expect(suffix).not.toMatch(/[01IO]/);
+    }
+  });
+});
+
+describe("referral attribution", () => {
+  beforeEach(() => {
+    process.env.STORAGE_ENGINE = "mem";
+    delete process.env.DATABASE_URL;
+    clearLeadsForTests();
+  });
+
+  it("generates a unique referral_code for every new founding driver lead", async () => {
+    const { lead } = await createFoundingDriverLead({
+      fullName: "Rigo Driver",
+      email: "rigo@example.com",
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+    expect(lead.referralCode).toMatch(/^[A-Z]+-[A-Z0-9]{6}$/);
+  });
+
+  it("returns referralStatus 'none' when no referral code is provided", async () => {
+    const { referralStatus } = await createFoundingDriverLead({
+      fullName: "Solo Driver",
+      email: "solo@example.com",
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+    expect(referralStatus).toBe("none");
+  });
+
+  it("attributes a valid referred_by_code", async () => {
+    const { lead: referrer } = await createFoundingDriverLead({
+      fullName: "Referrer Driver",
+      email: "referrer@example.com",
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+
+    const { lead: referred, referralStatus } = await createFoundingDriverLead({
+      fullName: "New Driver",
+      email: "new@example.com",
+      referredByCode: referrer.referralCode,
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+
+    expect(referralStatus).toBe("attributed");
+    expect(referred.referredByCode).toBe(referrer.referralCode);
+  });
+
+  it("ignores an invalid referred_by_code", async () => {
+    const { lead, referralStatus } = await createFoundingDriverLead({
+      fullName: "New Driver",
+      email: "new2@example.com",
+      referredByCode: "FAKE-ZZZZZZ",
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+
+    expect(referralStatus).toBe("invalid");
+    expect(lead.referredByCode).toBeNull();
+  });
+
+  it("ignores self-referral", async () => {
+    const { lead: self } = await createFoundingDriverLead({
+      fullName: "Self Driver",
+      email: "self@example.com",
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+
+    await expect(
+      createFoundingDriverLead({
+        fullName: "Self Driver Again",
+        email: "self@example.com",
+        referredByCode: self.referralCode,
+        consentContact: true,
+        consentVerification: true,
+        consentPrivacy: true,
+      })
+    ).rejects.toThrow(DuplicateLeadError);
+  });
+
+  it("normalizes referred_by_code to uppercase before lookup", async () => {
+    const { lead: referrer } = await createFoundingDriverLead({
+      fullName: "Referrer",
+      email: "referrer-norm@example.com",
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+
+    const { lead: referred, referralStatus } = await createFoundingDriverLead({
+      fullName: "Referred",
+      email: "referred-norm@example.com",
+      referredByCode: referrer.referralCode.toLowerCase(),
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+    });
+
+    expect(referralStatus).toBe("attributed");
+    expect(referred.referredByCode).toBe(referrer.referralCode);
   });
 });

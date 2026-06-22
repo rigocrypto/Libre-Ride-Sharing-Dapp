@@ -1,6 +1,13 @@
 import { Router } from "express";
 import { z } from "zod";
-import { sendEmail } from "../email";
+import {
+  buildFoundingDriverEmail,
+  buildFoundingDriverEmailText,
+  buildInvestorEmail,
+  getAppBaseUrl,
+  sendEmail,
+  type EmailResult,
+} from "../email";
 import { requireAuth, requireRole } from "../middleware/auth";
 import {
   createFoundingDriverLead,
@@ -12,6 +19,7 @@ import {
   updateFoundingDriverLead,
   updateInvestorInterestLead,
 } from "../services/leadsService";
+import { syncLeadToCrm, type CrmSyncResult } from "../services/crmService";
 
 const router = Router();
 
@@ -47,8 +55,8 @@ const driverLeadSchema = z.object({
   airportExperience: z.string().optional(),
   preferredZones: z.array(z.string()).default([]),
   source: z.string().optional(),
-  referralCode: z.string().optional(),
   referralName: z.string().optional(),
+  referredByCode: z.string().optional(),
   wantsDemoAccess: z.boolean().default(false),
   wantsWhatsAppInvite: z.boolean().default(false),
   consentContact: z.literal(true),
@@ -106,22 +114,47 @@ function handleLeadError(res: any, error: unknown, fallback: string) {
   return res.status(500).json({ error: fallback });
 }
 
-function sendLeadConfirmation(kind: "driver" | "investor", lead: { fullName: string; email: string }) {
+async function sendLeadConfirmation(
+  kind: "driver" | "investor",
+  lead: { fullName: string; email: string },
+  referralCode?: string | null,
+): Promise<EmailResult> {
   const isDriver = kind === "driver";
-  const subject = isDriver
-    ? "LIBRE Founding Driver application received"
-    : "LIBRE investor and partner interest received";
-  const html = isDriver
-    ? `<p>Hi ${lead.fullName},</p><p>Thank you for applying to become a LIBRE Founding Driver.</p><p>We received your information and will review your application for the Orlando pilot. If selected, you may be invited to early onboarding, app demo access, and driver feedback sessions.</p><p>LIBRE Ride</p>`
-    : `<p>Hi ${lead.fullName},</p><p>Thank you for your interest in LIBRE.</p><p>We are collecting investor and partner interest for a future compliant funding process. This is not a public securities offering. Our team may contact you with demo access, investor materials, or a partner meeting invitation.</p><p>LIBRE Ride</p>`;
 
-  if (!process.env.RESEND_API_KEY && process.env.NODE_ENV !== "production") {
-    console.info("[Leads] Email fallback payload", { to: lead.email, subject });
+  let inviteUrl: string | null = null;
+  if (isDriver && referralCode) {
+    const base = getAppBaseUrl();
+    if (base) {
+      inviteUrl = `${base}/founding-access?ref=${referralCode}`;
+    } else {
+      console.warn("[EMAIL] referral invite link omitted");
+    }
   }
 
-  sendEmail({ to: lead.email, subject, html }).catch((error) => {
-    console.warn("[Leads] Confirmation email failed:", error);
-  });
+  const subject = isDriver
+    ? "You're on the Libre founding driver list"
+    : "LIBRE investor and partner interest received";
+
+  const html = isDriver
+    ? buildFoundingDriverEmail(lead.fullName, referralCode, inviteUrl)
+    : buildInvestorEmail(lead.fullName);
+
+  const text = isDriver
+    ? buildFoundingDriverEmailText(lead.fullName, referralCode, inviteUrl)
+    : undefined;
+
+  const result = await sendEmail({ to: lead.email, subject, html, text });
+
+  if (result.sent) {
+    const detail = isDriver && referralCode ? "with referral code" : "without referral link";
+    console.info(`[EMAIL] founding driver confirmation sent ${detail} to ${lead.email} (id: ${result.messageId})`);
+  } else if (result.skipped) {
+    console.warn(`[Leads] Confirmation email skipped for ${lead.email}: ${result.reason}`);
+  } else {
+    console.error(`[Leads] Confirmation email failed for ${lead.email}: ${result.error}`);
+  }
+
+  return result;
 }
 
 function filterLeads(leads: any[], query: any, driver = false) {
@@ -144,17 +177,40 @@ function filterLeads(leads: any[], query: any, driver = false) {
 router.post("/api/leads/founding-driver", rateLimitByIp, async (req, res) => {
   try {
     const data = driverLeadSchema.parse(req.body);
-    // TODO: integrate CRM webhook (HubSpot/Airtable/Notion)
-    const lead = await createFoundingDriverLead({
+    const { lead, referralStatus } = await createFoundingDriverLead({
       ...data,
       ipAddress: req.ip,
     });
-    sendLeadConfirmation("driver", lead);
-    res.json({
+    const emailResult = await sendLeadConfirmation("driver", lead, lead.referralCode);
+    const crmResult: CrmSyncResult = await syncLeadToCrm("founding_driver", {
+      fullName: lead.fullName,
+      email: lead.email,
+      phone: lead.phone,
+      city: lead.city,
+      vehicleMakeModel: lead.vehicleMakeModel,
+      vehicleYear: lead.vehicleYear,
+      preferredZones: lead.preferredZones,
+      driverType: lead.driverType,
+      leadScore: lead.leadScore,
+      status: lead.status,
+      referralCode: lead.referralCode,
+      referredByCode: lead.referredByCode,
+      wantsWhatsAppInvite: lead.wantsWhatsAppInvite,
+      createdAt: lead.createdAt,
+    });
+    const response: Record<string, unknown> = {
       success: true,
       message:
         "You're on the founding driver list. We'll reach out before the Orlando pilot. Watch your email.",
-    });
+      referralCode: lead.referralCode,
+    };
+    if (process.env.NODE_ENV !== "production") {
+      response.emailStatus = emailResult;
+      response.referredByCode = lead.referredByCode ?? null;
+      response.referralStatus = referralStatus;
+      response.crmStatus = crmResult;
+    }
+    res.json(response);
   } catch (error) {
     return handleLeadError(res, error, "Failed to create founding driver lead");
   }
@@ -163,17 +219,33 @@ router.post("/api/leads/founding-driver", rateLimitByIp, async (req, res) => {
 router.post("/api/leads/investor-interest", rateLimitByIp, async (req, res) => {
   try {
     const data = investorLeadSchema.parse(req.body);
-    // TODO: integrate CRM webhook (HubSpot/Airtable/Notion)
     const lead = await createInvestorInterestLead({
       ...data,
       ipAddress: req.ip,
     });
-    sendLeadConfirmation("investor", lead);
-    res.json({
+    const emailResult = await sendLeadConfirmation("investor", lead);
+    const crmResult: CrmSyncResult = await syncLeadToCrm("investor_interest", {
+      fullName: lead.fullName,
+      email: lead.email,
+      phone: lead.phone,
+      leadType: lead.leadType,
+      interestRange: lead.interestRange,
+      interestType: lead.interestType,
+      message: lead.message,
+      leadScore: lead.leadScore,
+      status: lead.status,
+      createdAt: lead.createdAt,
+    });
+    const response: Record<string, unknown> = {
       success: true,
       message:
         "You're on the investor and partner interest list. We'll follow up with next steps.",
-    });
+    };
+    if (process.env.NODE_ENV !== "production") {
+      response.emailStatus = emailResult;
+      response.crmStatus = crmResult;
+    }
+    res.json(response);
   } catch (error) {
     return handleLeadError(res, error, "Failed to create investor interest lead");
   }
@@ -194,6 +266,8 @@ router.get(
       "status",
       "leadScore",
       "source",
+      "referralCode",
+      "referredByCode",
       "currentApps",
       "yearsDriving",
       "driverType",
@@ -246,7 +320,18 @@ router.get(
   requireAuth,
   requireRole("admin"),
   async (req, res) => {
-    res.json({ leads: filterLeads(await listFoundingDriverLeads(), req.query, true) });
+    const allLeads = await listFoundingDriverLeads();
+    const referralCounts = new Map<string, number>();
+    for (const lead of allLeads) {
+      const code = (lead as any).referredByCode as string | null | undefined;
+      if (code) referralCounts.set(code, (referralCounts.get(code) ?? 0) + 1);
+    }
+    const filtered = filterLeads(allLeads, req.query, true);
+    const withCount = filtered.map((lead) => ({
+      ...lead,
+      referralCount: referralCounts.get((lead as any).referralCode ?? "") ?? 0,
+    }));
+    res.json({ leads: withCount });
   }
 );
 

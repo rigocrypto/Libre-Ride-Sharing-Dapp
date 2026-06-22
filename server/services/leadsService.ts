@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 
+// Characters that avoid visual ambiguity (no 0/O, no I/1)
+const REFERRAL_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
 export type LeadStatus = "new" | "contacted" | "qualified" | "rejected" | "converted";
 
 export type FoundingDriverLeadInput = {
@@ -19,8 +22,8 @@ export type FoundingDriverLeadInput = {
   airportExperience?: string;
   preferredZones?: string[];
   source?: string;
-  referralCode?: string;
   referralName?: string;
+  referredByCode?: string | null;
   wantsDemoAccess?: boolean;
   wantsWhatsAppInvite?: boolean;
   consentContact?: boolean;
@@ -63,6 +66,8 @@ type DriverLeadRecord = FoundingDriverLeadInput & {
   id: string;
   status: LeadStatus;
   leadScore: number;
+  referralCode: string;
+  referredByCode?: string | null;
   adminNotes?: string | null;
   followUpAt?: Date | null;
   lastContactedAt?: Date | null;
@@ -186,10 +191,99 @@ export function leadPriority(score: number): "Hot Lead" | "Warm Lead" | "Needs R
   return "Low Priority";
 }
 
+// --- Referral code helpers ---
+
+function referralPrefix(fullName?: string): string {
+  if (!fullName) return "LIBRE";
+  const first = fullName.trim().split(/\s+/)[0];
+  const cleaned = first.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 8);
+  return cleaned || "LIBRE";
+}
+
+function referralSuffix(): string {
+  return Array.from({ length: 6 }, () =>
+    REFERRAL_CHARS[Math.floor(Math.random() * REFERRAL_CHARS.length)],
+  ).join("");
+}
+
+export function generateReferralCode(fullName?: string): string {
+  return `${referralPrefix(fullName)}-${referralSuffix()}`;
+}
+
+async function generateUniqueReferralCode(fullName?: string): Promise<string> {
+  if (shouldUsePersistentLeads()) {
+    const [{ db }, { foundingDriverLeads }] = await Promise.all([
+      import("../db/client"),
+      import("../db/schema"),
+    ]);
+    for (let i = 0; i < 5; i++) {
+      const code = generateReferralCode(fullName);
+      const [existing] = await db
+        .select({ id: foundingDriverLeads.id })
+        .from(foundingDriverLeads)
+        .where(eq(foundingDriverLeads.referralCode, code))
+        .limit(1);
+      if (!existing) return code;
+    }
+  } else {
+    for (let i = 0; i < 5; i++) {
+      const code = generateReferralCode(fullName);
+      if (!driverLeads.some((lead) => lead.referralCode === code)) return code;
+    }
+  }
+  throw new Error("[REFERRAL] Failed to generate unique referral code after 5 attempts");
+}
+
+async function resolveReferredByCode(
+  rawCode: string,
+  submitterEmail: string,
+): Promise<{ referredByCode: string | null; referralStatus: string }> {
+  const code = rawCode.toUpperCase().trim();
+
+  if (shouldUsePersistentLeads()) {
+    const [{ db }, { foundingDriverLeads }] = await Promise.all([
+      import("../db/client"),
+      import("../db/schema"),
+    ]);
+    const [owner] = await db
+      .select({ email: foundingDriverLeads.email })
+      .from(foundingDriverLeads)
+      .where(eq(foundingDriverLeads.referralCode, code))
+      .limit(1);
+
+    if (!owner) {
+      console.warn(`[REFERRAL] invalid referral code ignored: ${code}`);
+      return { referredByCode: null, referralStatus: "invalid" };
+    }
+    if (normalizedEmail(owner.email) === normalizedEmail(submitterEmail)) {
+      console.warn(`[REFERRAL] self-referral ignored for: ${submitterEmail}`);
+      return { referredByCode: null, referralStatus: "self" };
+    }
+    return { referredByCode: code, referralStatus: "attributed" };
+  }
+
+  const owner = driverLeads.find((lead) => lead.referralCode === code);
+  if (!owner) {
+    console.warn(`[REFERRAL] invalid referral code ignored: ${code}`);
+    return { referredByCode: null, referralStatus: "invalid" };
+  }
+  if (normalizedEmail(owner.email) === normalizedEmail(submitterEmail)) {
+    console.warn(`[REFERRAL] self-referral ignored for: ${submitterEmail}`);
+    return { referredByCode: null, referralStatus: "self" };
+  }
+  return { referredByCode: code, referralStatus: "attributed" };
+}
+
 export async function createFoundingDriverLead(input: FoundingDriverLeadInput) {
-  const email = normalizedEmail(input.email);
+  const { referredByCode: rawRefCode, ...rest } = input;
+  const email = normalizedEmail(rest.email);
   const leadScore = scoreFoundingDriverLead(input);
-  const values = { ...input, email, leadScore, status: "new" as LeadStatus };
+  const referralCode = await generateUniqueReferralCode(input.fullName);
+  const { referredByCode, referralStatus } = rawRefCode
+    ? await resolveReferredByCode(rawRefCode, email)
+    : { referredByCode: null, referralStatus: "none" };
+
+  const values = { ...rest, email, leadScore, status: "new" as LeadStatus, referralCode, referredByCode };
 
   if (shouldUsePersistentLeads()) {
     const [{ db }, { foundingDriverLeads }] = await Promise.all([
@@ -198,7 +292,7 @@ export async function createFoundingDriverLead(input: FoundingDriverLeadInput) {
     ]);
     try {
       const [inserted] = await db.insert(foundingDriverLeads).values(values).returning();
-      return inserted;
+      return { lead: inserted, referralStatus };
     } catch (error) {
       if (isDuplicateKeyError(error)) {
         throw new DuplicateLeadError("You're already on the founding driver list. We'll be in touch.");
@@ -212,7 +306,7 @@ export async function createFoundingDriverLead(input: FoundingDriverLeadInput) {
   }
   const lead = { ...values, id: randomUUID(), createdAt: new Date() };
   driverLeads.push(lead);
-  return lead;
+  return { lead, referralStatus };
 }
 
 export async function createInvestorInterestLead(input: InvestorInterestLeadInput) {
