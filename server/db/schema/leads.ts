@@ -19,6 +19,7 @@ export const foundingDriverLeads = pgTable("founding_driver_leads", {
   source: text("source"),
   referralCode: text("referral_code"),
   referralName: text("referral_name"),
+  referredByCode: text("referred_by_code"),
   status: text("status").default("new").notNull(),
   leadScore: integer("lead_score").default(0).notNull(),
   wantsDemoAccess: boolean("wants_demo_access").default(false).notNull(),
