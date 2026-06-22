@@ -37,7 +37,7 @@ const pool = new Pool({
   max: 5, // Neon free tier limit - DO NOT exceed (was 20, causing timeouts)
   min: 0, // Don't keep idle connections (Neon sleeps aggressively)
   idleTimeoutMillis: 20000, // Close idle connections quickly
-  connectionTimeoutMillis: 5000, // Fail fast on connection issues (was 10000)
+  connectionTimeoutMillis: 15000, // Tolerate Neon cold-start latency on Render (was 5000)
   // Keep connections alive with heartbeat
   keepAlive: true,
   keepAliveInitialDelayMillis: 10000,
