@@ -19,8 +19,12 @@ import {
 } from "@/components/ui/table";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { Copy, Check, MessageCircle, Download } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  buildWhatsAppInviteMessage,
+  buildWhatsAppInviteUrl,
+} from "@/lib/whatsapp";
 
 type LeadKind = "drivers" | "investors";
 type Lead = {
@@ -38,6 +42,9 @@ type Lead = {
   leadType?: string | null;
   followUpAt?: string | null;
   adminNotes?: string | null;
+  referralCode?: string | null;
+  referredByCode?: string | null;
+  referralCount?: number;
 };
 
 async function fetchLeads(kind: LeadKind): Promise<{ leads: Lead[] }> {
@@ -58,6 +65,7 @@ export function AdminLeadManagement() {
   const [status, setStatus] = useState("all");
   const [minScore, setMinScore] = useState("");
   const [search, setSearch] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["/api/admin/leads", kind],
@@ -82,6 +90,15 @@ export function AdminLeadManagement() {
   }, [query.data?.leads, minScore, search, status]);
 
   const exportHref = `/api/admin/leads/${kind}.csv`;
+
+  function handleCopyMessage(lead: Lead) {
+    const firstName = lead.fullName.trim().split(/\s+/)[0] || lead.fullName;
+    const message = buildWhatsAppInviteMessage(firstName, lead.referralCode);
+    navigator.clipboard.writeText(message).then(() => {
+      setCopiedId(lead.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }
 
   return (
     <Card className="border-white/10 bg-white/5 p-4">
@@ -128,6 +145,7 @@ export function AdminLeadManagement() {
               <TableHead>Score</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Source</TableHead>
+              <TableHead>Referral</TableHead>
               <TableHead>Intent</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -135,7 +153,7 @@ export function AdminLeadManagement() {
           <TableBody>
             {query.isLoading && (
               <TableRow>
-                <TableCell colSpan={6}>Loading leads...</TableCell>
+                <TableCell colSpan={7}>Loading leads...</TableCell>
               </TableRow>
             )}
             {leads.map((lead) => (
@@ -152,31 +170,78 @@ export function AdminLeadManagement() {
                 <TableCell>{lead.status || "new"}</TableCell>
                 <TableCell>{lead.source || "-"}</TableCell>
                 <TableCell className="text-xs">
+                  {lead.referralCode ? (
+                    <div className="space-y-0.5">
+                      <div className="font-mono text-xs">{lead.referralCode}</div>
+                      {(lead.referralCount ?? 0) > 0 && (
+                        <div className="text-emerald-400">{lead.referralCount} referred</div>
+                      )}
+                      {lead.referredByCode && (
+                        <div className="text-slate-400">via {lead.referredByCode}</div>
+                      )}
+                    </div>
+                  ) : "-"}
+                </TableCell>
+                <TableCell className="text-xs">
                   {lead.wantsInvestorDeck ? "Deck " : ""}
                   {lead.wantsDemoAccess ? "Demo " : ""}
                   {lead.wantsWhatsAppInvite ? "WhatsApp" : ""}
                   {!lead.wantsInvestorDeck && !lead.wantsDemoAccess && !lead.wantsWhatsAppInvite ? "-" : ""}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-2">
-                    {["contacted", "qualified", "converted", "rejected"].map((nextStatus) => (
-                      <Button
-                        key={nextStatus}
-                        size="sm"
-                        variant="outline"
-                        disabled={mutation.isPending}
-                        onClick={() => mutation.mutate({ kind, id: lead.id, status: nextStatus })}
-                      >
-                        {nextStatus}
-                      </Button>
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-1">
+                      {["contacted", "qualified", "converted", "rejected"].map((nextStatus) => (
+                        <Button
+                          key={nextStatus}
+                          size="sm"
+                          variant="outline"
+                          disabled={mutation.isPending}
+                          onClick={() => mutation.mutate({ kind, id: lead.id, status: nextStatus })}
+                        >
+                          {nextStatus}
+                        </Button>
+                      ))}
+                    </div>
+                    {kind === "drivers" && lead.wantsWhatsAppInvite && (() => {
+                      const waUrl = buildWhatsAppInviteUrl(lead);
+                      if (!waUrl) return null;
+                      return (
+                        <div className="flex items-center gap-1">
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-green-600/40 text-green-400 hover:bg-green-600/10 hover:text-green-300"
+                            >
+                              <MessageCircle className="mr-1 h-3 w-3" />
+                              WhatsApp Invite
+                            </Button>
+                          </a>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            title="Copy invite message"
+                            onClick={() => handleCopyMessage(lead)}
+                          >
+                            {copiedId === lead.id
+                              ? <Check className="h-3 w-3 text-green-400" />
+                              : <Copy className="h-3 w-3" />}
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </TableCell>
               </TableRow>
             ))}
             {!query.isLoading && leads.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6}>No leads match the current filters.</TableCell>
+                <TableCell colSpan={7}>No leads match the current filters.</TableCell>
               </TableRow>
             )}
           </TableBody>

@@ -14,9 +14,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { trackLandingEvent } from "@/lib/landingAnalytics";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, Copy, XCircle } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+
+type DriverLeadResponse = {
+  success: boolean;
+  message: string;
+  referralCode?: string;
+};
 
 const appOptions = ["Uber", "Lyft", "Empower", "HopSkipDrive", "Other"];
 const sourceOptions = [
@@ -40,6 +46,11 @@ const zoneOptions = [
 ];
 
 export function FoundingDriverForm() {
+  const [referredByCode] = useState(
+    () => new URLSearchParams(window.location.search).get("ref")?.toUpperCase().trim() || "",
+  );
+  const [copied, setCopied] = useState(false);
+
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -65,7 +76,7 @@ export function FoundingDriverForm() {
     notes: "",
   });
 
-  const mutation = useMutation({
+  const mutation = useMutation<DriverLeadResponse>({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/leads/founding-driver", {
         fullName: form.fullName,
@@ -94,6 +105,7 @@ export function FoundingDriverForm() {
         preferredZones: form.preferredZones,
         source: form.source || undefined,
         referralName: form.referralName || undefined,
+        referredByCode: referredByCode || undefined,
         wantsDemoAccess: form.wantsDemoAccess,
         wantsWhatsAppInvite: form.wantsWhatsAppInvite,
         consentContact: form.consentContact,
@@ -313,12 +325,43 @@ export function FoundingDriverForm() {
           </ConsentRow>
         </div>
 
-        {mutation.isSuccess && (
-          <p className="flex items-center gap-2 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-3 text-sm text-emerald-100">
-            <CheckCircle className="h-4 w-4" />
-            You're on the founding driver list. We'll reach out before the Orlando pilot. Watch your email.
-          </p>
-        )}
+        {mutation.isSuccess && (() => {
+          const code = mutation.data?.referralCode;
+          const inviteUrl = code
+            ? `${window.location.origin}/founding-access?ref=${code}`
+            : null;
+          return (
+            <div className="space-y-3 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4 text-sm text-emerald-100">
+              <p className="flex items-center gap-2 font-medium">
+                <CheckCircle className="h-4 w-4 shrink-0" />
+                You're on the founding driver list. We'll reach out before the Orlando pilot. Watch your email.
+              </p>
+              {code && inviteUrl && (
+                <div className="space-y-2 border-t border-emerald-300/20 pt-3">
+                  <p className="text-xs text-emerald-200">
+                    Your invite code: <span className="font-mono font-bold tracking-widest text-white">{code}</span>
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-mono text-xs text-emerald-200">{inviteUrl}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(inviteUrl);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="flex shrink-0 items-center gap-1 rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-2 py-1 text-xs hover:bg-emerald-300/20"
+                    >
+                      <Copy className="h-3 w-3" />
+                      {copied ? "Copied!" : "Copy link"}
+                    </button>
+                  </div>
+                  <p className="text-xs text-emerald-300">Share this link with other Orlando drivers to grow the waitlist.</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {mutation.isError && (
           <p className="flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm text-amber-100">
             <XCircle className="h-4 w-4" />
