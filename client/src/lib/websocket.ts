@@ -12,6 +12,14 @@
  * github.io hosts are always treated as frontend-only and return null.
  */
 export function getWebSocketUrl(): string | null {
+  // Static demo host (GitHub Pages) has no /ws server — never attempt a socket.
+  if (
+    typeof window !== 'undefined' &&
+    window.location.hostname.endsWith('github.io')
+  ) {
+    return null;
+  }
+
   const explicitWsUrl = import.meta.env.VITE_WS_URL as string | undefined;
   if (explicitWsUrl) return explicitWsUrl;
 
@@ -20,7 +28,6 @@ export function getWebSocketUrl(): string | null {
 
   try {
     const url = new URL(apiBase);
-    if (url.hostname.endsWith('github.io')) return null;
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     url.pathname = '/ws';
     url.search = '';

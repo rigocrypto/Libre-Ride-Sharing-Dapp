@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
+import { getWebSocketUrl } from '@/lib/websocket';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,16 +15,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     let ws: WebSocket | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
     let isMounted = true;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 3;
+
+    const wsUrl = getWebSocketUrl();
+    if (!wsUrl) {
+      console.info('WebSocket disabled for this environment');
+      return;
+    }
 
     const connect = () => {
-      if (!isMounted) return;
+      if (!isMounted || attempts >= MAX_ATTEMPTS) return;
+      attempts++;
 
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
+          attempts = 0; // reset on successful connect
           ws?.send(JSON.stringify({ type: 'stats_subscribe' }));
         };
 
@@ -42,14 +51,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           // Ignore errors
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
           ws = null;
-          if (isMounted) {
+          // Only retry on transient failures; 1000=clean, 1008/1011=server error.
+          const retryable = event.code !== 1000 && event.code !== 1008 && event.code !== 1011;
+          if (isMounted && retryable && attempts < MAX_ATTEMPTS) {
             reconnectTimeout = setTimeout(() => connect(), 5000);
           }
         };
       } catch (error) {
-        if (isMounted) {
+        if (isMounted && attempts < MAX_ATTEMPTS) {
           reconnectTimeout = setTimeout(() => connect(), 5000);
         }
       }
