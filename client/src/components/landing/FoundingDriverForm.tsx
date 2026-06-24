@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trackLandingEvent } from "@/lib/landingAnalytics";
+import { buildFoundingDriverFallback } from "@/lib/whatsapp";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCircle, Copy, XCircle } from "lucide-react";
+import { CheckCircle, Copy, MessageCircle, XCircle } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 
@@ -327,9 +328,10 @@ export function FoundingDriverForm() {
 
         {mutation.isSuccess && (() => {
           const code = mutation.data?.referralCode;
-          const inviteUrl = code
-            ? `${window.location.origin}/founding-access?ref=${code}`
-            : null;
+          // BASE_URL keeps the GitHub Pages sub-path (e.g. /Libre-Ride-Sharing-Dapp/)
+          // so the shared invite link doesn't 404 in production.
+          const base = `${window.location.origin}${import.meta.env.BASE_URL}`.replace(/\/$/, "");
+          const inviteUrl = code ? `${base}/founding-access?ref=${code}` : null;
           return (
             <div className="space-y-3 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4 text-sm text-emerald-100">
               <p className="flex items-center gap-2 font-medium">
@@ -362,12 +364,37 @@ export function FoundingDriverForm() {
             </div>
           );
         })()}
-        {mutation.isError && (
-          <p className="flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm text-amber-100">
-            <XCircle className="h-4 w-4" />
-            {mutation.error.message.includes("already") ? "You're already on the list. We'll be in touch." : mutation.error.message}
-          </p>
-        )}
+        {mutation.isError && (() => {
+          const alreadyOnList = mutation.error.message.includes("already");
+          const fallback = buildFoundingDriverFallback({
+            fullName: form.fullName,
+            phone: form.phone,
+            email: form.email,
+            city: form.city,
+            preferredZones: form.preferredZones,
+            driverType: form.driverType,
+            hasCommercialInsurance: form.hasCommercialInsurance,
+          });
+          return (
+            <div className="space-y-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm text-amber-100">
+              <p className="flex items-center gap-2">
+                <XCircle className="h-4 w-4 shrink-0" />
+                {alreadyOnList ? "You're already on the list. We'll be in touch." : mutation.error.message}
+              </p>
+              {!alreadyOnList && (
+                <a
+                  href={fallback.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/40 bg-emerald-300/15 px-3 py-2 font-medium text-emerald-100 hover:bg-emerald-300/25"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  {fallback.label}
+                </a>
+              )}
+            </div>
+          );
+        })()}
         <Button type="submit" disabled={mutation.isPending || !canSubmit} className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-400">
           {mutation.isPending ? "Submitting..." : "Apply as Founding Driver"}
         </Button>

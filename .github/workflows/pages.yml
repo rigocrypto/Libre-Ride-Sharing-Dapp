@@ -43,6 +43,11 @@ jobs:
         env:
           GITHUB_PAGES: "true"
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          # Founding-driver fallback + social links (optional — code ships safe defaults)
+          VITE_LIBRE_WHATSAPP: ${{ secrets.VITE_LIBRE_WHATSAPP }}
+          VITE_LIBRE_CONTACT_EMAIL: ${{ secrets.VITE_LIBRE_CONTACT_EMAIL }}
+          VITE_LIBRE_GITHUB_URL: ${{ secrets.VITE_LIBRE_GITHUB_URL }}
+          VITE_LIBRE_TWITTER_URL: ${{ secrets.VITE_LIBRE_TWITTER_URL }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}

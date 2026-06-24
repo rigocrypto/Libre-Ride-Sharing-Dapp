@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
+import { withDbRetry } from "../db/retry";
 
 // Characters that avoid visual ambiguity (no 0/O, no I/1)
 const REFERRAL_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -218,11 +219,15 @@ async function generateUniqueReferralCode(fullName?: string): Promise<string> {
     ]);
     for (let i = 0; i < 5; i++) {
       const code = generateReferralCode(fullName);
-      const [existing] = await db
-        .select({ id: foundingDriverLeads.id })
-        .from(foundingDriverLeads)
-        .where(eq(foundingDriverLeads.referralCode, code))
-        .limit(1);
+      const [existing] = await withDbRetry(
+        () =>
+          db
+            .select({ id: foundingDriverLeads.id })
+            .from(foundingDriverLeads)
+            .where(eq(foundingDriverLeads.referralCode, code))
+            .limit(1),
+        { label: "referral code lookup" },
+      );
       if (!existing) return code;
     }
   } else {
@@ -245,11 +250,15 @@ async function resolveReferredByCode(
       import("../db/client"),
       import("../db/schema"),
     ]);
-    const [owner] = await db
-      .select({ email: foundingDriverLeads.email })
-      .from(foundingDriverLeads)
-      .where(eq(foundingDriverLeads.referralCode, code))
-      .limit(1);
+    const [owner] = await withDbRetry(
+      () =>
+        db
+          .select({ email: foundingDriverLeads.email })
+          .from(foundingDriverLeads)
+          .where(eq(foundingDriverLeads.referralCode, code))
+          .limit(1),
+      { label: "referred-by lookup" },
+    );
 
     if (!owner) {
       console.warn(`[REFERRAL] invalid referral code ignored: ${code}`);
@@ -291,7 +300,10 @@ export async function createFoundingDriverLead(input: FoundingDriverLeadInput) {
       import("../db/schema"),
     ]);
     try {
-      const [inserted] = await db.insert(foundingDriverLeads).values(values).returning();
+      const [inserted] = await withDbRetry(
+        () => db.insert(foundingDriverLeads).values(values).returning(),
+        { label: "founding driver insert" },
+      );
       return { lead: inserted, referralStatus };
     } catch (error) {
       if (isDuplicateKeyError(error)) {
@@ -320,7 +332,10 @@ export async function createInvestorInterestLead(input: InvestorInterestLeadInpu
       import("../db/schema"),
     ]);
     try {
-      const [inserted] = await db.insert(investorInterestLeads).values(values).returning();
+      const [inserted] = await withDbRetry(
+        () => db.insert(investorInterestLeads).values(values).returning(),
+        { label: "investor interest insert" },
+      );
       return inserted;
     } catch (error) {
       if (isDuplicateKeyError(error)) {

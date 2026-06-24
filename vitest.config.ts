@@ -18,6 +18,8 @@ export default defineConfig({
       'server/**/*.spec.{ts,tsx,js}',
       'shared/**/*.test.{ts,tsx,js}',
       'shared/**/*.spec.{ts,tsx,js}',
+      'client/**/*.test.{ts,tsx,js}',
+      'client/**/*.spec.{ts,tsx,js}',
       'tests/**/*.test.{ts,tsx,js}',
       'tests/**/*.spec.{ts,tsx,js}'
     ],

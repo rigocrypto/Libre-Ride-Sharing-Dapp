@@ -544,17 +544,39 @@ VITE_API_BASE_URL=https://your-backend.example.com
 
 The Pages workflow reads `VITE_API_BASE_URL` from GitHub Actions secrets during build.
 
+### GitHub Actions secrets for the Pages build
+
+Set these under **Settings → Secrets and variables → Actions → New repository secret**.
+All `VITE_*` values are read at build time by `.github/workflows/pages.yml` and baked
+into the static bundle. The founding-driver/social values ship with safe code defaults,
+so the site still works if they are unset — but set them to make config explicit.
+
+| Secret | Required? | Purpose / default if unset |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | **Required** | Base URL of the deployed Render backend (e.g. `https://libre-api.onrender.com`). Without it, lead forms have no API to call. **This is the most important secret.** |
+| `VITE_LIBRE_WHATSAPP` | Optional | LIBRE support WhatsApp number for the form fallback + footer icon. Default: `16892165223`. |
+| `VITE_LIBRE_CONTACT_EMAIL` | Optional | Email used by the form fallback when WhatsApp is unavailable. Default: `security@gmx-labs.com`. |
+| `VITE_LIBRE_GITHUB_URL` | Optional | Footer GitHub link. Default: `https://github.com/rigocrypto/Libre-Ride-Sharing-Dapp`. |
+| `VITE_LIBRE_TWITTER_URL` | Optional | Footer X/Twitter link. Default placeholder: `https://x.com/LibreRide` — update once the official LIBRE handle exists. |
+| `VITE_WALLETCONNECT_PROJECT_ID` | Optional | Enables wallet UI on `/rider` and `/driver`. |
+| `VITE_FIREBASE_*` | Optional | Firebase social auth (see workflow for the full list). |
+
+> A full WhatsApp URL override (`VITE_LIBRE_WHATSAPP_URL`, e.g. a group invite link) is
+> also supported in code and takes precedence over `VITE_LIBRE_WHATSAPP` for the footer icon.
+
 For wallet UI on deployed static pages that link to `/rider` or `/driver`, set `VITE_WALLETCONNECT_PROJECT_ID` in the GitHub Actions build environment or document that users configure wallets only after the Pages rebuild includes a valid Reown project ID.
 
 ## Render Backend Deploy
 
-The Express API can be deployed separately to Render using `render.yaml`. This is the recommended first hosted backend for Founding Access lead capture because it supports a persistent Node web service, WebSockets, sessions, and a managed Postgres database without refactoring the Express app.
+The Express API can be deployed separately to Render using `render.yaml`. This is the recommended first hosted backend for Founding Access lead capture because it supports a persistent Node web service, WebSockets, and sessions without refactoring the Express app.
+
+**Database:** lead capture uses an external **Neon** free-tier Postgres rather than Render's free Postgres (which expires after 30 days). In `render.yaml`, `DATABASE_URL` is `sync: false` — set it in the Render dashboard to the Neon **pooled** connection string (must end with `?sslmode=require`). The `pg` client enables TLS automatically for `neon.tech`/`sslmode=require` URLs ([server/db/client.ts](server/db/client.ts)), and `runProductionMigrations()` applies migrations on startup. The DB retry helper tolerates Neon's scale-to-zero cold starts. To migrate from Render Postgres to Neon, just point `DATABASE_URL` at Neon and redeploy — no code changes needed.
 
 Recommended Render variables:
 
 ```txt
 NODE_ENV=production
-DATABASE_URL=postgresql://...  # provided by the Render Postgres database
+DATABASE_URL=postgresql://USER:PASSWORD@ep-xxxx-pooler.<region>.aws.neon.tech/libre?sslmode=require  # Neon pooled URL
 SESSION_SECRET=...
 FRONTEND_ORIGIN=https://rigocrypto.github.io
 STORAGE_ENGINE=drizzle
@@ -592,6 +614,30 @@ POST the same email again and expect 409
 GET /api/admin/leads/drivers without auth and expect 401 or 403
 Restart the Render service and confirm the lead remains in Postgres
 ```
+
+### Founding-driver flow smoke test (run before deploying)
+
+`scripts/smoke-founders-flow.ts` exercises the public founding-driver path
+against a deployed backend so you catch a broken registration before users do.
+It verifies the health endpoint, that CORS allows the GitHub Pages origin, that
+a valid submission returns success (no 500), and that validation still rejects
+bad payloads with 400.
+
+```powershell
+# Point at the live backend (NOT the GitHub Pages URL)
+$env:API_BASE_URL = "https://your-render-service.onrender.com"
+npm run smoke:founders
+```
+
+A non-zero exit code means the flow is broken — do not promote the deploy.
+The script creates one throwaway lead (`smoke+<timestamp>@libre-smoke.test`)
+per run; remove it from the admin CRM if you want a clean list.
+
+> Reliability note: lead inserts now retry transient Neon cold-start timeouts,
+> and the confirmation email / Airtable CRM sync are non-blocking — a lead is
+> always saved even if those optional integrations fail. If the API is still
+> unreachable, the form shows a "Send registration by WhatsApp" fallback
+> (configure `VITE_LIBRE_WHATSAPP`) so no registration is lost.
 
 ## Docker
 

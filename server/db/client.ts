@@ -30,9 +30,26 @@ if (!process.env.DATABASE_URL && !isTest && !isMemStorage) {
   console.warn('[DB] DATABASE_URL not set. Database operations will fail.');
 }
 
+// Managed Postgres providers (Neon, Supabase, etc.) require TLS. Their certs
+// are valid, but we relax strict CA verification to avoid chain issues across
+// hosts. Mirrors scripts/verify-neon-leads.ts. Plain local Postgres stays
+// unencrypted (no sslmode in the URL -> undefined -> pg parses from the URL).
+function getPoolSsl(): { rejectUnauthorized: boolean } | undefined {
+  const url = process.env.DATABASE_URL || '';
+  if (
+    url.includes('sslmode=require') ||
+    url.includes('neon.tech') ||
+    url.includes('supabase')
+  ) {
+    return { rejectUnauthorized: false };
+  }
+  return undefined;
+}
+
 // Neon free tier has strict connection limits - use small pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: getPoolSsl(),
   // Connection pool settings (optimized for Neon free tier)
   max: 5, // Neon free tier limit - DO NOT exceed (was 20, causing timeouts)
   min: 0, // Don't keep idle connections (Neon sleeps aggressively)

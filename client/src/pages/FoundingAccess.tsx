@@ -11,6 +11,7 @@ import { LandingTraction } from "@/components/landing/LandingTraction";
 import { LandingUseOfFunds } from "@/components/landing/LandingUseOfFunds";
 import { LandingWhyOrlando } from "@/components/landing/LandingWhyOrlando";
 import { trackLandingEvent } from "@/lib/landingAnalytics";
+import { getGithubLink, getTwitterLink, getWhatsAppLink } from "@/lib/socialLinks";
 import { Github, MessageCircle, Twitter } from "lucide-react";
 import { useEffect } from "react";
 import { Link } from "wouter";
@@ -104,10 +105,47 @@ export default function FoundingAccess() {
             <a href="#compliance">Terms</a>
             <a href="mailto:hello@libreride.local">Contact</a>
           </div>
-          <div className="flex gap-3 text-slate-300">
-            <Github className="h-5 w-5" />
-            <Twitter className="h-5 w-5" />
-            <MessageCircle className="h-5 w-5" />
+          <div className="flex gap-4 text-slate-300">
+            {(() => {
+              const github = getGithubLink();
+              const twitter = getTwitterLink();
+              const whatsapp = getWhatsAppLink();
+              const iconClass =
+                "rounded-md p-1 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300";
+              return (
+                <>
+                  <a
+                    href={github.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={github.label}
+                    className={iconClass}
+                  >
+                    <Github className="h-5 w-5" />
+                  </a>
+                  <a
+                    href={twitter.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={twitter.label}
+                    className={iconClass}
+                  >
+                    <Twitter className="h-5 w-5" />
+                  </a>
+                  {whatsapp && (
+                    <a
+                      href={whatsapp.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={whatsapp.label}
+                      className={iconClass}
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                    </a>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       </footer>
