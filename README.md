@@ -631,7 +631,25 @@ npm run smoke:founders
 
 A non-zero exit code means the flow is broken — do not promote the deploy.
 The script creates one throwaway lead (`smoke+<timestamp>@libre-smoke.test`)
-per run; remove it from the admin CRM if you want a clean list.
+per run, so the smoke test stays valuable for verifying production after every
+deploy. Keep it active; just clean up the synthetic rows it leaves behind.
+
+#### Cleaning up smoke-test leads
+
+`scripts/cleanup-smoke-leads.ts` deletes **only** rows in
+`founding_driver_leads` whose email ends with `@libre-smoke.test`. The suffix is
+hard-coded, so it can never remove a real registration. Always dry-run first to
+see the count, then delete:
+
+```powershell
+# 1. Preview how many smoke rows would be removed (no changes made)
+npm run smoke:founders:cleanup -- --dry-run
+
+# 2. Only after confirming they are test data, actually delete them
+npm run smoke:founders:cleanup
+```
+
+It connects straight to Neon via `DATABASE_URL` and logs the deleted count.
 
 > Reliability note: lead inserts now retry transient Neon cold-start timeouts,
 > and the confirmation email / Airtable CRM sync are non-blocking — a lead is
