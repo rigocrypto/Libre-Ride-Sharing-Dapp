@@ -19,7 +19,8 @@ import {
   updateFoundingDriverLead,
   updateInvestorInterestLead,
 } from "../services/leadsService";
-import { syncLeadToCrm, type CrmSyncResult } from "../services/crmService";
+import { syncLeadToCrm } from "../services/crmService";
+import { isTransientConnectionError } from "../db/retry";
 
 const router = Router();
 
@@ -103,15 +104,41 @@ const leadUpdateSchema = z.object({
     .transform((value) => (value ? new Date(value) : value)),
 });
 
-function handleLeadError(res: any, error: unknown, fallback: string) {
+// Friendly, action-oriented message shown to users when the core lead save
+// fails. The real technical error is logged server-side only.
+const USER_FACING_SAVE_ERROR =
+  "We couldn't complete your registration right now. Please try again in a moment, or contact LIBRE directly on WhatsApp.";
+
+function handleLeadError(res: any, error: unknown, _fallback: string) {
   if (error instanceof z.ZodError) {
     return res.status(400).json({ error: "Invalid lead data", details: error.errors });
   }
   if (error instanceof DuplicateLeadError) {
     return res.status(409).json({ error: error.message });
   }
+  // Log the real error server-side; never leak internals to the client.
   console.error("[Leads] Failed to process lead:", error);
-  return res.status(500).json({ error: fallback });
+  const retryable = isTransientConnectionError(error);
+  return res.status(retryable ? 503 : 500).json({
+    error: USER_FACING_SAVE_ERROR,
+    retryable,
+  });
+}
+
+// Optional integrations (email confirmation, CRM sync) must never break a
+// registration that has already been persisted. Run each defensively so a
+// thrown error degrades to a logged warning instead of a 500.
+async function runOptionalIntegration<T>(
+  label: string,
+  task: () => Promise<T>,
+): Promise<T | { failed: true; error: string }> {
+  try {
+    return await task();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[Leads] Optional integration '${label}' failed (non-blocking): ${message}`);
+    return { failed: true, error: message };
+  }
 }
 
 async function sendLeadConfirmation(
@@ -177,27 +204,33 @@ function filterLeads(leads: any[], query: any, driver = false) {
 router.post("/api/leads/founding-driver", rateLimitByIp, async (req, res) => {
   try {
     const data = driverLeadSchema.parse(req.body);
+    // Core registration: if this throws, the lead was NOT saved -> error response.
     const { lead, referralStatus } = await createFoundingDriverLead({
       ...data,
       ipAddress: req.ip,
     });
-    const emailResult = await sendLeadConfirmation("driver", lead, lead.referralCode);
-    const crmResult: CrmSyncResult = await syncLeadToCrm("founding_driver", {
-      fullName: lead.fullName,
-      email: lead.email,
-      phone: lead.phone,
-      city: lead.city,
-      vehicleMakeModel: lead.vehicleMakeModel,
-      vehicleYear: lead.vehicleYear,
-      preferredZones: lead.preferredZones,
-      driverType: lead.driverType,
-      leadScore: lead.leadScore,
-      status: lead.status,
-      referralCode: lead.referralCode,
-      referredByCode: lead.referredByCode,
-      wantsWhatsAppInvite: lead.wantsWhatsAppInvite,
-      createdAt: lead.createdAt,
-    });
+    // Lead is persisted. Optional integrations below can fail without losing it.
+    const emailResult = await runOptionalIntegration("driver confirmation email", () =>
+      sendLeadConfirmation("driver", lead, lead.referralCode),
+    );
+    const crmResult = await runOptionalIntegration("driver CRM sync", () =>
+      syncLeadToCrm("founding_driver", {
+        fullName: lead.fullName,
+        email: lead.email,
+        phone: lead.phone,
+        city: lead.city,
+        vehicleMakeModel: lead.vehicleMakeModel,
+        vehicleYear: lead.vehicleYear,
+        preferredZones: lead.preferredZones,
+        driverType: lead.driverType,
+        leadScore: lead.leadScore,
+        status: lead.status,
+        referralCode: lead.referralCode,
+        referredByCode: lead.referredByCode,
+        wantsWhatsAppInvite: lead.wantsWhatsAppInvite,
+        createdAt: lead.createdAt,
+      }),
+    );
     const response: Record<string, unknown> = {
       success: true,
       message:
@@ -223,19 +256,23 @@ router.post("/api/leads/investor-interest", rateLimitByIp, async (req, res) => {
       ...data,
       ipAddress: req.ip,
     });
-    const emailResult = await sendLeadConfirmation("investor", lead);
-    const crmResult: CrmSyncResult = await syncLeadToCrm("investor_interest", {
-      fullName: lead.fullName,
-      email: lead.email,
-      phone: lead.phone,
-      leadType: lead.leadType,
-      interestRange: lead.interestRange,
-      interestType: lead.interestType,
-      message: lead.message,
-      leadScore: lead.leadScore,
-      status: lead.status,
-      createdAt: lead.createdAt,
-    });
+    const emailResult = await runOptionalIntegration("investor confirmation email", () =>
+      sendLeadConfirmation("investor", lead),
+    );
+    const crmResult = await runOptionalIntegration("investor CRM sync", () =>
+      syncLeadToCrm("investor_interest", {
+        fullName: lead.fullName,
+        email: lead.email,
+        phone: lead.phone,
+        leadType: lead.leadType,
+        interestRange: lead.interestRange,
+        interestType: lead.interestType,
+        message: lead.message,
+        leadScore: lead.leadScore,
+        status: lead.status,
+        createdAt: lead.createdAt,
+      }),
+    );
     const response: Record<string, unknown> = {
       success: true,
       message:

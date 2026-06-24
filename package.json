@@ -21,7 +21,8 @@
     "verify:acceptance": "tsx scripts/verify-acceptance.js",
     "db:migrate": "tsx scripts/run-migrations.ts",
     "db:verify-leads": "tsx scripts/verify-neon-leads.ts",
-    "email:test": "tsx scripts/test-resend-email.ts"
+    "email:test": "tsx scripts/test-resend-email.ts",
+    "smoke:founders": "tsx scripts/smoke-founders-flow.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1066.0",

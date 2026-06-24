@@ -8,10 +8,13 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Lead capture uses an external managed Postgres (Neon free tier) instead
+      # of Render's free Postgres, which expires after 30 days. Set this in the
+      # Render dashboard to the Neon POOLED connection string, e.g.
+      #   postgresql://USER:PASSWORD@ep-xxxx-pooler.<region>.aws.neon.tech/libre?sslmode=require
+      # Keep sslmode=require so the pg client negotiates TLS.
       - key: DATABASE_URL
-        fromDatabase:
-          name: libre-db
-          property: connectionString
+        sync: false
       - key: FRONTEND_ORIGIN
         value: https://rigocrypto.github.io
       - key: STORAGE_ENGINE
@@ -27,8 +30,7 @@ services:
       - key: FIREBASE_ADMIN_PRIVATE_KEY
         sync: false
 
-databases:
-  - name: libre-db
-    plan: free
-    databaseName: libre
-    user: libre
+# No Render-managed database: DATABASE_URL above points to external Neon Postgres
+# (set it in the Render dashboard). Migrations run automatically on startup via
+# runProductionMigrations(); the DB retry helper tolerates Neon scale-to-zero
+# cold starts.
