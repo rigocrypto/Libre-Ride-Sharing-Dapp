@@ -116,9 +116,18 @@ function handleLeadError(res: any, error: unknown, _fallback: string) {
   if (error instanceof DuplicateLeadError) {
     return res.status(409).json({ error: error.message });
   }
-  // Log the real error server-side; never leak internals to the client.
-  console.error("[Leads] Failed to process lead:", error);
+  // Log a structured, PII-safe diagnostic server-side so production failures are
+  // debuggable without leaking request bodies (no email/phone/notes here). The
+  // pg `code`/`constraint` fields pinpoint Neon cold-start vs real DB errors.
   const retryable = isTransientConnectionError(error);
+  const err = error as { name?: string; code?: string; constraint?: string; message?: string };
+  console.error("[Leads] Failed to process lead:", {
+    name: err?.name,
+    code: err?.code, // pg SQLSTATE (e.g. 57P01) or node errno (e.g. ETIMEDOUT)
+    constraint: err?.constraint, // set on unique/not-null violations
+    retryable,
+    message: err?.message,
+  });
   return res.status(retryable ? 503 : 500).json({
     error: USER_FACING_SAVE_ERROR,
     retryable,

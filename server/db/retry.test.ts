@@ -14,6 +14,27 @@ describe("isTransientConnectionError", () => {
     expect(isTransientConnectionError(new Error("timeout exceeded when establishing a connection"))).toBe(true);
   });
 
+  it("flags Neon scale-to-zero / cold-start SQLSTATE codes", () => {
+    // The exact signatures that returned 500 instead of a retryable 503 when
+    // Neon was asleep on the first request after idle.
+    expect(isTransientConnectionError({ code: "57P01", message: "terminating connection due to administrator command" })).toBe(true);
+    expect(isTransientConnectionError({ code: "57P03", message: "the database system is starting up" })).toBe(true);
+    expect(isTransientConnectionError({ code: "08006", message: "connection failure" })).toBe(true);
+    expect(isTransientConnectionError({ code: "08001" })).toBe(true);
+  });
+
+  it("flags Neon cold-start signatures by message even without a known code", () => {
+    expect(isTransientConnectionError(new Error("terminating connection due to administrator command"))).toBe(true);
+    expect(isTransientConnectionError(new Error("the database system is starting up"))).toBe(true);
+    expect(isTransientConnectionError(new Error("server closed the connection unexpectedly"))).toBe(true);
+  });
+
+  it("flags additional dropped-socket codes", () => {
+    expect(isTransientConnectionError({ code: "EPIPE" })).toBe(true);
+    expect(isTransientConnectionError({ code: "ENOTFOUND" })).toBe(true);
+    expect(isTransientConnectionError({ code: "ENETUNREACH" })).toBe(true);
+  });
+
   it("unwraps nested causes", () => {
     const err = new Error("wrapper");
     (err as any).cause = { code: "ETIMEDOUT" };
@@ -23,7 +44,10 @@ describe("isTransientConnectionError", () => {
   it("does NOT flag real SQL errors (missing column, unique violation, syntax)", () => {
     expect(isTransientConnectionError({ code: "23505", message: "duplicate key value" })).toBe(false);
     expect(isTransientConnectionError({ code: "42703", message: 'column "foo" does not exist' })).toBe(false);
+    expect(isTransientConnectionError({ code: "23502", message: "null value in column violates not-null constraint" })).toBe(false);
     expect(isTransientConnectionError(new Error("syntax error at or near"))).toBe(false);
+    // 57-class codes other than the two connection ones must NOT be retried.
+    expect(isTransientConnectionError({ code: "57014", message: "canceling statement due to statement timeout" })).toBe(false);
     expect(isTransientConnectionError(null)).toBe(false);
   });
 });

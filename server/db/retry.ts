@@ -7,26 +7,58 @@
  * bad syntax, unique violation) are not and must surface immediately.
  */
 
-const transientConnectionCodes = new Set([
+// Node socket-level errors that indicate a dropped/refused/unreachable
+// connection rather than a problem with the query itself.
+const transientSocketCodes = new Set([
   "ECONNRESET",
   "ETIMEDOUT",
   "ECONNREFUSED",
   "EAI_AGAIN",
+  "EPIPE",
+  "ENOTFOUND",
+  "ENETUNREACH",
+  "EHOSTUNREACH",
 ]);
+
+// PostgreSQL SQLSTATE codes meaning the server was unavailable or closed the
+// connection — exactly what Neon's scale-to-zero produces on the first request
+// after an idle period. These are safe to retry. Data/logic errors (class 22
+// data, 23 integrity, 42 syntax/undefined-column) are deliberately excluded so
+// real bugs still surface as 500 immediately.
+const transientPgSqlStates = new Set([
+  "57P01", // admin_shutdown — "terminating connection due to administrator command"
+  "57P03", // cannot_connect_now — "the database system is starting up"
+  "08000", // connection_exception
+  "08001", // sqlclient_unable_to_establish_sqlconnection
+  "08003", // connection_does_not_exist
+  "08004", // sqlserver_rejected_establishment_of_sqlconnection
+  "08006", // connection_failure
+  "08007", // transaction_resolution_unknown
+  "08P01", // protocol_violation at the connection level
+]);
+
+const transientMessageFragments = [
+  "connection timeout",
+  "connection terminated",
+  "timeout exceeded",
+  "terminating connection due to administrator command",
+  "the database system is starting up",
+  "server closed the connection unexpectedly",
+  "socket hang up",
+  "client has encountered a connection error",
+  "etimedout",
+  "econnreset",
+  "econnrefused",
+];
 
 export function isTransientConnectionError(error: any): boolean {
   if (!error) return false;
-  if (transientConnectionCodes.has(error.code)) return true;
+  const code = typeof error.code === "string" ? error.code : "";
+  if (transientSocketCodes.has(code)) return true;
+  if (transientPgSqlStates.has(code)) return true;
   if (error.cause && isTransientConnectionError(error.cause)) return true;
   const message = String(error.message ?? "").toLowerCase();
-  return (
-    message.includes("connection timeout") ||
-    message.includes("connection terminated") ||
-    message.includes("timeout exceeded") ||
-    message.includes("etimedout") ||
-    message.includes("econnreset") ||
-    message.includes("econnrefused")
-  );
+  return transientMessageFragments.some((fragment) => message.includes(fragment));
 }
 
 export function delay(ms: number): Promise<void> {
