@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Web3Connect } from "@/components/Web3Connect";
 import { BADGE_TYPES } from "@shared/schema";
 import { track } from "@/lib/analytics";
+import { buildAppUrl } from "@/lib/routes";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -65,7 +66,9 @@ export default function Profile() {
 
   const handleCopyReferral = () => {
     if (!referralCode) return;
-    const shareUrl = `${window.location.origin}/become-driver?ref=${referralCode}`;
+    // buildAppUrl preserves the GitHub Pages base path (e.g. /Libre-Ride-Sharing-Dapp/)
+    // so the referral link resolves on the deployed site instead of 404ing at the domain root.
+    const shareUrl = buildAppUrl(`/become-driver?ref=${referralCode}`);
     navigator.clipboard.writeText(shareUrl);
     track('referral_link_copied', { code: referralCode });
     toast({
