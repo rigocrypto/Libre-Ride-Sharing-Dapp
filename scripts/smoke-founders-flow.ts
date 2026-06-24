@@ -62,7 +62,9 @@ async function main() {
     check("CORS preflight", false, err instanceof Error ? err.message : String(err));
   }
 
-  // 3. Valid founding-driver submission (unique email so it can be re-run)
+  // 3. Valid founding-driver submission — full realistic payload matching every
+  //    field the real mobile form can send (not just the minimal required set),
+  //    so the smoke test exercises the same insert path real drivers hit.
   const testEmail = `smoke+${Date.now()}@libre-smoke.test`;
   try {
     const res = await fetch(`${API_BASE_URL}/api/leads/founding-driver`, {
@@ -73,12 +75,24 @@ async function main() {
         email: testEmail,
         phone: "407-555-0100",
         city: "Orlando, FL",
-        currentApps: ["Uber"],
-        preferredZones: ["MCO Airport"],
+        currentApps: ["Uber", "Lyft", "Other"],
+        yearsDriving: 7,
+        driverType: "Full-time",
+        vehicleType: "SUV",
+        vehicleYear: 2021,
+        vehicleMakeModel: "Toyota Highlander",
+        hasCommercialInsurance: true,
+        interestedInAirport: true,
+        airportExperience: "experienced",
+        preferredZones: ["MCO Airport", "Disney/Lake Buena Vista"],
+        source: "WhatsApp driver group",
+        referralName: "Smoke referral",
+        wantsDemoAccess: true,
         wantsWhatsAppInvite: false,
         consentContact: true,
         consentVerification: true,
         consentPrivacy: true,
+        notes: "Smoke test full payload with accents: ñ á é í ó ú.",
       }),
     });
     const body = await res.json().catch(() => ({}));

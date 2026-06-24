@@ -80,6 +80,40 @@ describe("POST /api/leads/founding-driver", () => {
     expect(json.referralCode).toMatch(/^[A-Z]+-[A-Z0-9]{6}$/);
   });
 
+  it("accepts a FULL realistic mobile payload (all optional fields, accents) without 500", async () => {
+    // Mirrors every field the real FoundingDriverForm can submit. Guards against
+    // a field/value that passes validation but breaks the insert path.
+    const fullPayload = {
+      fullName: "José Ramírez",
+      email: "jose.full@example.com",
+      phone: "407-555-0142",
+      city: "Orlando, FL",
+      currentApps: ["Uber", "Lyft", "Other"],
+      yearsDriving: 7,
+      driverType: "Full-time",
+      vehicleType: "SUV",
+      vehicleYear: 2021,
+      vehicleMakeModel: "Toyota Highlander",
+      hasCommercialInsurance: true,
+      interestedInAirport: true,
+      airportExperience: "experienced",
+      preferredZones: ["MCO Airport", "Disney/Lake Buena Vista"],
+      source: "WhatsApp driver group",
+      referralName: "Friend referral",
+      wantsDemoAccess: true,
+      wantsWhatsAppInvite: true,
+      consentContact: true,
+      consentVerification: true,
+      consentPrivacy: true,
+      notes: "Drive MCO airport mornings; ready for beta. Acentos: ñ á é í ó ú.",
+    };
+    const res = await post("/api/leads/founding-driver", fullPayload);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.referralCode).toMatch(/^[A-Z]+-[A-Z0-9]{6}$/);
+  });
+
   it("returns 400 when required consent fields are missing", async () => {
     const { consentPrivacy, ...missingConsent } = validDriver;
     const res = await post("/api/leads/founding-driver", {
