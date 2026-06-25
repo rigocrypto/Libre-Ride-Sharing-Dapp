@@ -163,6 +163,18 @@ npm run dev
 - ✅ Restart dev server after adding env vars
 - ✅ Make sure no extra spaces in env values
 
+### Error: "Firebase: Error (auth/unauthorized-domain)"
+Social login (Google/Apple) only works on domains in Firebase's allowlist. This is a
+**Firebase Console setting, not a code/env change** — the repo config is already correct.
+
+- ✅ Firebase Console → **Authentication → Settings → Authorized domains → Add domain**
+- ✅ Add the **bare host** that serves the app — no `https://`, no path:
+  - `localhost` (already present by default, for local dev)
+  - `rigocrypto.github.io` (GitHub Pages production)
+- ⚠️ Do **not** enter `https://rigocrypto.github.io` or `rigocrypto.github.io/Libre-Ride-Sharing-Dapp/` — the field expects only the hostname.
+- ℹ️ This is separate from `VITE_FIREBASE_AUTH_DOMAIN` (which is your `<project>.firebaseapp.com` OAuth handler and stays unchanged).
+- ℹ️ Apple sign-in additionally needs the same host configured in the Apple Service ID return URLs; Google needs no extra step beyond the authorized-domains entry.
+
 ### Error: "Firebase Admin not configured"
 - ✅ Check `FIREBASE_ADMIN_PRIVATE_KEY` format (quotes + `\n`)
 - ✅ Verify `FIREBASE_ADMIN_PROJECT_ID` matches your project
