@@ -56,15 +56,22 @@ export default function Rider() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-3">
           <Link href="/" className="text-2xl font-bold bg-gradient-neon bg-clip-text text-transparent">
             Libre Rider
           </Link>
-          <Link href="/profile" asChild>
-            <Button variant="ghost" size="sm">
-              Profile
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            {isDemoMode && (
+              <span className="text-xs text-muted-foreground border border-white/10 rounded-full px-3 py-1">
+                Demo · Base Sepolia
+              </span>
+            )}
+            <Link href="/profile" asChild>
+              <Button variant="ghost" size="sm">
+                Profile
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -72,7 +79,7 @@ export default function Rider() {
       <div className="container mx-auto px-4 py-8">
         {/* Demo mode: no Firebase auth */}
         {isDemoMode ? (
-          <div className="max-w-lg mx-auto">
+          <div className="max-w-7xl mx-auto">
             <DemoRiderFlow />
           </div>
         ) : /* Authenticated ride flow */ !rideId || (ride.isLoading && !ride.data) ? (
