@@ -11,6 +11,13 @@ import {
   RIDER_NOTIFICATIONS,
   AI_TRAVEL_TIPS,
   RECENT_RIDES,
+  RIDER_ACCOUNT,
+  TRIP_PREFERENCES,
+  RIDER_SAFETY_SETTINGS,
+  RIDER_REFERRAL,
+  RIDER_SUPPORT_ITEMS,
+  RIDER_WALLET,
+  ITINERARY,
 } from "./demoRiderData";
 
 describe("demo rider dashboard data", () => {
@@ -86,5 +93,42 @@ describe("demo rider dashboard data", () => {
     expect(RIDER_NOTIFICATIONS.length).toBeGreaterThan(0);
     expect(AI_TRAVEL_TIPS.length).toBeGreaterThan(0);
     expect(RECENT_RIDES.every((r) => r.status === "completed")).toBe(true);
+  });
+});
+
+describe("rider profile / account data", () => {
+  it("defines the rider identity (the 'Orlando Visitor' equivalent of Carlos M.)", () => {
+    expect(RIDER_ACCOUNT.name).toBe("Orlando Visitor");
+    expect(RIDER_ACCOUNT.rating).toBeGreaterThan(0);
+    expect(RIDER_ACCOUNT.initials.length).toBeGreaterThan(0);
+    expect(RIDER_ACCOUNT.language).toContain("Español");
+  });
+
+  it("provides trip preferences with favorite Orlando areas", () => {
+    expect(TRIP_PREFERENCES.favoriteAreas.length).toBeGreaterThanOrEqual(5);
+    expect(TRIP_PREFERENCES.favoriteAreas).toContain("MCO Airport");
+    expect(TRIP_PREFERENCES.preferredPackage.length).toBeGreaterThan(0);
+  });
+
+  it("lists safety settings, all enabled for the demo", () => {
+    expect(RIDER_SAFETY_SETTINGS.length).toBeGreaterThan(0);
+    expect(RIDER_SAFETY_SETTINGS.every((s) => s.enabled)).toBe(true);
+    expect(new Set(RIDER_SAFETY_SETTINGS.map((s) => s.key)).size).toBe(RIDER_SAFETY_SETTINGS.length);
+  });
+
+  it("exposes wallet demo fields and a clear no-real-funds payment method", () => {
+    expect(RIDER_WALLET.usdcBalance).toMatch(/USDC/);
+    expect(RIDER_WALLET.paymentMethod).toMatch(/Demo/i);
+    expect(RIDER_WALLET.recentPayment.length).toBeGreaterThan(0);
+  });
+
+  it("provides a referral code and support items", () => {
+    expect(RIDER_REFERRAL.code).toBe("ORLANDO-RIDER");
+    expect(RIDER_SUPPORT_ITEMS.length).toBeGreaterThan(0);
+  });
+
+  it("has itinerary entries for the trip-history panel", () => {
+    expect(ITINERARY.length).toBeGreaterThan(0);
+    expect(ITINERARY.some((it) => it.status === "upcoming")).toBe(true);
   });
 });

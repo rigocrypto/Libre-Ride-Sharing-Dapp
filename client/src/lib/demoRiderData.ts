@@ -278,6 +278,8 @@ export const RIDER_WALLET = {
   usdcBalance: "100.00 USDC",
   escrowStatus: "Locked for current ride",
   escrowAmount: "12.50 USDC",
+  paymentMethod: "USDC Demo Wallet · Base Sepolia",
+  recentPayment: "Disney Springs · 10.25 USDC",
 };
 
 export interface MapHotspot {
@@ -309,4 +311,87 @@ export const QUICK_DESTINATIONS = [
   "Disney Springs",
   "Orange County Convention Center",
   "Lake Nona Medical City",
+];
+
+/* ------------------------- Rider Profile / Account ----------------------- */
+
+export interface RiderAccount {
+  name: string;
+  profileType: string;
+  rating: number;
+  memberStatus: string;
+  language: string;
+  safetyMode: string;
+  initials: string;
+}
+
+/** The rider identity, mirroring the Driver side's "Carlos M." identity. */
+export const RIDER_ACCOUNT: RiderAccount = {
+  name: "Orlando Visitor",
+  profileType: "Tourist · Family Traveler",
+  rating: 4.8,
+  memberStatus: "LIBRE Demo Rider",
+  language: "English / Español",
+  safetyMode: "Enabled",
+  initials: "OV",
+};
+
+export interface TripPreferences {
+  preferredPickup: string;
+  favoriteAreas: string[];
+  partySize: string;
+  luggage: string;
+  accessibility: string;
+  preferredPackage: string;
+}
+
+export const TRIP_PREFERENCES: TripPreferences = {
+  preferredPickup: "Airport / Hotel / Theme Park",
+  favoriteAreas: [
+    "MCO Airport",
+    "Disney Springs",
+    "Universal Orlando",
+    "International Drive",
+    "Convention Center",
+  ],
+  partySize: "2–4 passengers",
+  luggage: "2 bags (airport pickup)",
+  accessibility: "No special requirements",
+  preferredPackage: "Airport Pickup",
+};
+
+export interface ToggleSetting {
+  key: string;
+  label: string;
+  enabled: boolean;
+  /** lucide-react icon name; resolved by the component. */
+  icon: string;
+}
+
+export const RIDER_SAFETY_SETTINGS: ToggleSetting[] = [
+  { key: "share", label: "Share trip", enabled: true, icon: "Share2" },
+  { key: "otp", label: "Trip PIN / OTP", enabled: true, icon: "KeyRound" },
+  { key: "verified", label: "Verified drivers only", enabled: true, icon: "BadgeCheck" },
+  { key: "sos", label: "SOS preview", enabled: true, icon: "Siren" },
+  { key: "bilingual", label: "Bilingual support (EN/ES)", enabled: true, icon: "Languages" },
+  { key: "family", label: "Family travel mode", enabled: true, icon: "Users" },
+];
+
+export const RIDER_REFERRAL = {
+  code: "ORLANDO-RIDER",
+  note: "Invite travelers to try LIBRE during the Orlando pilot.",
+};
+
+export interface SupportItem {
+  key: string;
+  label: string;
+  detail: string;
+  icon: string;
+}
+
+export const RIDER_SUPPORT_ITEMS: SupportItem[] = [
+  { key: "chat", label: "Support Chat", detail: "English & Español, 24/7", icon: "MessageCircle" },
+  { key: "airport", label: "Airport Pickup Instructions", detail: "Confirm your terminal before arrival", icon: "Plane" },
+  { key: "lost", label: "Lost Item Support", detail: "Report items left in a vehicle", icon: "Search" },
+  { key: "family", label: "Family & Tourist Help", detail: "Car seats, group trips, accessibility", icon: "Users" },
 ];

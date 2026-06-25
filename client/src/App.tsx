@@ -9,6 +9,7 @@ import { queryClient } from "./lib/queryClient";
 import Landing from "@/pages/Landing";
 import BecomeDriver from "@/pages/BecomeDriver";
 import Profile from "@/pages/Profile";
+import RiderProfile from "@/pages/RiderProfile";
 import Verify from "@/pages/Verify";
 import FoundingAccess from "@/pages/FoundingAccess";
 import Privacy from "@/pages/Privacy";
@@ -47,6 +48,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/rider/profile" component={RiderProfile} />
       <Route path="/rider" component={RiderRoute} />
       <Route path="/driver" component={DriverRoute} />
       <Route path="/admin" component={AdminRoute} />
