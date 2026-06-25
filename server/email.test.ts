@@ -4,6 +4,7 @@ import {
   buildFoundingDriverEmailText,
   buildInvestorEmail,
   getAppBaseUrl,
+  getEmailConfig,
 } from "./email";
 
 // Restore env vars changed per test
@@ -53,6 +54,37 @@ describe("getAppBaseUrl", () => {
     const base = getAppBaseUrl();
     const url = `${base}/founding-access?ref=RIGO-A7K29P`;
     expect(url).toBe("https://libreride.com/founding-access?ref=RIGO-A7K29P");
+  });
+});
+
+describe("getEmailConfig", () => {
+  afterEach(restoreEnv);
+
+  it("is disabled (with reason) when RESEND_API_KEY is missing", () => {
+    saveEnv("RESEND_API_KEY", "EMAIL_FROM");
+    delete process.env.RESEND_API_KEY;
+    process.env.EMAIL_FROM = "LIBRE <noreply@verified.test>";
+    const config = getEmailConfig();
+    expect(config.enabled).toBe(false);
+    expect(config.reason).toBe("RESEND_API_KEY missing");
+  });
+
+  it("is disabled (with reason) when EMAIL_FROM is missing", () => {
+    saveEnv("RESEND_API_KEY", "EMAIL_FROM");
+    process.env.RESEND_API_KEY = "re_test_key";
+    delete process.env.EMAIL_FROM;
+    const config = getEmailConfig();
+    expect(config.enabled).toBe(false);
+    expect(config.reason).toBe("EMAIL_FROM missing");
+  });
+
+  it("is enabled only when both RESEND_API_KEY and EMAIL_FROM are set", () => {
+    saveEnv("RESEND_API_KEY", "EMAIL_FROM");
+    process.env.RESEND_API_KEY = "re_test_key";
+    process.env.EMAIL_FROM = "LIBRE <noreply@verified.test>";
+    const config = getEmailConfig();
+    expect(config.enabled).toBe(true);
+    expect(config.from).toBe("LIBRE <noreply@verified.test>");
   });
 });
 
