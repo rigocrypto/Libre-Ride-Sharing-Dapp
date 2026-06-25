@@ -29,6 +29,18 @@ services:
         sync: false
       - key: FIREBASE_ADMIN_PRIVATE_KEY
         sync: false
+      # --- Email (Resend) — set actual values in the Render dashboard ---
+      # Confirmation emails are NON-BLOCKING: if these are unset the lead is still
+      # saved and the email is simply skipped (logged as "[EMAIL] ... skipped").
+      # EMAIL_FROM must use a VERIFIED Resend domain for real delivery —
+      # onboarding@resend.dev only reaches the Resend account owner, not drivers.
+      # APP_BASE_URL lets the confirmation email include a working referral link.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
 
 # No Render-managed database: DATABASE_URL above points to external Neon Postgres
 # (set it in the Render dashboard). Migrations run automatically on startup via
