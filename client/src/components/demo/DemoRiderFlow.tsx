@@ -714,7 +714,17 @@ function TripProfileBar() {
     { label: 'Language', value: RIDER_PROFILE.language },
   ];
   return (
-    <Card className={cn(glass, 'p-4')}>
+    <Card className={cn(glass, 'space-y-3 p-4')}>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">Your Trip Profile</p>
+        <Link
+          href="/rider/profile"
+          className="inline-flex items-center gap-1 text-xs font-medium text-neon-teal hover:underline"
+          data-testid="view-rider-profile"
+        >
+          View Profile <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {items.map((it) => (
           <div key={it.label}>
