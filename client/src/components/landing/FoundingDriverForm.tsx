@@ -13,6 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { trackLandingEvent } from "@/lib/landingAnalytics";
 import { buildFoundingDriverFallback } from "@/lib/whatsapp";
+import { getWhatsAppLink } from "@/lib/socialLinks";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle, Copy, MessageCircle, XCircle } from "lucide-react";
@@ -23,6 +24,8 @@ type DriverLeadResponse = {
   success: boolean;
   message: string;
   referralCode?: string;
+  /** True only when production email (Resend) is configured; gates the email copy. */
+  emailConfigured?: boolean;
 };
 
 const appOptions = ["Uber", "Lyft", "Empower", "HopSkipDrive", "Other"];
@@ -328,6 +331,10 @@ export function FoundingDriverForm() {
 
         {mutation.isSuccess && (() => {
           const code = mutation.data?.referralCode;
+          // Only promise an email when production email is actually configured;
+          // otherwise the saved referral code is the source of truth.
+          const emailConfigured = mutation.data?.emailConfigured === true;
+          const whatsapp = getWhatsAppLink();
           // BASE_URL keeps the GitHub Pages sub-path (e.g. /Libre-Ride-Sharing-Dapp/)
           // so the shared invite link doesn't 404 in production.
           const base = `${window.location.origin}${import.meta.env.BASE_URL}`.replace(/\/$/, "");
@@ -336,7 +343,13 @@ export function FoundingDriverForm() {
             <div className="space-y-3 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4 text-sm text-emerald-100">
               <p className="flex items-center gap-2 font-medium">
                 <CheckCircle className="h-4 w-4 shrink-0" />
-                You're on the founding driver list. We'll reach out before the Orlando pilot. Watch your email.
+                Registration received — you're on the founding driver list. We'll reach out before the Orlando pilot.
+              </p>
+              <p className="text-xs text-emerald-200">
+                {code ? "Save your referral code below — that's your confirmation. " : ""}
+                {emailConfigured
+                  ? "You'll also receive a confirmation email shortly."
+                  : "Email confirmations aren't enabled yet, so keep your referral code handy."}
               </p>
               {code && inviteUrl && (
                 <div className="space-y-2 border-t border-emerald-300/20 pt-3">
@@ -360,6 +373,20 @@ export function FoundingDriverForm() {
                   </div>
                   <p className="text-xs text-emerald-300">Share this link with other Orlando drivers to grow the waitlist.</p>
                 </div>
+              )}
+              {whatsapp && (
+                <p className="border-t border-emerald-300/20 pt-3 text-xs text-emerald-200">
+                  Need help?{" "}
+                  <a
+                    href={whatsapp.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-emerald-100 underline hover:text-white"
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    Contact LIBRE on WhatsApp
+                  </a>
+                </p>
               )}
             </div>
           );

@@ -5,6 +5,7 @@ import {
   buildFoundingDriverEmailText,
   buildInvestorEmail,
   getAppBaseUrl,
+  getEmailConfig,
   sendEmail,
   type EmailResult,
 } from "../email";
@@ -243,8 +244,12 @@ router.post("/api/leads/founding-driver", rateLimitByIp, async (req, res) => {
     const response: Record<string, unknown> = {
       success: true,
       message:
-        "You're on the founding driver list. We'll reach out before the Orlando pilot. Watch your email.",
+        "You're on the founding driver list. We'll reach out before the Orlando pilot.",
       referralCode: lead.referralCode,
+      // Non-secret flag so the frontend only promises a confirmation email when
+      // production email (Resend) is actually configured. The lead is saved
+      // regardless of this value.
+      emailConfigured: getEmailConfig().enabled,
     };
     if (process.env.NODE_ENV !== "production") {
       response.emailStatus = emailResult;

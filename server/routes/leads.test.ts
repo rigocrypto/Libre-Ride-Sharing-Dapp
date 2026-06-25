@@ -78,6 +78,8 @@ describe("POST /api/leads/founding-driver", () => {
     const json = await res.json();
     expect(json.success).toBe(true);
     expect(json.referralCode).toMatch(/^[A-Z]+-[A-Z0-9]{6}$/);
+    // Email is unconfigured in tests, so the frontend must not promise an email.
+    expect(json.emailConfigured).toBe(false);
   });
 
   it("accepts a FULL realistic mobile payload (all optional fields, accents) without 500", async () => {
