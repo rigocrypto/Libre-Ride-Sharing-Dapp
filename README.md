@@ -581,6 +581,8 @@ SESSION_SECRET=...
 FRONTEND_ORIGIN=https://rigocrypto.github.io
 STORAGE_ENGINE=drizzle
 RESEND_API_KEY=
+EMAIL_FROM=
+APP_BASE_URL=https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp
 ESCROW_CONTRACT_ADDRESS=0xE4995d77BffAcB05AF23764bf2831FCC35B4888F
 USDC_TOKEN_ADDRESS=0xcb27336B232eA62469D0d2DEcDAC016d23CE1414
 RPC_URL_BASE_SEPOLIA=
@@ -590,6 +592,20 @@ ESCROW_VERIFIER_MODE=mock
 ```
 
 Render runs `npm run db:push` during the Blueprint build before compiling the app, so the Postgres schema is created before the API starts. In production, Drizzle/Postgres initialization fails hard instead of falling back to in-memory storage.
+
+### Production email (confirmation emails)
+
+Founding-driver confirmation emails are sent via [Resend](https://resend.com) and are **non-blocking**: if email is unconfigured or the send fails, the lead is still saved and the WhatsApp fallback stays available — the email is just skipped (logged as `[EMAIL] Confirmation email skipped — …`). To actually deliver confirmation emails in production, set all three of these in the Render dashboard (they are declared `sync: false` in `render.yaml`, so no values are committed):
+
+| Variable | Purpose |
+| --- | --- |
+| `RESEND_API_KEY` | Resend API key (`re_…`). Without it, email is skipped. |
+| `EMAIL_FROM` | Sender address, e.g. `LIBRE <noreply@yourverifieddomain.com>`. Without it, email is skipped. |
+| `APP_BASE_URL` | e.g. `https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp` — used to build the referral invite link inside the email (the email still sends without it; the link is just omitted). |
+
+> ⚠️ **Use a verified Resend domain for `EMAIL_FROM`.** Resend's shared test sender `onboarding@resend.dev` only delivers to the Resend **account owner's** email — real drivers will not receive anything. Verify a sending domain at [resend.com/domains](https://resend.com/domains) before using a custom `from` address. Do **not** rely on `onboarding@resend.dev` for real founders.
+
+Verify delivery end-to-end after configuring: `npm run email:test` ([scripts/test-resend-email.ts](scripts/test-resend-email.ts)).
 
 The production API exposes:
 
