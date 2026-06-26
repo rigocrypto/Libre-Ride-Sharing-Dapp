@@ -1,790 +1,301 @@
-# LIBRE Ride - Orlando-First Web3 Ride-Sharing Platform
+# LIBRE Ride-Sharing Dapp
 
-**LIBRE Ride** is an Orlando-first, Florida-compliance-aware Web3 ride-sharing platform designed to give drivers, riders, and local transportation operators a more transparent alternative to traditional ride-hailing apps.
+> **Driver-first, escrow-protected ride sharing for Orlando mobility.**
 
-LIBRE combines modern ride-sharing infrastructure with **AI dispatch concepts**, **USDC escrow**, Web3 wallet support, driver verification, compliance workflows, safety tooling, and real-time operations.
+![React](https://img.shields.io/badge/React-18-149ECA?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
+![Render](https://img.shields.io/badge/API-Render-46E3B7?logo=render&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/Frontend-GitHub%20Pages-222222?logo=github&logoColor=white)
+![Base Sepolia](https://img.shields.io/badge/Web3-Base%20Sepolia-0052FF?logo=coinbase&logoColor=white)
+![Demo Mode](https://img.shields.io/badge/Status-Demo%20%2F%20MVP-orange)
 
-The project is currently a **QA/staging-ready MVP**, not a live production service for real passengers, real drivers, or real funds.
+**LIBRE is a Web3-enabled ride-sharing demo designed to prove a fairer mobility model** where riders get transparent pricing, drivers only see escrow-confirmed rides, and admins can monitor the full ride lifecycle. The first pilot focuses on the Orlando, Florida market — airport visitors, hotel guests, convention attendees, families, and local riders.
 
-## Vision
-
-Traditional ride-sharing platforms often leave drivers with limited transparency, high platform dependency, unclear earnings logic, and little ownership in the ecosystem.
-
-LIBRE is being built around a different idea:
-
-> Drivers should have more transparency, riders should have safer local options, and payments should be protected by modern digital infrastructure.
-
-LIBRE is not simply "Uber with crypto." It is a **compliance-first, AI-assisted, Web3-enabled mobility marketplace** built initially for the Orlando, Florida market.
-
-## Why Orlando?
-
-Orlando is a strong pilot market for a next-generation ride-sharing platform because it has:
-
-- Heavy tourism demand
-- Orlando International Airport traffic
-- Disney, Universal, hotels, conventions, and event zones
-- High driver activity
-- Strong demand for airport, tourist, family, and local transportation
-- A clear need for transparent driver-first alternatives
-
-The first launch strategy focuses on a limited Orlando pilot before broader Florida or national expansion.
-
-## Who LIBRE Is For
-
-**Drivers**
-
-LIBRE is designed for independent drivers who want transparent ride offers, clear payout information, escrow-protected payment flow, verification badges, AI demand guidance, local support, founding-driver benefits, optional Web3 rewards, and a stronger voice in the platform's future.
-
-**Riders**
-
-LIBRE is designed for riders who want transparent fares, verified local drivers, safer ride workflows, digital payment options, tourist-friendly ride support, and better visibility into ride/payment status.
-
-**Investors and Partners**
-
-LIBRE is designed for early backers, local sponsors, operators, and strategic partners interested in Web3 mobility infrastructure, stablecoin payments, AI-assisted local transportation, driver-first marketplaces, Orlando tourism and airport mobility, and compliance-focused ride-sharing innovation.
-
-## Product Snapshot
-
-LIBRE includes or is being built toward:
-
-- Rider and driver dashboards
-- Premium LIBRE Driver Dashboard
-- Ride request, offer, acceptance, and start flows
-- Real-time ride state updates
-- WebSocket and polling fallback
-- USDC escrow flow on Base Sepolia
-- Wallet support through Wagmi, RainbowKit, and Viem
-- Shared escrow state machine
-- AI dispatch and smart matching roadmap
-- Driver document upload and compliance review
-- Orlando permit and airport-eligibility workflow
-- Founding Access landing page with persistent lead capture and CRM scoring
-- Safety/SOS structures
-- Dispute center planning
-- Driver and rider subscription models
-- Admin command center roadmap
-- Security hardening and production readiness documentation
-
-## Demo Walkthrough
-
-LIBRE Ride includes a self-guided demo that shows the core ride-sharing flow behind the platform:
-
-> **LIBRE protects driver time by only showing rides after rider payment is escrow-confirmed.**
-
-This is the key product difference. Riders get payment protection, drivers avoid unpaid or unconfirmed trips, and admins can monitor the full ride lifecycle.
-
-### What the Demo Proves
-
-- Rider ride request and Orlando fare estimate
-- Escrow/payment confirmation before the ride is offered to drivers
-- Driver-only visibility for escrow-confirmed rides
-- Driver accept, start, and complete actions
-- Admin ride lifecycle monitoring: status, escrow state, driver assignment, fare, and transaction reference
-
-This is a demo/staging flow only. It does not use real passengers, real dispatch, real production funds, or production compliance checks.
-
-### Audience Framing
-
-**For investors:** Driver time is money. LIBRE reduces wasted driver time by only exposing payment-confirmed rides.
-
-**For drivers:** No wasted trips. You only see rides after the rider has confirmed payment.
-
-**For riders:** Your payment is protected through the escrow flow before the ride moves forward.
-
-### Demo Paths
-
-| Page | Purpose |
-| ---- | ------- |
-| `/rider` | Rider creates a ride, estimates fare, and confirms escrow |
-| `/driver` | Driver sees only escrow-confirmed rides and completes the trip |
-| `/admin` | Admin monitors ride status, escrow state, fare, driver, and transaction reference |
-
-### Recommended Walkthrough
-
-1. Open `/rider`
-2. Choose Orlando pickup and destination
-3. Estimate fare
-4. Create the ride
-5. Simulate escrow confirmation
-6. Open `/driver`
-7. Switch driver status online
-8. Confirm that only escrow-confirmed rides appear
-9. Accept the ride
-10. Start the ride
-11. Complete the ride and release escrow
-12. Open `/admin`
-13. Review the full lifecycle, status, fare, driver, and transaction hash
-
-### Local Demo
-
-```bash
-npm install
-npm run dev
-# http://localhost:5000
-```
-
-Verify:
-
-```bash
-npm run check
-npm test -- --run
-npm run build:pages
-```
-
-### GitHub Pages Note
-
-The GitHub Pages frontend can display the demo UI. API-backed demo routes (`/api/demo/*`) require the backend URL to be configured through:
-
-```env
-VITE_API_BASE_URL=https://your-backend-url.com
-```
-
-For deployed demos, set `VITE_API_BASE_URL` to the active backend service URL and rebuild the Pages frontend.
+> ⚠️ LIBRE is currently a **demo / MVP**. No real transportation, payment, insurance, regulatory approval, or financial product is provided through this demo.
 
 ---
 
-## Current Status
+## 🔗 Quick Links
 
-The project is currently in **QA/staging-ready MVP** state.
+| Area | Link |
+| --- | --- |
+| Live App | [rigocrypto.github.io/Libre-Ride-Sharing-Dapp](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/) |
+| Rider Demo | [/rider](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/rider) |
+| Rider Profile | [/rider/profile](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/rider/profile) |
+| Driver Demo | [/driver](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/driver) |
+| Admin Demo | [/admin](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/admin) |
+| Founding Driver Registration | [/founding-access](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/founding-access) |
+| Privacy | [/privacy](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/privacy) |
+| Backend API Health | [libre-api.onrender.com/health](https://libre-api.onrender.com/health) |
+| GitHub Repo | [github.com/rigocrypto/Libre-Ride-Sharing-Dapp](https://github.com/rigocrypto/Libre-Ride-Sharing-Dapp) |
 
-Verified recently:
+---
 
-```powershell
-npm.cmd run check
-npm.cmd test -- --run
-npm.cmd run build
-npm.cmd run test:e2e
+## 📸 Product Screenshots
+
+> Screenshots are captured from the live GitHub Pages demo. Drop PNGs into
+> [`docs/images/`](docs/images/) (see the [capture guide](docs/images/README.md))
+> to replace the placeholders below.
+
+<!-- TODO: Add screenshots after the latest GitHub Pages deploy. Filenames below match docs/images/README.md. -->
+
+### Landing / Founding Access
+<!-- ![Founding Access](docs/images/founding-access.png) -->
+_TODO: `docs/images/founding-access.png`_
+
+### Rider Dashboard — Orlando Visitor Experience
+<!-- ![Rider Dashboard](docs/images/rider-dashboard.png) -->
+_TODO: `docs/images/rider-dashboard.png`_
+
+### Rider Profile
+<!-- ![Rider Profile](docs/images/rider-profile.png) -->
+_TODO: `docs/images/rider-profile.png`_
+
+### Driver Dashboard
+<!-- ![Driver Dashboard](docs/images/driver-dashboard.png) -->
+_TODO: `docs/images/driver-dashboard.png`_
+
+### Admin Escrow Monitoring
+<!-- ![Admin Dashboard](docs/images/admin-dashboard.png) -->
+_TODO: `docs/images/admin-dashboard.png`_
+
+---
+
+## 🌎 Vision
+
+LIBRE is not simply "Uber with crypto." It is designed around **fairness, driver control, rider transparency, escrow protection, and local community mobility.**
+
+Traditional ride-sharing platforms often leave drivers with limited transparency, high platform dependency, unclear earnings logic, and little ownership in the ecosystem. LIBRE is being built around a different idea:
+
+> Drivers should have more transparency, riders should have safer local options, and payments should be protected by modern digital infrastructure.
+
+The Orlando pilot focuses on tourists, airport visitors, hotel guests, families, convention visitors, and local riders. The long-term vision is a **community-based mobility marketplace with transparent pricing and programmable payment flows.**
+
+### Why Orlando?
+
+- Heavy tourism demand and Orlando International Airport (MCO) traffic
+- Disney, Universal, hotels, conventions, and event zones
+- High driver activity and strong airport / tourist / family / local demand
+- A clear need for transparent, driver-first alternatives
+
+The first launch strategy focuses on a limited Orlando pilot before broader Florida or national expansion.
+
+## ❗ The Problem
+
+- Traditional ride-sharing platforms often lack transparency.
+- Drivers may accept rides without clear payment guarantees.
+- Riders face dynamic pricing and unclear fees.
+- Local drivers have limited ownership and control.
+- Tourists need safer, clearer, easier transportation options.
+- Compliance, trust, and payment assurance are major barriers.
+
+## ✅ The LIBRE Solution
+
+- Rider requests a transparent ride and sees an up-front Orlando fare estimate.
+- Payment is confirmed through demo escrow before the ride moves forward.
+- Driver sees the ride **only after escrow confirmation** — protecting driver time.
+- Admin can monitor the full ride lifecycle and escrow state.
+- WhatsApp / email fallback protects founding-driver registrations.
+- The demo proves the operating model **before real funds are involved.**
+
+> **The key product difference:** LIBRE protects driver time by only showing rides after rider payment is escrow-confirmed. Riders get payment protection, drivers avoid unpaid or unconfirmed trips, and admins can monitor the full ride lifecycle.
+
+---
+
+## 🔄 Demo Lifecycle
+
+1. Rider estimates an Orlando ride fare
+2. Rider creates the ride request
+3. Rider confirms demo escrow
+4. Driver sees **only** escrow-confirmed rides
+5. Driver accepts the ride
+6. Driver starts the trip
+7. Driver completes the trip
+8. Admin verifies the completed state and payout release
+
+```mermaid
+flowchart LR
+  A[Rider Estimate] --> B[Create Ride]
+  B --> C[Confirm Demo Escrow]
+  C --> D[Driver Sees Ride]
+  D --> E[Driver Accepts]
+  E --> F[Trip In Progress]
+  F --> G[Trip Completed]
+  G --> H[Admin Monitoring]
 ```
 
-Current progress:
+### Recommended Walkthrough
 
-- React/Vite/TypeScript frontend is working.
-- Express/TypeScript backend is working.
-- Driver dashboard is implemented.
-- Escrow state machine is implemented and tested under `shared/escrow`.
-- Base Sepolia `RideEscrow` contract is deployed.
-- Mock USDC is deployed and funded for testing.
-- Live approve -> deposit -> backend verify -> release flow has passed on Base Sepolia.
-- Correct 300 bps fee split has been verified on-chain.
-- Escrow balance returned to zero after release.
-- Dev seed routes are isolated from production route registration.
-- Security hardening reduced local audit results to low-only issues.
-- Production roadmap and implementation tickets are documented.
-- `/founding-access` captures founding driver and investor/partner interest with consent, source/referral tracking, lead scoring, CSV export, and an admin Lead CRM tab.
+1. Open `/rider`, choose an Orlando pickup and destination, and estimate the fare.
+2. Create the ride and confirm demo escrow.
+3. Open `/driver`, switch the driver status online, and confirm that **only** escrow-confirmed rides appear.
+4. Accept, start, and complete the ride to release escrow.
+5. Open `/admin` to review the full lifecycle: status, escrow state, fare, driver, and transaction reference.
 
-Not production-live yet:
+> Demo / staging flow only. It does not use real passengers, real dispatch, real production funds, or production compliance checks.
 
-- Basescan source verification still needs a valid API key.
-- Production database validation is still needed.
-- Production Firebase/KYC/storage/notification keys must be validated.
-- Admin workflows need production-grade completion.
-- Legal/compliance review is required before public operation.
-- Smart contract and payment security review are required before handling real user funds.
+---
 
-## Web3 Payments & Escrow
+## 🧩 Product Modules
 
-LIBRE is designed around a payment-first ride flow.
+### Rider Demo (`/rider`, `/rider/profile`)
 
-The current tested rail is USDC escrow on Base Sepolia:
+- Orlando tourist-focused dashboard with destination presets
+- Ride packages and transparent fare estimates
+- Escrow explanation and demo wallet
+- Safety and travel support + AI travel assistant
+- Rider Profile / account page
 
-1. Rider requests a ride.
-2. Rider approves USDC spend.
-3. Rider deposits fare into the escrow contract.
-4. Backend verifies chain ID, contract, token, amount, rider, ride ID, and transaction status.
-5. Ride becomes driver-eligible only after escrow confirmation.
-6. Ride is completed.
-7. Funds are released to the driver, with the configured platform fee split.
-8. Refunds or disputes can follow a defined workflow.
+### Driver Demo (`/driver`)
 
-This helps reduce uncertainty for both riders and drivers. The live test for `TICKET-024` verified a 25 USDC fare, 0.75 USDC platform fee, 24.25 USDC driver payout, and final escrow balance of 0 USDC.
+- Modern driver operations dashboard with KPI cards
+- Demand map and escrow-confirmed ride visibility
+- Earnings / wallet panel
+- Safety & compliance panels, promotions / referrals
+- AI driver tips
 
-Important: Any token, reward, bond, staking, investment, or revenue-sharing structure connected to LIBRE requires legal review before public launch. LIBRE tokens, if introduced, should be treated as utility/reward infrastructure only unless properly reviewed under applicable securities and financial regulations.
+### Admin Demo (`/admin`)
 
-## Why LIBRE?
+- Ride lifecycle visibility and escrow status monitoring
+- Completed ride tracking
+- Demo operations view and system verification tools
 
-**For drivers:** clearer ride economics, payment-confirmed work, compliance credentials, local launch focus, and a path toward driver-first benefits.
+### Founding Access (`/founding-access`)
 
-**For riders:** transparent fares, verified drivers, safer payment state, better local context, and tourist-friendly Orlando ride workflows.
+- Founding Driver registration with referral code support
+- WhatsApp fallback when the API is unavailable
+- Neon-backed lead storage
+- Optional, non-blocking confirmation email
 
-**For local operators:** compliance-first tooling, admin visibility, airport/permit readiness, and a marketplace that can be piloted city by city.
+---
 
-## AI Capabilities Roadmap
+## ⭐ Key Features
 
-LIBRE is being designed with AI features that support real operational needs:
+### For riders
 
-- AI driver matching
-- AI dispatch optimization
-- AI demand heatmaps
-- AI driver copilot
-- AI document pre-screening
-- AI risk scoring
-- AI fraud detection
-- AI tourist ride assistant
-- AI toll-aware routing
-- AI earnings insights
+- Transparent demo fares and Orlando destination presets
+- Escrow-protected ride confirmation
+- Tourist travel packages, rider profile, wallet / payment demo, safety & support
 
-Example use cases include recommending the best driver based on compliance, distance, rating, vehicle type, and escrow readiness; helping drivers identify high-demand Orlando zones; flagging suspicious payment patterns; and helping tourists request rides to MCO, Disney, Universal, hotels, and convention areas.
+### For drivers
 
-## Compliance-First Orlando Launch
+- Escrow-confirmed ride visibility (no wasted trips)
+- Modern operations dashboard and earnings overview
+- Safety / compliance panels, driver profile / status, referrals & promotions
 
-LIBRE is being designed with Florida and Orlando transportation requirements in mind.
+### For admins
 
-Compliance areas include:
+- Ride lifecycle and escrow-state monitoring
+- Demo ride tracking and system verification tools
 
-- Driver license verification
-- Vehicle document upload
-- Insurance document tracking
-- Background-check workflow
-- Orlando transportation permit tracking
-- Airport/MCO eligibility workflow
-- Vehicle inspection status
-- Driver approval and suspension workflow
-- Admin compliance queue
-- Retention and privacy policies
+### For founders / operators
 
-The project includes planning for Florida TNC insurance considerations, including Florida Statutes Section 627.748, Orlando driver requirements, airport pickup eligibility, toll-aware route planning, ADA/accessibility considerations, and driver/rider safety workflows.
+- Founding registration with Neon / Postgres lead storage
+- Render backend + GitHub Pages frontend
+- Smoke tests and cleanup scripts
 
-## Driver Founding Program
+---
 
-LIBRE is exploring a founding-driver model for early Orlando drivers.
+## 🏗️ Architecture
 
-Possible benefits may include:
+```mermaid
+flowchart TB
+  U[Users: Riders / Drivers / Founders] --> FE[GitHub Pages React Frontend]
+  FE --> API[Render Express API]
+  API --> DB[Neon PostgreSQL]
+  API --> EMAIL[Resend Email - Optional]
+  FE --> WA[WhatsApp Fallback]
+  FE --> FB[Firebase Auth]
+  API --> DEMO[In-Memory Demo Ride Store]
+```
 
-- Founding Driver badge
-- Early access to the platform
-- Priority onboarding
-- Reduced platform fees during pilot
-- Access to private feedback group
-- Driver profile visibility
-- Referral rewards
-- Early access to future driver benefits
-- Eligibility for reputation credentials
+**Frontend** — React 18, TypeScript, Vite, Wouter routing, Tailwind + Radix UI, TanStack Query. Deployed to GitHub Pages with an SPA fallback (`index.html` copied to `404.html`) and base path `/Libre-Ride-Sharing-Dapp/`.
 
-The founding-driver program should not be treated as an investment product. It is intended as an early-access and community-building program.
+**Backend** — Node.js / Express + TypeScript with Zod validation. Demo ride API and founding-driver lead-capture API. Deployed to Render via `render.yaml`.
 
-## Investor / Partner Snapshot
+**Database** — Neon PostgreSQL (pooled, `sslmode=require`) via Drizzle ORM, with retry logic for cold-start transient errors.
 
-LIBRE's early opportunity is based on:
+**Web3 / Escrow** — Wagmi, RainbowKit, Viem against Base Sepolia, with a USDC escrow flow and Foundry contracts. Demo messaging only — no real funds.
 
-- Orlando's high-volume tourism market
-- Airport and event transportation demand
-- Driver dissatisfaction with legacy platforms
-- Growth in stablecoin payment infrastructure
-- AI-assisted dispatch and operations
-- Compliance-first transportation tooling
-- Potential expansion across Florida markets
-
-Potential revenue channels include ride platform fees, driver subscriptions, rider memberships, corporate accounts, tourist passes, local sponsor partnerships, premium driver tools, compliance/admin services, and future utility/rewards ecosystem.
-
-Any formal investment offering should be conducted through proper legal structures, disclosures, and regulatory review.
-
-## Stack Overview
+**Integrations** — Resend (optional email), WhatsApp fallback, Firebase Auth, GitHub Actions CI, Render hosting.
 
 | Layer | Technology |
 | --- | --- |
-| Client | React 18, Vite, TypeScript, TanStack Query, Tailwind, Radix UI |
+| Client | React 18, Vite, TypeScript, TanStack Query, Tailwind, Radix UI, Wouter |
 | Server | Express, TypeScript, Zod validation |
-| Persistence | Drizzle ORM, PostgreSQL, MemStorage for dev/test |
-| Web3 | Wagmi, RainbowKit, Viem, Base Sepolia, USDC escrow flow, Foundry contracts |
+| Persistence | Drizzle ORM, Neon PostgreSQL, MemStorage for dev/test |
+| Web3 | Wagmi, RainbowKit, Viem, Base Sepolia, USDC escrow, Foundry |
 | Realtime | WebSocket layer, polling fallback |
-| Uploads | UploadThing / S3-style document storage path |
-| Notifications | Resend, Twilio, OneSignal planning |
+| Notifications | Resend (email), WhatsApp fallback |
 | Testing | Vitest, Playwright, Foundry |
-| DevOps | Docker Compose planning, GitHub Actions CI planning |
 
-## Architecture
+### Repository Structure
 
 ```txt
 client/
-  React SPA
-  Rider dashboard
-  Driver dashboard
-  Wallet/payment UI
-  Compliance components
-
+  src/
+    pages/             # Landing, rider, driver, admin, founding-access, privacy
+    components/        # UI + demo components
+    lib/               # client helpers
+  public/              # static assets, 404.html SPA fallback
 server/
-  Express API
-  Ride routes
-  Escrow routes
-  Compliance routes
-  Auth scaffolding
-  WebSocket/realtime layer
-  routes.dev.ts
-
-contracts/
-  RideEscrow.sol
-  MockUSDC.sol
-  script/
-  test/
-
+  routes/              # ride, lead-capture, admin routes
+  services/            # email, CRM, escrow verification
+  db/                  # Drizzle client + migrations runner
 shared/
-  schema.ts
-  escrow/
-    states.ts
-    transitions.ts
-    validators.ts
-    errors.ts
-    abi.ts
-
-docs/
-  IMPLEMENTATION_TICKETS.md
-  PRODUCTION_READINESS_CHECKLIST.md
-  ESCROW_STATE_MACHINE.md
-  DRIVER_SUBSCRIPTION_BENEFITS.md
-  RIDER_SUBSCRIPTION_TIERS.md
-
-migrations/
-  SQL migrations
-
-SECURITY.md
-ORLANDO_AI_COMPLIANCE_ROADMAP.md
+  schema.ts            # shared types
+  escrow/              # canonical escrow state machine (states/transitions/validators)
+contracts/             # RideEscrow.sol, MockUSDC.sol, Foundry scripts/tests
+scripts/               # smoke tests, cleanup, migrations, email test
+docs/                  # tickets, checklists, state-machine docs, images/
+.github/workflows/     # GitHub Pages + CI workflows
 ```
 
-## Key Capabilities
-
-**Rider Flow**
-
-- Request ride
-- View active ride
-- Connect wallet
-- Approve and deposit USDC
-- Track escrow/deposit status
-- Track driver assignment
-- Complete ride
-- View ride summary
-
-**Driver Flow**
-
-- Go online/offline
-- View eligible ride offers
-- Accept rides
-- View escrow-confirmed status
-- Start escrow-confirmed rides
-- Track earnings
-- View AI Copilot tips
-- Manage vehicle/compliance status
-- Access driver benefits
-
-**Escrow Flow**
-
-- Initiate deposit
-- Check allowance
-- Approve USDC spend
-- Confirm deposit
-- Verify transaction
-- Lock ride payment
-- Release payment
-- Refund payment
-- Dispute payment
-- Maintain canonical escrow state transitions
-
-**Admin/Compliance Flow**
-
-- Review driver documents
-- Approve/reject drivers
-- Track insurance and permits
-- Monitor escrow status
-- Review disputes
-- Manage safety flags
-- Prepare for Orlando pilot operations
-
-## Prerequisites
-
-Recommended:
-
-- Node.js 20+
-- npm 10+
-- PostgreSQL or Neon for production-like runs
-- Redis if using realtime/queue features
-- Docker + Docker Compose v2, optional
-- Foundry for contract tests and deployment
-- Base Sepolia RPC provider
-- UploadThing or equivalent file storage
-- Resend/Twilio/OneSignal sandbox credentials, optional
-
-## Environment Variables
-
-Create a local `.env` file and use development/sandbox keys. Never commit real production secrets.
-
-Common environment groups:
-
-```txt
-Database / Storage
-DATABASE_URL=
-STORAGE_ENGINE=mem
-REDIS_URL=
+---
 
-Web3 / Escrow
-CHAIN_ID=84532
-VITE_CHAIN_ID=84532
-RPC_URL_BASE_SEPOLIA=
-BASESCAN_API_KEY=
-PLATFORM_WALLET_ADDRESS=
-ARBITER_ADDRESS=
-DEPLOYER_PRIVATE_KEY=
-ESCROW_CONTRACT_ADDRESS=
-VITE_ESCROW_CONTRACT_ADDRESS=
-USDC_TOKEN_ADDRESS=
-USDC_CONTRACT_ADDRESS_TESTNET=
-VITE_USDC_TOKEN_ADDRESS=
-ESCROW_VERIFIER_MODE=viem
-PLATFORM_FEE_BPS=300
+## 💸 Web3 Payments & Escrow
 
-Auth / KYC
-FIREBASE_*
-PERSONA_*
+LIBRE is designed around a payment-first ride flow. The current tested rail is USDC escrow on Base Sepolia:
 
-Uploads
-UPLOADTHING_API_KEY=
-UPLOADTHING_SECRET=
+1. Rider requests a ride and approves USDC spend.
+2. Rider deposits the fare into the escrow contract.
+3. Backend verifies chain ID, contract, token, amount, rider, ride ID, and tx status.
+4. Ride becomes driver-eligible **only after** escrow confirmation.
+5. Ride is completed and funds are released to the driver, with the configured platform fee split.
+6. Refunds or disputes can follow a defined workflow.
 
-Notifications
-RESEND_API_KEY=
-TWILIO_*
-ONESIGNAL_*
+The live test for `TICKET-024` verified a 25 USDC fare, 0.75 USDC platform fee (300 bps), 24.25 USDC driver payout, and a final escrow balance of 0 USDC.
 
-Feature Flags
-ENABLE_PAYMENTS=
-ENABLE_AA=
-ENABLE_PUSH=
+> Any token, reward, bond, staking, investment, or revenue-sharing structure connected to LIBRE requires legal review before public launch.
 
-Compliance
-RETENTION_DAYS=
-PROTOCOL_FEE_BPS=
-```
+---
 
-## Getting Started
+## 🗺️ Roadmap
 
-Install dependencies:
+### Phase 1 — Demo Foundation ✅
 
-```powershell
-npm.cmd install
-```
+Landing page · Rider / Driver / Admin demos · Founding registration · Lead capture · GitHub Pages + Render + Neon.
 
-Run TypeScript check:
+### Phase 2 — Product Demo Polish ✅
 
-```powershell
-npm.cmd run check
-```
+Rider dashboard redesign · Rider Profile · Driver dashboard redesign · Product demo CTAs · Mobile responsiveness.
 
-Run tests:
+### Phase 3 — Pilot Readiness
 
-```powershell
-npm.cmd test -- --run
-```
+Verified driver onboarding · Compliance workflows · Real auth stabilization · Better admin dashboard · Email domain verification · Founder crowdfunding flow · Orlando pilot campaign.
 
-Run production build:
+### Phase 4 — Web3 Mobility Layer
 
-```powershell
-npm.cmd run build
-```
+Real escrow smart contracts · Wallet abstraction · USDC payments · Driver payouts · On-chain receipts / proof · Dispute handling.
 
-Run E2E smoke test:
+### Phase 5 — Scale
 
-```powershell
-npm.cmd run test:e2e
-```
+Multi-city support · Fleet / company accounts · Tourist / hotel partnerships · Airport / hotel package integrations · AI dispatch optimization.
 
-## Development
-
-Start local dev server:
-
-```powershell
-Remove-Item Env:GITHUB_PAGES -ErrorAction SilentlyContinue
-npm.cmd run dev
-```
-
-Do **not** leave `GITHUB_PAGES=true` in your shell when running `npm run dev`. That flag is only for GitHub Pages builds and switches Vite to base path `/Libre-Ride-Sharing-Dapp/`, which can make `http://localhost:5000` render a blank page.
-
-Depending on your local setup, the app generally runs on:
-
-```txt
-Client/API dev server: http://localhost:5000
-```
-
-Use `STORAGE_ENGINE=mem` for local development and tests when you do not want PostgreSQL startup checks.
-
-Copy `.env.example` to `.env` before configuring Firebase, Reown, or production API URLs.
-
-### WalletConnect / Reown dev warnings
-
-Public routes such as `/founding-access` should not load wallet providers or make WalletConnect/Reown requests.
-
-Wallet routes such as `/rider`, `/driver`, and `/admin` load RainbowKit/Wagmi lazily. If `VITE_WALLETCONNECT_PROJECT_ID` is missing, dev mode may show 403/400 requests to Web3Modal/Reown endpoints. This is expected until a real Reown project ID is configured.
-
-Get a project ID at [cloud.reown.com](https://cloud.reown.com), add it to `.env`, and restart `npm run dev`. Use the same value in Render env vars when deploying the API for production wallet flows.
-
-## GitHub Pages Frontend Deploy
-
-The static React/Vite frontend can be deployed to GitHub Pages at:
-
-```txt
-https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/
-```
-
-GitHub Pages is frontend-only. It can host the landing page, `/founding-access`, `/privacy`, and static demo routes, but it cannot run Express API routes, auth sessions, PostgreSQL/Drizzle, escrow verification, WebSockets, lead capture persistence, or admin CRM routes.
-
-For Pages builds, the workflow sets:
-
-```txt
-GITHUB_PAGES=true
-```
-
-That makes Vite use:
-
-```txt
-/Libre-Ride-Sharing-Dapp/
-```
-
-as the asset/router base path. If forms or admin pages should work from GitHub Pages, deploy the backend separately and set:
-
-```txt
-VITE_API_BASE_URL=https://your-backend.example.com
-```
-
-The Pages workflow reads `VITE_API_BASE_URL` from GitHub Actions secrets during build.
-
-### GitHub Actions secrets for the Pages build
-
-Set these under **Settings → Secrets and variables → Actions → New repository secret**.
-All `VITE_*` values are read at build time by `.github/workflows/pages.yml` and baked
-into the static bundle. The founding-driver/social values ship with safe code defaults,
-so the site still works if they are unset — but set them to make config explicit.
-
-| Secret | Required? | Purpose / default if unset |
-| --- | --- | --- |
-| `VITE_API_BASE_URL` | **Required** | Base URL of the deployed Render backend (e.g. `https://libre-api.onrender.com`). Without it, lead forms have no API to call. **This is the most important secret.** |
-| `VITE_LIBRE_WHATSAPP` | Optional | LIBRE support WhatsApp number for the form fallback + footer icon. Default: `16892165223`. |
-| `VITE_LIBRE_CONTACT_EMAIL` | Optional | Email used by the form fallback when WhatsApp is unavailable. Default: `security@gmx-labs.com`. |
-| `VITE_LIBRE_GITHUB_URL` | Optional | Footer GitHub link. Default: `https://github.com/rigocrypto/Libre-Ride-Sharing-Dapp`. |
-| `VITE_LIBRE_TWITTER_URL` | Optional | Footer X/Twitter link. Default placeholder: `https://x.com/LibreRide` — update once the official LIBRE handle exists. |
-| `VITE_WALLETCONNECT_PROJECT_ID` | Optional | Enables wallet UI on `/rider` and `/driver`. |
-| `VITE_FIREBASE_*` | Optional | Firebase social auth (see workflow for the full list). |
-
-> A full WhatsApp URL override (`VITE_LIBRE_WHATSAPP_URL`, e.g. a group invite link) is
-> also supported in code and takes precedence over `VITE_LIBRE_WHATSAPP` for the footer icon.
-
-For wallet UI on deployed static pages that link to `/rider` or `/driver`, set `VITE_WALLETCONNECT_PROJECT_ID` in the GitHub Actions build environment or document that users configure wallets only after the Pages rebuild includes a valid Reown project ID.
-
-## Render Backend Deploy
-
-The Express API can be deployed separately to Render using `render.yaml`. This is the recommended first hosted backend for Founding Access lead capture because it supports a persistent Node web service, WebSockets, and sessions without refactoring the Express app.
-
-**Database:** lead capture uses an external **Neon** free-tier Postgres rather than Render's free Postgres (which expires after 30 days). In `render.yaml`, `DATABASE_URL` is `sync: false` — set it in the Render dashboard to the Neon **pooled** connection string (must end with `?sslmode=require`). The `pg` client enables TLS automatically for `neon.tech`/`sslmode=require` URLs ([server/db/client.ts](server/db/client.ts)), and `runProductionMigrations()` applies migrations on startup. The DB retry helper tolerates Neon's scale-to-zero cold starts. To migrate from Render Postgres to Neon, just point `DATABASE_URL` at Neon and redeploy — no code changes needed.
-
-Recommended Render variables:
-
-```txt
-NODE_ENV=production
-DATABASE_URL=postgresql://USER:PASSWORD@ep-xxxx-pooler.<region>.aws.neon.tech/libre?sslmode=require  # Neon pooled URL
-SESSION_SECRET=...
-FRONTEND_ORIGIN=https://rigocrypto.github.io
-STORAGE_ENGINE=drizzle
-RESEND_API_KEY=
-EMAIL_FROM=
-APP_BASE_URL=https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp
-ESCROW_CONTRACT_ADDRESS=0xE4995d77BffAcB05AF23764bf2831FCC35B4888F
-USDC_TOKEN_ADDRESS=0xcb27336B232eA62469D0d2DEcDAC016d23CE1414
-RPC_URL_BASE_SEPOLIA=
-PLATFORM_WALLET_ADDRESS=0xb4CfAB88357D0f8C817a0b4E8C95D7B067C49Ac0
-ARBITER_ADDRESS=0xb4CfAB88357D0f8C817a0b4E8C95D7B067C49Ac0
-ESCROW_VERIFIER_MODE=mock
-```
-
-Render runs `npm run db:push` during the Blueprint build before compiling the app, so the Postgres schema is created before the API starts. In production, Drizzle/Postgres initialization fails hard instead of falling back to in-memory storage.
-
-### Production email (confirmation emails)
-
-Founding-driver confirmation emails are sent via [Resend](https://resend.com) and are **non-blocking**: if email is unconfigured or the send fails, the lead is still saved and the WhatsApp fallback stays available — the email is just skipped (logged as `[EMAIL] Confirmation email skipped — …`). To actually deliver confirmation emails in production, set all three of these in the Render dashboard (they are declared `sync: false` in `render.yaml`, so no values are committed):
-
-| Variable | Purpose |
-| --- | --- |
-| `RESEND_API_KEY` | Resend API key (`re_…`). Without it, email is skipped. |
-| `EMAIL_FROM` | Sender address, e.g. `LIBRE <noreply@yourverifieddomain.com>`. Without it, email is skipped. |
-| `APP_BASE_URL` | e.g. `https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp` — used to build the referral invite link inside the email (the email still sends without it; the link is just omitted). |
-
-> ⚠️ **Use a verified Resend domain for `EMAIL_FROM`.** Resend's shared test sender `onboarding@resend.dev` only delivers to the Resend **account owner's** email — real drivers will not receive anything. Verify a sending domain at [resend.com/domains](https://resend.com/domains) before using a custom `from` address. Do **not** rely on `onboarding@resend.dev` for real founders.
-
-Verify delivery end-to-end after configuring: `npm run email:test` ([scripts/test-resend-email.ts](scripts/test-resend-email.ts)).
-
-The production API exposes:
-
-```txt
-GET /health
-```
-
-After deploy, set the GitHub Actions secret:
-
-```txt
-VITE_API_BASE_URL=https://your-render-service.onrender.com
-```
-
-Trigger the Pages workflow again so the static frontend points at the live API.
-
-Render smoke test:
-
-```txt
-GET /health
-POST /api/leads/founding-driver
-POST the same email again and expect 409
-GET /api/admin/leads/drivers without auth and expect 401 or 403
-Restart the Render service and confirm the lead remains in Postgres
-```
-
-### Founding-driver flow smoke test (run before deploying)
-
-`scripts/smoke-founders-flow.ts` exercises the public founding-driver path
-against a deployed backend so you catch a broken registration before users do.
-It verifies the health endpoint, that CORS allows the GitHub Pages origin, that
-a valid submission returns success (no 500), and that validation still rejects
-bad payloads with 400.
-
-```powershell
-# Point at the live backend (NOT the GitHub Pages URL)
-$env:API_BASE_URL = "https://your-render-service.onrender.com"
-npm run smoke:founders
-```
-
-A non-zero exit code means the flow is broken — do not promote the deploy.
-The script creates one throwaway lead (`smoke+<timestamp>@libre-smoke.test`)
-per run, so the smoke test stays valuable for verifying production after every
-deploy. Keep it active; just clean up the synthetic rows it leaves behind.
-
-#### Cleaning up smoke-test leads
-
-`scripts/cleanup-smoke-leads.ts` deletes **only** rows in
-`founding_driver_leads` whose email ends with `@libre-smoke.test`. The suffix is
-hard-coded, so it can never remove a real registration. Always dry-run first to
-see the count, then delete:
-
-```powershell
-# 1. Preview how many smoke rows would be removed (no changes made)
-npm run smoke:founders:cleanup -- --dry-run
-
-# 2. Only after confirming they are test data, actually delete them
-npm run smoke:founders:cleanup
-```
-
-It connects straight to Neon via `DATABASE_URL` and logs the deleted count.
-
-> Reliability note: lead inserts now retry transient Neon cold-start timeouts,
-> and the confirmation email / Airtable CRM sync are non-blocking — a lead is
-> always saved even if those optional integrations fail. If the API is still
-> unreachable, the form shows a "Send registration by WhatsApp" fallback
-> (configure `VITE_LIBRE_WHATSAPP`) so no registration is lost.
-
-## Docker
-
-The repository includes `docker-compose.yml` for local service orchestration. Confirm required environment variables first, then run:
-
-```powershell
-docker compose up --build
-```
-
-Common local services may include Postgres, Redis, Mailhog, mock notification tooling, the API, and the client depending on the active compose profile.
-
-## Database Migrations & Seeding
-
-For production-like database testing, configure:
-
-```txt
-DATABASE_URL=
-STORAGE_ENGINE=drizzle
-```
-
-Then run the Drizzle command:
-
-```powershell
-npm.cmd run db:push
-```
-
-SQL migrations live under `migrations/`. Confirm the current migration path and storage engine before running destructive database changes.
-
-Dev-only seed routes are isolated in `server/routes.dev.ts` and are only registered when `NODE_ENV !== 'production'`.
-
-## Smart Contracts
-
-Foundry configuration lives in `foundry.toml`.
-
-Run contract tests:
-
-```powershell
-forge test -vv
-```
-
-Deploy `RideEscrow` to Base Sepolia:
-
-```powershell
-forge script contracts/script/DeployRideEscrow.s.sol `
-  --rpc-url $env:RPC_URL_BASE_SEPOLIA `
-  --private-key $env:DEPLOYER_PRIVATE_KEY `
-  --broadcast `
-  --verify `
-  -vvvv
-```
-
-If Basescan verification fails because of an API key issue, re-run verification without redeploying after setting `BASESCAN_API_KEY`.
-
-## Testing
-
-Core verification commands:
-
-```powershell
-npm.cmd run check
-npm.cmd test -- --run
-npm.cmd run build
-npm.cmd run test:e2e
-forge test -vv
-```
-
-Current coverage includes:
-
-- Ride acceptance race-condition tests
-- Escrow state-machine tests
-- Escrow contract tests
-- Playwright smoke flow
-
-Before opening a pull request, run the verification commands relevant to your change.
-
-## Security
-
-Security hardening is tracked in [SECURITY.md](SECURITY.md).
-
-Recent hardening reduced local npm audit results from critical/high issues to low-only issues.
-
-Security priorities before production:
-
-- Smart contract audit
-- Payment route review
-- WebSocket authorization review
-- Rate limiting
-- Request validation
-- Escrow transaction replay protection
-- Admin RBAC
-- Audit logging
-- Secrets management
-- Production CI security checks
-
-## Production Readiness
-
-Production readiness is tracked in [docs/PRODUCTION_READINESS_CHECKLIST.md](docs/PRODUCTION_READINESS_CHECKLIST.md).
-
-LIBRE should not be considered live-production-ready until:
-
-- Real two-wallet authenticated ride flow is validated.
-- Contract source is verified on Basescan.
-- Production database is migration-tested.
-- Firebase/KYC/storage integrations are validated.
-- Driver compliance workflow is operational.
-- Admin approval workflow is operational.
-- Rate limiting and validation are active.
-- WebSocket authorization is reviewed.
-- Smart contract review is complete.
-- Staging pilot ride is completed end to end.
-
-## Roadmap
-
-See:
+Detailed tickets and design docs:
 
 - [docs/IMPLEMENTATION_TICKETS.md](docs/IMPLEMENTATION_TICKETS.md)
 - [docs/ESCROW_STATE_MACHINE.md](docs/ESCROW_STATE_MACHINE.md)
@@ -792,76 +303,238 @@ See:
 - [docs/RIDER_SUBSCRIPTION_TIERS.md](docs/RIDER_SUBSCRIPTION_TIERS.md)
 - [ORLANDO_AI_COMPLIANCE_ROADMAP.md](ORLANDO_AI_COMPLIANCE_ROADMAP.md)
 
-Near-term priorities:
+---
 
-1. Complete `TICKET-025`: real driver wallet auth plus escrow-gated ride start.
-2. Verify contract source on Basescan.
-3. Add admin escrow monitoring.
-4. Validate production database path.
-5. Complete driver compliance approval workflow.
-6. Run limited Orlando staging pilot with two real wallets.
-7. Prepare legal/compliance review before public launch.
+## 📍 Current Status
 
-## Troubleshooting
+- Live demo deployed to GitHub Pages.
+- Rider dashboard, Rider Profile, and Driver dashboard are live.
+- Admin ride lifecycle is verified.
+- Founding Driver registration works through **GitHub Pages → Render → Neon.**
+- Lead inserts retry transient Neon cold-start timeouts; confirmation email / CRM sync are non-blocking.
+- Email confirmation requires a verified Resend production domain (see below).
+- Firebase OAuth requires `rigocrypto.github.io` in Firebase **Authorized Domains.**
 
-| Issue | Fix |
+---
+
+## 💻 Local Development
+
+```bash
+npm install
+npm run dev
+# http://localhost:5000
+```
+
+> On Windows PowerShell, clear the Pages flag before running dev so the base path
+> does not blank the page: `Remove-Item Env:GITHUB_PAGES -ErrorAction SilentlyContinue`.
+> `GITHUB_PAGES=true` is only for `npm run build:pages`.
+
+Use `STORAGE_ENGINE=mem` for local development and tests when you do not want PostgreSQL startup checks. Copy `.env.example` to `.env` before configuring Firebase, Reown, or production API URLs.
+
+### Verify
+
+```bash
+npm run check        # tsc typecheck
+npm test -- --run    # vitest
+npm run build        # production build (client + server bundle)
+npm run test:e2e     # Playwright smoke
+```
+
+---
+
+## 🔐 Environment Variables
+
+Create a local `.env` with development / sandbox keys. **Never commit `.env` or real secrets.**
+
+**Frontend (`VITE_*`, baked into the static bundle at build time):**
+
+```env
+VITE_API_BASE_URL=
+VITE_LIBRE_WHATSAPP=
+VITE_LIBRE_CONTACT_EMAIL=
+VITE_WALLETCONNECT_PROJECT_ID=
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+```
+
+**Backend (server-only — keep these secret):**
+
+```env
+DATABASE_URL=
+RESEND_API_KEY=
+EMAIL_FROM=
+APP_BASE_URL=
+NODE_ENV=
+STORAGE_ENGINE=
+SESSION_SECRET=
+FRONTEND_ORIGIN=
+```
+
+**Web3 / Escrow (Base Sepolia demo):**
+
+```env
+CHAIN_ID=84532
+RPC_URL_BASE_SEPOLIA=
+ESCROW_CONTRACT_ADDRESS=
+USDC_TOKEN_ADDRESS=
+PLATFORM_WALLET_ADDRESS=
+ARBITER_ADDRESS=
+ESCROW_VERIFIER_MODE=mock
+PLATFORM_FEE_BPS=300
+```
+
+> ⚠️ Security: Never commit `.env`. `DATABASE_URL` and `RESEND_API_KEY` are backend-only secrets. Use a **verified** Resend domain for production email — `onboarding@resend.dev` is testing-only and delivers only to the Resend account owner.
+
+---
+
+## 🚀 Deployment
+
+### Frontend — GitHub Pages
+
+The static React/Vite frontend deploys to `https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/`. The build uses base path `/Libre-Ride-Sharing-Dapp/`, and SPA routing works via a `404.html` fallback. `VITE_*` values are read from GitHub Actions secrets at build time.
+
+| Secret | Required? | Purpose / default if unset |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | **Required** | Base URL of the Render backend (`https://libre-api.onrender.com`). Without it, lead forms have no API to call. |
+| `VITE_LIBRE_WHATSAPP` | Optional | WhatsApp number for form fallback + footer. Default: `16892165223`. |
+| `VITE_LIBRE_CONTACT_EMAIL` | Optional | Email fallback when WhatsApp is unavailable. |
+| `VITE_WALLETCONNECT_PROJECT_ID` | Optional | Enables wallet UI on `/rider` and `/driver`. |
+| `VITE_FIREBASE_*` | Optional | Firebase social auth (see workflow for the full list). |
+
+### Backend — Render
+
+The Express API deploys separately to Render via `render.yaml` (persistent Node web service with WebSockets and sessions). Lead capture uses an external **Neon** free-tier Postgres rather than Render's expiring free Postgres.
+
+`DATABASE_URL` is `sync: false` in `render.yaml` — set it in the Render dashboard to the Neon **pooled** connection string ending with `?sslmode=require`. The `pg` client enables TLS automatically for Neon URLs, `runProductionMigrations()` applies migrations on startup, and the DB retry helper tolerates Neon's scale-to-zero cold starts.
+
+The production API exposes `GET /health`. After deploying, set the `VITE_API_BASE_URL` GitHub Actions secret to the Render URL and re-run the Pages workflow.
+
+### Database — Neon PostgreSQL
+
+Pooled connection string with `sslmode=require`. Retry logic handles cold-start transient errors. To migrate hosting, just point `DATABASE_URL` at Neon and redeploy — no code changes needed.
+
+---
+
+## 🧪 Smoke Testing
+
+`scripts/smoke-founders-flow.ts` exercises the public founding-driver path against a deployed backend so you catch a broken registration before users do. It checks health, CORS for the GitHub Pages origin, a valid submission (no 500), and validation rejection (400).
+
+```bash
+# Point at the live backend (NOT the GitHub Pages URL)
+API_BASE_URL=https://libre-api.onrender.com npm run smoke:founders
+```
+
+A non-zero exit code means the flow is broken — do not promote the deploy. Each run creates one throwaway lead (`smoke+<timestamp>@libre-smoke.test`).
+
+### Cleaning up smoke-test leads
+
+`scripts/cleanup-smoke-leads.ts` deletes **only** rows whose email ends with `@libre-smoke.test` (the suffix is hard-coded, so it can never remove a real registration). Always dry-run first:
+
+```bash
+npm run smoke:founders:cleanup -- --dry-run   # preview count, no changes
+npm run smoke:founders:cleanup                # delete after confirming
+```
+
+---
+
+## ✉️ Production Email (Confirmation Emails)
+
+Founding-driver confirmation emails are sent via [Resend](https://resend.com) and are **non-blocking** — if email is unconfigured or fails, the lead is still saved and the WhatsApp fallback stays available. To deliver emails in production, set all three in the Render dashboard (declared `sync: false`, so no values are committed):
+
+| Variable | Purpose |
 | --- | --- |
-| TypeScript errors after dependency update | Run a clean install and verify lockfile changes. |
-| Wallet not detecting Base Sepolia | Confirm chain ID `84532`, RPC URL, and wallet network. |
-| Approval succeeds but deposit fails | Check USDC allowance, escrow address, token address, and wallet network. |
-| Backend rejects deposit tx | Check `ESCROW_CONTRACT_ADDRESS`, `USDC_TOKEN_ADDRESS`, `RPC_URL_BASE_SEPOLIA`, `ESCROW_VERIFIER_MODE`, and tx hash formatting. |
-| PostgreSQL checks running in local tests | Use `STORAGE_ENGINE=mem`. |
-| Upload errors | Confirm UploadThing keys and callback URLs. |
-| Push notifications not working | Confirm OneSignal sandbox/app credentials. |
-| E2E port conflicts | Ensure no dev server is already listening on port 5000. |
-| Local dev shows blank page or broken assets | Clear `GITHUB_PAGES` from your shell (`Remove-Item Env:GITHUB_PAGES`) and restart `npm run dev`. Use `GITHUB_PAGES=true` only for `npm run build:pages`. |
-| WalletConnect 403/400 on `/rider` or `/driver` only | Expected without `VITE_WALLETCONNECT_PROJECT_ID`. Public routes (`/founding-access`, `/privacy`) should not load wallet code. |
-| GitHub Dependabot count looks stale | Wait for GitHub rescan and compare against local `npm audit`. |
+| `RESEND_API_KEY` | Resend API key (`re_…`). Without it, email is skipped. |
+| `EMAIL_FROM` | Sender, e.g. `LIBRE <noreply@yourverifieddomain.com>`. |
+| `APP_BASE_URL` | e.g. `https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp` — builds the referral invite link inside the email. |
 
-## Legal and Compliance Notice
+> ⚠️ Use a **verified** Resend domain for `EMAIL_FROM`. The shared sender `onboarding@resend.dev` only delivers to the Resend account owner. Verify a domain at [resend.com/domains](https://resend.com/domains) before using a custom `from`.
 
-LIBRE is an early-stage software project. It is not currently a live licensed transportation company, investment offering, money transmission service, insurance product, or public token sale.
+Verify delivery end-to-end: `npm run email:test`.
 
-Before public launch, the project should receive legal review for:
+---
 
-- Transportation/TNC operations
-- Insurance requirements, including Florida Statutes Section 627.748
-- Airport pickup rules
-- Driver onboarding
-- KYC/background checks
-- Stablecoin payments
-- Escrow handling
-- Token/reward design
-- Subscriptions
-- Driver benefits
-- Privacy and data retention
-- Investment or fundraising structures
+## 🔑 Firebase OAuth Setup
+
+For GitHub Pages Google / Apple login to work, add this domain in **Firebase Console → Authentication → Settings → Authorized domains**:
+
+```txt
+rigocrypto.github.io
+```
+
+Do **not** add `https://` or the `/Libre-Ride-Sharing-Dapp/` path — only the bare host.
+
+---
+
+## 📜 Smart Contracts
+
+Foundry configuration lives in `foundry.toml`.
+
+```bash
+forge test -vv     # run contract tests
+```
+
+Deploy `RideEscrow` to Base Sepolia with `contracts/script/DeployRideEscrow.s.sol` (set `RPC_URL_BASE_SEPOLIA`, `DEPLOYER_PRIVATE_KEY`, and `BASESCAN_API_KEY` for verification).
+
+---
+
+## 🛡️ Security Notes
+
+- No real funds in the demo — Base Sepolia / demo messaging only.
+- Never expose secrets; `.env` is never committed.
+- Founding-driver leads are stored in Neon; email / CRM sync are optional and non-blocking.
+- WhatsApp fallback ensures no registration is lost if the API is unreachable.
+- OAuth requires authorized domains configured in Firebase.
+
+Security hardening is tracked in [SECURITY.md](SECURITY.md). Priorities before production: smart-contract audit, payment-route review, WebSocket authorization, rate limiting, request validation, escrow replay protection, admin RBAC, audit logging, and secrets management.
+
+---
+
+## 🤝 Founding Driver / Community Launch
+
+LIBRE is preparing founding driver access for the Orlando pilot:
+
+- Goal: **500 founding supporters**
+- Proposed **$50** founder contribution
+- Target: **$25,000** community launch fund
+- Contributions support early development and pilot preparation
+
+> **Disclaimer:** Founder contributions support project development and do **not** represent equity, ownership, or any guaranteed financial return. The founding-driver program is an early-access and community-building program, not an investment product.
+
+---
+
+## ⚖️ Legal and Compliance Notice
+
+LIBRE is an early-stage software project. It is not currently a live licensed transportation company, investment offering, money-transmission service, insurance product, or public token sale.
+
+Before public launch, the project should receive legal review for transportation / TNC operations, insurance (including Florida Statutes Section 627.748), airport pickup rules, driver onboarding, KYC / background checks, stablecoin payments, escrow handling, token / reward design, subscriptions, driver benefits, privacy / data retention, and any fundraising structure.
 
 Nothing in this repository should be interpreted as legal, financial, insurance, or investment advice.
 
-## Contributing
+---
 
-Contributions should preserve:
+## 👋 Contributing
 
-- TypeScript safety
-- Tested ride state transitions
-- Escrow state-machine integrity
-- Payment safety
-- Compliance-first design
-- Privacy-conscious data handling
-- Clear documentation
+Contributions should preserve TypeScript safety, tested ride-state transitions, escrow state-machine integrity, payment safety, compliance-first design, and privacy-conscious data handling.
 
-Before submitting changes:
+- Open an issue to discuss larger changes before a PR.
+- Keep PRs scoped and do not commit secrets.
+- Run the verification commands before opening a PR:
 
-```powershell
-npm.cmd run check
-npm.cmd test -- --run
-npm.cmd run build
-npm.cmd run test:e2e
+```bash
+npm run check
+npm test -- --run
+npm run build
+npm run test:e2e
 ```
 
-## Contact
+---
 
-LIBRE is being built as an Orlando-first Web3 ride-sharing MVP focused on transparency, driver empowerment, and safer local transportation infrastructure.
+## 📄 License
 
-For collaboration, driver onboarding, partnerships, or investment discussions, contact the LIBRE core team.
+Licensed under the **MIT License** — see [LICENSE](LICENSE).
+
+> **Demo disclaimer:** LIBRE is currently a demo / MVP. No real transportation, payment, insurance, regulatory approval, or financial product is provided through this demo.
+
+## 📬 Contact
+
+LIBRE is being built as an Orlando-first Web3 ride-sharing MVP focused on transparency, driver empowerment, and safer local transportation. For collaboration, driver onboarding, partnerships, or investment discussions, contact the LIBRE core team via the WhatsApp / email channels on [`/founding-access`](https://rigocrypto.github.io/Libre-Ride-Sharing-Dapp/founding-access).
