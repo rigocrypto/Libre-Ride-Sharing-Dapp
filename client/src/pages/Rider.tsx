@@ -66,7 +66,7 @@ export default function Rider() {
                 Demo · Base Sepolia
               </span>
             )}
-            <Link href="/profile" asChild>
+            <Link href="/rider/profile" asChild>
               <Button variant="ghost" size="sm">
                 Profile
               </Button>

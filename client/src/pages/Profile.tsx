@@ -13,35 +13,24 @@ import { BADGE_TYPES } from "@shared/schema";
 import { track } from "@/lib/analytics";
 import { buildAppUrl } from "@/lib/routes";
 
+// Demo-safe placeholder shown until a real auth context + backend user exist.
+const DEMO_REFERRAL_CODE = "LIBREDEMO";
+
 export default function Profile() {
   const { toast } = useToast();
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralStats, setReferralStats] = useState<any>(null);
-  
-  // Fetch referral code on mount
+
+  // Referral data is demo-only for now. There is no authenticated user context
+  // wired up here yet, and the `/api/referrals/*` endpoints require a real
+  // account — calling them with a placeholder id 404s, and on GitHub Pages a
+  // relative `/api/...` path returns the SPA HTML, which then breaks JSON
+  // parsing ("Unexpected token '<'"). So we show demo-safe values instead and
+  // leave live referral wiring for when real auth is available.
+  // TODO: once an auth context exists, fetch real data through `apiRequest`
+  // (which respects VITE_API_BASE_URL and validates the response content-type).
   React.useEffect(() => {
-    // TODO: Get userId from auth context
-    const userId = "current-user-id"; // Replace with actual user ID
-    if (userId) {
-      fetch(`/api/referrals/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.code) {
-            setReferralCode(data.code);
-          }
-        })
-        .catch(console.error);
-      
-      // Fetch stats
-      fetch(`/api/referrals/stats?userId=${userId}`)
-        .then(res => res.json())
-        .then(data => setReferralStats(data))
-        .catch(console.error);
-    }
+    setReferralCode(DEMO_REFERRAL_CODE);
   }, []);
 
   const userProfile = {
