@@ -13,6 +13,7 @@ import {
   UserCredential 
 } from 'firebase/auth';
 import { auth } from './config';
+import { resolveApiUrl } from '@/lib/queryClient';
 import { track } from '@/lib/analytics';
 import { useToast } from '@/hooks/use-toast';
 
@@ -41,7 +42,7 @@ export function useSocialAuth(): UseSocialAuthReturn {
           if (!email) return;
           
           // Send token to backend
-          const res = await fetch('/api/auth/social-login', {
+          const res = await fetch(resolveApiUrl('/api/auth/social-login'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken, provider: 'google' }),
@@ -106,7 +107,7 @@ export function useSocialAuth(): UseSocialAuthReturn {
       }
 
       // Send token to Libre backend
-      const res = await fetch('/api/auth/social-login', {
+      const res = await fetch(resolveApiUrl('/api/auth/social-login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken, provider: providerName }),
