@@ -22,6 +22,7 @@ import { RiderEscrowPaymentCard } from '@/components/rider/RiderEscrowPaymentCar
 import { DriverAssignedPanel } from '@/components/DriverAssignedPanel';
 import { RideInProgressPanel } from '@/components/RideInProgressPanel';
 import { RideCompleteSummary } from '@/components/RideCompleteSummary';
+import { buildInternalPath } from '@/lib/routes';
 
 /**
  * Rider Phase 5 Page
@@ -50,7 +51,7 @@ export function RiderPhase5() {
   };
 
   const handleBookAgain = () => {
-    window.location.href = '/book';
+    window.location.href = buildInternalPath('/book');
   };
 
   const handleSOS = () => {
