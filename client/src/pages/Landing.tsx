@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { track } from "@/lib/analytics";
+import { buildInternalPath } from "@/lib/routes";
 
 const LandingPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -231,8 +232,8 @@ const LandingPage: React.FC = () => {
                 context="landing"
                 onSuccess={(address) => {
                   track('landing_social_login_success', { address });
-                  // Redirect to rider page
-                  window.location.href = '/rider';
+                  // Redirect to rider page (base-path aware for GitHub Pages)
+                  window.location.href = buildInternalPath('/rider');
                 }}
                 size="lg"
                 variant="default"

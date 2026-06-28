@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Shield, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Link } from 'wouter';
 import { track } from '@/lib/analytics';
+import { buildInternalPath } from '@/lib/routes';
 
 interface VerificationGateProps {
   verified: boolean;
@@ -79,8 +80,8 @@ export function VerificationGate({
     if (onVerifyClick) {
       onVerifyClick();
     } else {
-      // Navigate to verification page
-      window.location.href = '/verify';
+      // Navigate to verification page (base-path aware for GitHub Pages)
+      window.location.href = buildInternalPath('/verify');
     }
   };
 

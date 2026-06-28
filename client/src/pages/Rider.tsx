@@ -13,6 +13,7 @@ import { DriverAssignedPanel } from '@/components/DriverAssignedPanel';
 import { RideInProgressPanel } from '@/components/RideInProgressPanel';
 import { RideCompleteSummary } from '@/components/RideCompleteSummary';
 import DemoRiderFlow from '@/components/demo/DemoRiderFlow';
+import { buildInternalPath } from '@/lib/routes';
 
 function isAuthenticated(): boolean {
   try {
@@ -43,7 +44,7 @@ export default function Rider() {
   };
 
   const handleBookAgain = () => {
-    window.location.href = '/book';
+    window.location.href = buildInternalPath('/book');
   };
 
   const handleSOS = () => {
