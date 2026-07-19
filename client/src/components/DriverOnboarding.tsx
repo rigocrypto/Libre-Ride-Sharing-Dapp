@@ -106,6 +106,8 @@ export function DriverOnboarding({ driverId, onComplete }: DriverOnboardingProps
                   </div>
 
                   <input
+                    id={`upload-${item.id}`}
+                    name={`upload-${item.id}`}
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => {

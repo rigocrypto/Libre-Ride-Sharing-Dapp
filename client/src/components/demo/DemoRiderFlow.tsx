@@ -143,24 +143,30 @@ function RequestForm({
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs uppercase tracking-wide text-muted-foreground">Your name</label>
+        <label htmlFor="rider-name" className="text-xs uppercase tracking-wide text-muted-foreground">Your name</label>
         <Input
+          id="rider-name"
+          name="name"
           placeholder="e.g. Alex (optional)"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="bg-muted/20"
+          autoComplete="name"
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-wide text-muted-foreground">Pickup</label>
+        <label htmlFor="rider-pickup" className="text-xs uppercase tracking-wide text-muted-foreground">Pickup</label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-400" />
           <Input
+            id="rider-pickup"
+            name="pickup"
             placeholder="Where are you?"
             value={pickup}
             onChange={(e) => setPickup(e.target.value)}
             className="bg-muted/20 pl-9"
+            autoComplete="off"
           />
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -178,14 +184,17 @@ function RequestForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-wide text-muted-foreground">Destination</label>
+        <label htmlFor="rider-destination" className="text-xs uppercase tracking-wide text-muted-foreground">Destination</label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-400" />
           <Input
+            id="rider-destination"
+            name="destination"
             placeholder="Where to?"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             className="bg-muted/20 pl-9"
+            autoComplete="off"
           />
         </div>
         <div className="flex flex-wrap gap-1.5">
