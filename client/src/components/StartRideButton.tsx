@@ -13,6 +13,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { resolveApiUrl } from '@/lib/queryClient';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 
 interface StartRideButtonProps {
@@ -50,7 +51,7 @@ export function StartRideButton({
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/rides/${rideId}/start`, {
+      const response = await fetch(resolveApiUrl(`/api/rides/${rideId}/start`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

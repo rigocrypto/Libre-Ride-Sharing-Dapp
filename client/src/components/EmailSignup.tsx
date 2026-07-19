@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { resolveApiUrl } from '@/lib/queryClient';
 import { track } from '@/lib/analytics';
 import { Mail, CheckCircle2, Loader2 } from 'lucide-react';
 
@@ -43,7 +43,7 @@ export function EmailSignup({
       track('aa_signup_start', { email_provided: true });
       
       // Make request directly to get better error handling
-      const res = await fetch('/api/auth/aa-signup', {
+      const res = await fetch(resolveApiUrl('/api/auth/aa-signup'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

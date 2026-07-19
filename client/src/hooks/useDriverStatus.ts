@@ -15,6 +15,7 @@
 
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 interface DriverStatusResponse {
   success: boolean;
@@ -68,7 +69,7 @@ export function useDriverStatus() {
       // Get location if going online
       const location = isOnline ? await getLocation() : null;
 
-      const response = await fetch('/api/driver/status', {
+      const response = await fetch(resolveApiUrl('/api/driver/status'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

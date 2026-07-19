@@ -10,6 +10,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getWebSocketUrl } from '@/lib/websocket';
 import { useEffect, useRef } from 'react';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 interface Ride {
   id: string;
@@ -52,7 +53,7 @@ export function useRiderRide(rideId: string) {
       const token = localStorage.getItem('firebaseToken');
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch(`/api/rides/${rideId}`, {
+      const response = await fetch(resolveApiUrl(`/api/rides/${rideId}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
 

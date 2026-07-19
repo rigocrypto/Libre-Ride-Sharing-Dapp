@@ -17,6 +17,7 @@ import { Wallet, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { getAuthHeader, getAuthHeaders } from '@/lib/api/authHeader';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 interface WalletStatus {
   walletAddress: string | null;
@@ -58,7 +59,7 @@ export function WalletGate() {
     try {
       // Use centralized auth header helper
       const headers = await getAuthHeader();
-      const res = await fetch('/api/wallet/status', {
+      const res = await fetch(resolveApiUrl('/api/wallet/status'), {
         headers,
       });
 
@@ -69,7 +70,7 @@ export function WalletGate() {
         // Token expired or invalid, try refreshing
         console.log('[WalletGate] Token expired, refreshing...');
         const refreshedHeaders = await getAuthHeader(true); // Force refresh
-        const retryRes = await fetch('/api/wallet/status', {
+        const retryRes = await fetch(resolveApiUrl('/api/wallet/status'), {
           headers: refreshedHeaders,
         });
         if (retryRes.ok) {
@@ -145,7 +146,7 @@ export function WalletGate() {
       const nonceHeaders = await getAuthHeaders({
         'Content-Type': 'application/json',
       });
-      const nonceRes = await fetch('/api/wallet/nonce', {
+      const nonceRes = await fetch(resolveApiUrl('/api/wallet/nonce'), {
         method: 'POST',
         headers: nonceHeaders,
       });
@@ -174,7 +175,7 @@ export function WalletGate() {
         },
         true // Force refresh for critical operation
       );
-      const linkRes = await fetch('/api/wallet/link', {
+      const linkRes = await fetch(resolveApiUrl('/api/wallet/link'), {
         method: 'POST',
         headers: linkHeaders,
         body: JSON.stringify({

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { track } from '@/lib/analytics';
 import { useToast } from '@/hooks/use-toast';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 interface UseAAReturn {
   address: string | null;
@@ -22,7 +23,7 @@ export function useAA(): UseAAReturn {
     try {
       track('aa_signup_start', { email_provided: true });
 
-      const res = await fetch('/api/auth/aa-signup', {
+      const res = await fetch(resolveApiUrl('/api/auth/aa-signup'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

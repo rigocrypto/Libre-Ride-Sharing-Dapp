@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { track } from '@/lib/analytics';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 interface UserProfile {
   id: string;
@@ -48,7 +49,7 @@ async function fetchUserProfile(userId?: string): Promise<UserProfile | null> {
   }
 
   try {
-    const res = await fetch(`/api/user/profile?userId=${userId}`, {
+    const res = await fetch(resolveApiUrl(`/api/user/profile?userId=${userId}`), {
       credentials: 'include',
     });
 

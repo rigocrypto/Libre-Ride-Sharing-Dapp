@@ -8,6 +8,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 interface EscrowStatus {
   status: 'pending' | 'locked' | 'released' | 'refunded';
@@ -22,7 +23,7 @@ export function useEscrowStatus(rideId: string, enabled: boolean = true) {
       const token = localStorage.getItem('firebaseToken');
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch(`/api/escrow/status/${rideId}`, {
+      const response = await fetch(resolveApiUrl(`/api/escrow/status/${rideId}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
 

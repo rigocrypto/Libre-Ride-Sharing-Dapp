@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { resolveApiUrl } from "@/lib/queryClient";
 
 interface ComplianceStatus {
   profilePhoto: boolean;
@@ -33,8 +34,8 @@ export function useComplianceStatus(driverId: string) {
     const fetchStatus = async () => {
       try {
         const [photos, vehicle] = await Promise.all([
-          fetch(`/api/driver/${driverId}/photos`).then((r) => r.json()),
-          fetch(`/api/vehicle/${driverId}/photos`).then((r) => r.json()),
+          fetch(resolveApiUrl(`/api/driver/${driverId}/photos`)).then((r) => r.json()),
+          fetch(resolveApiUrl(`/api/vehicle/${driverId}/photos`)).then((r) => r.json()),
         ]);
 
         const photoMap = new Map<string, boolean>(photos.map((p: any) => [String(p.photoType), p.verificationStatus === "verified"]));

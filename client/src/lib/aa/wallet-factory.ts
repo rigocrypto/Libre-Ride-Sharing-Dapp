@@ -5,6 +5,7 @@
  */
 
 import { Address } from 'viem';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 export interface AAWallet {
   address: Address;
@@ -36,7 +37,7 @@ export function isAAWallet(address: Address): boolean {
  */
 export async function getAAWalletByEmail(email: string): Promise<Address | null> {
   try {
-    const res = await fetch(`/api/auth/aa-wallet?email=${encodeURIComponent(email)}`);
+    const res = await fetch(resolveApiUrl(`/api/auth/aa-wallet?email=${encodeURIComponent(email)}`));
     if (res.ok) {
       const data = await res.json();
       return data.address || null;

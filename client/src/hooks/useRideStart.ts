@@ -15,6 +15,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 export interface RideStartError {
   type:
@@ -52,7 +53,7 @@ export function useRideStart() {
         return;
       }
 
-      const response = await fetch(`/api/rides/${rideId}/start`, {
+      const response = await fetch(resolveApiUrl(`/api/rides/${rideId}/start`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
