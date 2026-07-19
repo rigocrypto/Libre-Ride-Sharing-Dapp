@@ -45,7 +45,7 @@ export default function Rider() {
   };
 
   const handleBookAgain = () => {
-    window.location.href = buildInternalPath('/book');
+    window.location.href = buildInternalPath('/rider');
   };
 
   const handleSOS = () => {
@@ -171,7 +171,7 @@ export default function Rider() {
         ) : !rideId ? (
           <Card className="p-8 bg-white/5 backdrop-blur-lg border-white/10 text-center space-y-4">
             <p className="text-muted-foreground">No ride selected</p>
-            <Link href="/book" asChild>
+            <Link href="/rider" asChild>
               <Button>Book a Ride</Button>
             </Link>
           </Card>
