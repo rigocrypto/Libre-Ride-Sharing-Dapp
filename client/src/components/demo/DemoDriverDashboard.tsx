@@ -49,6 +49,7 @@ import {
   NOTIFICATIONS,
   PROMO,
   DEMAND_HOTSPOTS,
+  VEHICLE_MARKERS,
   SAMPLE_RIDES,
   SAMPLE_ACTIVE_RIDER,
 } from '@/lib/demoDriverData';
@@ -312,7 +313,11 @@ function KpiGrid() {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {KPI_CARDS.map((kpi) => (
-        <Card key={kpi.key} className={cn(glass, 'p-4')} data-testid="kpi-card">
+        <Card
+          key={kpi.key}
+          className={cn(glass, 'p-4 transition duration-300 hover:-translate-y-0.5 hover:border-white/20')}
+          data-testid="kpi-card"
+        >
           <p className="text-xs text-muted-foreground">{kpi.label}</p>
           <p className="mt-1 text-lg font-bold tracking-tight">{kpi.value}</p>
           {kpi.hint && <p className="mt-0.5 text-[11px] text-neon-teal">{kpi.hint}</p>}
@@ -374,6 +379,34 @@ function DemandMapPanel() {
         </div>
       ))}
 
+      {/* Nearby driver markers */}
+      {VEHICLE_MARKERS.map((marker) => (
+        <div
+          key={marker.id}
+          className="absolute -translate-x-1/2 -translate-y-1/2"
+          style={{ top: `${marker.top}%`, left: `${marker.left}%` }}
+        >
+          <span
+            className={cn(
+              'absolute -inset-2.5 rounded-full',
+              marker.state === 'available' ? 'animate-pulse bg-green-400/20' : 'bg-blue-400/20'
+            )}
+          />
+          <span
+            className={cn(
+              'relative flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold backdrop-blur-md',
+              marker.state === 'available'
+                ? 'border-green-400/40 bg-green-400/15 text-green-200'
+                : 'border-blue-400/40 bg-blue-400/15 text-blue-200'
+            )}
+          >
+            <Car className="h-3 w-3" />
+            {marker.id}
+            <span className="text-[9px] text-white/80">{marker.heading}</span>
+          </span>
+        </div>
+      ))}
+
       {/* Overlays */}
       <div className="absolute left-3 top-3 flex items-center gap-2">
         <Badge className="border-neon-pink/30 bg-neon-pink/20 text-neon-pink">
@@ -387,6 +420,10 @@ function DemandMapPanel() {
       <div className="absolute bottom-3 left-3 rounded-lg bg-background/70 px-3 py-1.5 text-xs backdrop-blur-md">
         <span className="text-muted-foreground">Nearby requests: </span>
         <span className="font-semibold text-neon-teal">7 active</span>
+      </div>
+      <div className="absolute bottom-3 right-3 rounded-lg bg-background/70 px-3 py-1.5 text-xs backdrop-blur-md">
+        <span className="text-muted-foreground">Drivers nearby: </span>
+        <span className="font-semibold text-green-300">{VEHICLE_MARKERS.length}</span>
       </div>
     </Card>
   );
@@ -422,6 +459,8 @@ function RidesPanel({
   completeMut: Mut;
   onReset: () => void;
 }) {
+  const showcaseRide = activeRide ?? realRides[0];
+
   if (!online) {
     return (
       <Card className={cn(glass, 'space-y-3 p-8 text-center')}>
@@ -446,6 +485,8 @@ function RidesPanel({
 
   return (
     <div className="space-y-3">
+      <ActiveTripShowcase ride={showcaseRide} hasActiveTrip={!!activeRide} />
+
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Available Rides
@@ -462,7 +503,11 @@ function RidesPanel({
 
       {/* Real escrow-confirmed rides — preserves the existing accept lifecycle */}
       {realRides.map((ride) => (
-        <Card key={ride.id} className={cn(glass, 'space-y-3 p-4')} data-testid="available-ride">
+        <Card
+          key={ride.id}
+          className={cn(glass, 'space-y-3 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-white/20')}
+          data-testid="available-ride"
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2 text-sm">
@@ -492,6 +537,7 @@ function RidesPanel({
               size="sm"
               disabled={acceptMut.isPending}
               onClick={() => acceptMut.mutate(ride.id)}
+              className="transition hover:scale-[1.02]"
             >
               {acceptMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Accept'}
             </Button>
@@ -527,7 +573,7 @@ function RidesPanel({
           {SAMPLE_RIDES.map((ride) => (
             <Card
               key={ride.id}
-              className={cn(glass, 'space-y-3 p-4 opacity-70')}
+              className={cn(glass, 'space-y-3 p-4 opacity-70 transition duration-300 hover:border-white/20')}
               data-testid="sample-ride"
             >
               <div className="flex items-start justify-between gap-4">
@@ -568,6 +614,91 @@ function RidesPanel({
         </>
       )}
     </div>
+  );
+}
+
+function ActiveTripShowcase({
+  ride,
+  hasActiveTrip,
+}: {
+  ride: DemoRide | undefined;
+  hasActiveTrip: boolean;
+}) {
+  const title = hasActiveTrip ? 'Live Active Trip' : 'Active Trip Showcase';
+  const pickup = ride?.pickup ?? 'Downtown Orlando';
+  const destination = ride?.destination ?? 'MCO Airport';
+  const riderName = ride?.riderName ?? SAMPLE_ACTIVE_RIDER.name;
+  const payout = ride?.driverPayoutUsd ?? 24.8;
+
+  return (
+    <Card className={cn(glass, 'overflow-hidden p-0')} data-testid="active-trip-showcase">
+      <div className="relative border-b border-white/10 bg-gradient-to-r from-cyan-500/15 via-blue-500/10 to-neon-pink/15 px-4 py-3">
+        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-neon-teal to-neon-pink" />
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-cyan-200/80">Trip readiness</p>
+            <h4 className="text-base font-semibold text-white">{title}</h4>
+          </div>
+          <Badge className={cn(
+            'border px-2.5 py-1 text-[11px]',
+            hasActiveTrip
+              ? 'border-green-500/40 bg-green-500/15 text-green-300'
+              : 'border-blue-500/40 bg-blue-500/15 text-blue-300'
+          )}>
+            {hasActiveTrip ? 'In lifecycle' : 'Preview always on'}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="grid gap-4 p-4 md:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-3">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Rider and OTP verification</p>
+            <div className="mt-2 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-white">{riderName}</p>
+                <p className="text-xs text-muted-foreground">Confirm rider enters OTP before departure</p>
+              </div>
+              <div className="rounded-lg border border-neon-teal/40 bg-neon-teal/15 px-3 py-1.5 text-center">
+                <p className="text-[10px] uppercase tracking-wide text-neon-teal">OTP</p>
+                <p className="font-mono text-lg font-bold tracking-[0.2em] text-neon-teal">{SAMPLE_ACTIVE_RIDER.otp}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-3">
+              <p className="text-[11px] uppercase tracking-wide text-green-300">Pickup</p>
+              <p className="mt-1 text-sm font-medium">{pickup}</p>
+            </div>
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3">
+              <p className="text-[11px] uppercase tracking-wide text-red-300">Drop-off</p>
+              <p className="mt-1 text-sm font-medium">{destination}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Navigate state</p>
+            <div className="mt-2 flex items-center gap-2 text-sm">
+              <Navigation className="h-4 w-4 text-blue-300" />
+              <span>ETA to pickup: 5 min</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4 text-neon-pink" />
+              <span>Route confidence: High demand corridor</span>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-neon-teal/30 bg-neon-teal/10 p-3 text-right">
+            <p className="text-[11px] uppercase tracking-wide text-neon-teal">Estimated payout</p>
+            <p className="mt-1 text-2xl font-black text-neon-teal">${payout.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground">Escrow-confirmed release on completion</p>
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -613,7 +744,7 @@ function ActiveTripCard({
   };
 
   return (
-    <Card className={cn(glass, 'space-y-4 p-6')} data-testid="active-trip">
+    <Card className={cn(glass, 'space-y-4 p-6 transition duration-300 hover:border-white/20')} data-testid="active-trip">
       <div className="flex items-center justify-between">
         <h3 className="font-bold">Active Trip</h3>
         <Badge
@@ -678,6 +809,20 @@ function ActiveTripCard({
         </div>
       </div>
 
+      <div className="rounded-xl border border-white/10 bg-slate-950/50 p-3">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Rider OTP and navigation checklist</p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="rounded-lg border border-neon-teal/30 bg-neon-teal/10 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-neon-teal">OTP confirmation</p>
+            <p className="font-mono text-base font-bold tracking-[0.22em] text-neon-teal">{SAMPLE_ACTIVE_RIDER.otp}</p>
+          </div>
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-blue-300">Navigate state</p>
+            <p className="text-sm font-medium">ETA 5 min · Traffic moderate</p>
+          </div>
+        </div>
+      </div>
+
       <Separator className="opacity-20" />
 
       <div className="flex justify-between text-sm">
@@ -704,7 +849,7 @@ function ActiveTripCard({
 
       {ride.status === 'driver_assigned' && (
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" disabled>
+          <Button variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-200" disabled>
             <Navigation className="mr-2 h-4 w-4" /> Navigate
           </Button>
           <Button disabled={startMut.isPending} onClick={() => startMut.mutate(ride.id)}>
@@ -738,14 +883,15 @@ function ActiveTripCard({
 
 function AiAssistantCard() {
   return (
-    <Card className={cn(glass, 'space-y-3 p-5')}>
+    <Card className={cn(glass, 'relative overflow-hidden space-y-3 p-5 transition duration-300 hover:-translate-y-0.5 hover:border-neon-purple/30')}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(217,70,239,0.2),transparent_40%),radial-gradient(circle_at_20%_100%,rgba(45,212,191,0.16),transparent_42%)]" />
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-neon-purple" />
         <h3 className="font-semibold">AI Assistant</h3>
       </div>
-      <ul className="space-y-2">
+      <ul className="relative space-y-2">
         {AI_TIPS.map((tip) => (
-          <li key={tip} className="flex gap-2 text-sm text-muted-foreground">
+          <li key={tip} className="flex gap-2 rounded-lg border border-white/10 bg-white/5 p-2 text-sm text-muted-foreground transition hover:border-neon-teal/30 hover:bg-neon-teal/10">
             <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neon-teal" />
             {tip}
           </li>
@@ -836,19 +982,27 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function WalletCard() {
   return (
-    <Card className={cn(glass, 'space-y-4 p-5')}>
+    <Card className={cn(glass, 'space-y-4 p-5 transition duration-300 hover:border-white/20')}>
       <div className="flex items-center gap-2">
         <Wallet className="h-4 w-4 text-neon-teal" />
         <h3 className="font-semibold">Wallet & Payouts</h3>
       </div>
 
+      <div className="rounded-2xl border border-neon-teal/30 bg-gradient-to-r from-neon-teal/15 via-cyan-500/10 to-neon-pink/10 p-4">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-neon-teal">Primary payout balance</p>
+        <div className="mt-1 flex items-end justify-between gap-3">
+          <p className="text-3xl font-black text-neon-teal">{WALLET.usdcBalance}</p>
+          <Badge className="border-green-500/30 bg-green-500/15 text-green-300">Payout ready</Badge>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-white/5 p-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
           <p className="text-xs text-muted-foreground">Cash balance</p>
           <p className="text-lg font-bold">{WALLET.cashBalance}</p>
         </div>
-        <div className="rounded-xl bg-white/5 p-3">
-          <p className="text-xs text-muted-foreground">USDC wallet</p>
+        <div className="rounded-xl border border-neon-teal/30 bg-neon-teal/10 p-3">
+          <p className="text-xs text-neon-teal">USDC wallet</p>
           <p className="text-lg font-bold text-neon-teal">{WALLET.usdcBalance}</p>
         </div>
       </div>
@@ -858,7 +1012,7 @@ function WalletCard() {
         <span className="text-right">{WALLET.payoutMethod}</span>
       </div>
 
-      <Button className="w-full" disabled>
+      <Button className="w-full bg-gradient-to-r from-neon-teal/80 to-cyan-500/80 text-slate-900 hover:from-neon-teal hover:to-cyan-400" disabled>
         Cash Out Instantly · Demo only
       </Button>
       <p className="text-center text-[11px] text-muted-foreground">

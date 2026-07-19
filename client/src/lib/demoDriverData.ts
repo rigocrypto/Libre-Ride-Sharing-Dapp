@@ -167,6 +167,20 @@ export const DEMAND_HOTSPOTS: DemandHotspot[] = [
   { label: "I-Drive", level: "Medium", top: 48, left: 50 },
 ];
 
+export interface VehicleMarker {
+  id: string;
+  top: number;
+  left: number;
+  heading: "N" | "E" | "S" | "W";
+  state: "available" | "on_trip";
+}
+
+export const VEHICLE_MARKERS: VehicleMarker[] = [
+  { id: "DRV-204", top: 36, left: 40, heading: "E", state: "available" },
+  { id: "DRV-317", top: 54, left: 58, heading: "N", state: "on_trip" },
+  { id: "DRV-411", top: 70, left: 44, heading: "W", state: "available" },
+];
+
 /**
  * A clearly-labeled sample ride request used to populate the available-rides panel
  * when no real escrow-confirmed ride exists yet. NOT actionable — it has no real
