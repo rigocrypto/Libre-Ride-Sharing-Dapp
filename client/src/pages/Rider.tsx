@@ -13,6 +13,7 @@ import { DriverAssignedPanel } from '@/components/DriverAssignedPanel';
 import { RideInProgressPanel } from '@/components/RideInProgressPanel';
 import { RideCompleteSummary } from '@/components/RideCompleteSummary';
 import DemoRiderFlow from '@/components/demo/DemoRiderFlow';
+import { UserMenu } from '@/components/auth/UserMenu';
 import { buildInternalPath } from '@/lib/routes';
 
 function isAuthenticated(): boolean {
@@ -72,6 +73,7 @@ export default function Rider() {
                 Profile
               </Button>
             </Link>
+            <UserMenu />
           </div>
         </div>
       </header>
