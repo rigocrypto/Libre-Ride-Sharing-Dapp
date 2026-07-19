@@ -57,6 +57,8 @@ export function AdminDriverComplianceTable({
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
+            id="driver-compliance-search"
+            name="driverComplianceSearch"
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             className="pl-9"

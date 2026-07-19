@@ -24,6 +24,8 @@ export function AdminEscrowFilters({
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-8">
       <Input
+        id="admin-escrow-search"
+        name="adminEscrowSearch"
         value={filters.search}
         onChange={(event) =>
           onFiltersChange(updateFilter(filters, "search", event.target.value))
@@ -33,6 +35,8 @@ export function AdminEscrowFilters({
         data-testid="input-admin-escrow-search"
       />
       <Input
+        id="admin-escrow-token"
+        name="adminEscrowToken"
         value={filters.token === "all" ? "" : filters.token}
         onChange={(event) =>
           onFiltersChange(updateFilter(filters, "token", event.target.value || "all"))
