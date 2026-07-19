@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Shield, CheckCircle2, Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics';
 import { useToast } from '@/hooks/use-toast';
+import { resolveApiUrl } from '@/lib/queryClient';
 
 export default function Verify() {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +37,7 @@ export default function Verify() {
     }
 
     try {
-      const res = await fetch('/api/identity/start', {
+      const res = await fetch(resolveApiUrl('/api/identity/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),

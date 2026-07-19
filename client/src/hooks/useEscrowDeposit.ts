@@ -5,6 +5,7 @@ import { getAddress, isAddress, type Hex } from "viem";
 import { useAccount, useChainId, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
 import { erc20Abi, rideEscrowAbi } from "@shared/escrow";
 import { escrowClientConfig, libreChain } from "@/lib/web3/chains";
+import { resolveApiUrl } from "@/lib/queryClient";
 
 export type DepositStatus =
   | "WALLET_NOT_CONNECTED"
@@ -118,7 +119,7 @@ export function useEscrowDeposit(rideId: string) {
         await switchChainAsync({ chainId: libreChain.id });
       }
 
-      const initiateRes = await fetch("/api/escrow/deposit/initiate", {
+      const initiateRes = await fetch(resolveApiUrl("/api/escrow/deposit/initiate"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -206,7 +207,7 @@ export function useEscrowDeposit(rideId: string) {
       }
 
       setStatus("VERIFYING_ESCROW");
-      const confirmRes = await fetch("/api/escrow/deposit/confirm", {
+      const confirmRes = await fetch(resolveApiUrl("/api/escrow/deposit/confirm"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

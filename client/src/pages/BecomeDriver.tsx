@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, resolveApiUrl } from '@/lib/queryClient';
 import { useMutation } from '@tanstack/react-query';
 import { track } from '@/lib/analytics';
 import { CheckCircle2, ArrowRight, ArrowLeft, Car, FileText, User, Upload as UploadIcon } from 'lucide-react';
@@ -161,7 +161,7 @@ export default function BecomeDriver() {
       // Claim referral bonus if referral code was used
       if (referralCode && userId) {
         try {
-          const claimRes = await fetch('/api/referrals/claim', {
+          const claimRes = await fetch(resolveApiUrl('/api/referrals/claim'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: referralCode, newUserId: userId })

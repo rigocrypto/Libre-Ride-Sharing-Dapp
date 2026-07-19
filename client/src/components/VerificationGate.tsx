@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Shield, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Link } from 'wouter';
 import { track } from '@/lib/analytics';
+import { resolveApiUrl } from '@/lib/queryClient';
 import { buildInternalPath } from '@/lib/routes';
 
 interface VerificationGateProps {
@@ -52,7 +53,7 @@ export function VerificationGate({
           const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
           
           if (token) {
-            const res = await fetch('/api/identity/mock-verify', {
+            const res = await fetch(resolveApiUrl('/api/identity/mock-verify'), {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
